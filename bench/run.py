@@ -36,7 +36,12 @@ CONFIGS = {
     "default": {"model": "opus", "effort": None, "right_size": False},
     "max": {"model": "opus", "effort": "max", "right_size": False},
     "right-size": {"model": "opus", "effort": None, "right_size": True},
+    # The router picks model and effort for the whole session before it starts
+    # (skills/right-size/scripts/route.py), then escalates on request.
+    "router": {"model": None, "effort": None, "right_size": False, "router": True},
 }
+
+ROUTER = ROOT / "skills" / "right-size" / "scripts" / "route.py"
 
 RIGHT_SIZE_NUDGE = "Before starting, size the task with the right-size skill and follow its decision."
 
@@ -128,6 +133,48 @@ def claude_cmd(cfg):
     return cmd
 
 
+def run_router(task, log_dir):
+    """Run a task through route.py and fold its runs into one result-like dict.
+
+    Cost includes the classifier call. Sessions must persist so that an
+    escalation can resume them, so --no-session-persistence is left out.
+    """
+    cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
+           task["prompt"] + PROMPT_SUFFIX, "--",
+           "--setting-sources", "project", "--strict-mcp-config", "--permission-mode", "dontAsk",
+           "--allowedTools", *ALLOWED_TOOLS]
+    try:
+        r = subprocess.run(cmd, cwd=WORK, capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return {}, True
+    try:
+        summary = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        raise SystemExit(f"router failed on {task['id']}: {r.stderr[-1500:]}")
+    runs = [x["result"] or {} for x in summary["runs"]]
+    usage = {}
+    for mu in [(summary["classifier"] or {}).get("model_usage")] + [x.get("modelUsage") for x in runs]:
+        for model, u in (mu or {}).items():
+            acc = usage.setdefault(model, {})
+            for k, v in u.items():
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    acc[k] = acc.get(k, 0) + v
+    last = runs[-1] if runs else {}
+    return {
+        "api_error_status": next((x.get("api_error_status") for x in runs if x.get("api_error_status")), None),
+        "result": last.get("result"),
+        "is_error": last.get("is_error"),
+        "num_turns": sum(x.get("num_turns") or 0 for x in runs),
+        "duration_ms": sum(x.get("duration_ms") or 0 for x in runs),
+        "total_cost_usd": ((summary["classifier"] or {}).get("cost_usd") or 0) + sum(x.get("total_cost_usd") or 0 for x in runs),
+        "modelUsage": usage,
+        "subagent_stats": last.get("subagent_stats"),
+        "permission_denials": [d for x in runs for d in (x.get("permission_denials") or [])],
+        "route": {"decision": summary["decision"], "profiles": [x["profile"] for x in summary["runs"]]},
+    }, False
+
+
 def run_one(task, name, out_dir):
     cfg = CONFIGS[name]
     files = test_files(task)
@@ -139,24 +186,30 @@ def run_one(task, name, out_dir):
     raw.mkdir(parents=True, exist_ok=True)
     stream_path = raw / f"{task['id']}__{name}.jsonl"
     started = time.time()
-    try:
-        r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,
-                           capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=TIMEOUT_S)
-        stream, timed_out = r.stdout, False
-    except subprocess.TimeoutExpired as e:
-        stream, timed_out = (e.stdout or b"").decode("utf-8", "replace") if isinstance(e.stdout, bytes) else (e.stdout or ""), True
-    wall = time.time() - started
-    stream_path.write_text(stream, encoding="utf-8")
-
-    result = {}
-    for line in stream.splitlines():
+    if cfg.get("router"):
+        result, timed_out = run_router(task, raw / f"{task['id']}__{name}")
+    else:
         try:
-            ev = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if ev.get("type") == "result":
-            result = ev
+            r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,
+                               capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               timeout=TIMEOUT_S)
+            stream, timed_out = r.stdout, False
+        except subprocess.TimeoutExpired as e:
+            stream, timed_out = (e.stdout or b"").decode("utf-8", "replace") if isinstance(e.stdout, bytes) else (e.stdout or ""), True
+        stream_path.write_text(stream, encoding="utf-8")
+        result = {}
+        for line in stream.splitlines():
+            try:
+                ev = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if ev.get("type") == "result":
+                result = ev
+    wall = time.time() - started
+
+    if result.get("api_error_status") == 429:
+        # Usage limit, not a task failure: record nothing so a rerun picks it up.
+        raise SystemExit(f"rate limited on {task['id']} / {name}: {result.get('result')}")
 
     diff = sh(["git", "diff", "--", ".", ":(exclude)*.test.ts", ":(exclude)*.test.tsx"], check=False).stdout
     (raw / f"{task['id']}__{name}.diff").write_text(diff, encoding="utf-8")
@@ -172,6 +225,7 @@ def run_one(task, name, out_dir):
         "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
         "model_usage": result.get("modelUsage"), "subagents": result.get("subagent_stats"),
         "permission_denials": len(result.get("permission_denials") or []),
+        "route": result.get("route"),
         "diff_lines": sum(1 for l in diff.splitlines() if l[:1] in "+-" and l[:3] not in ("+++", "---")),
         "test_files": files, "test_tail": test_log[-1500:],
     }
@@ -264,6 +318,7 @@ def cmd_summarize(args):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")  # summaries and test logs aren't cp1252-safe
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
     v = sub.add_parser("validate"); v.add_argument("--tasks")

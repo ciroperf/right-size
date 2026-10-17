@@ -35,6 +35,8 @@ The decision itself must stay cheap. Use what is already in context plus at most
 
 ## Output
 
+Print the block before doing anything else, even when the decision is to stay inline and even in a non-interactive run: it is the only record of the decision.
+
 The block below is the whole answer. `why` gives the two or three facts that drove the choice, so the user can disagree quickly. `apply` covers only the harness you are running in.
 
 After the block, add at most three short bullets, and only for things that would change the decision (an assumption to confirm) or that the subagent's brief must include. Don't restate the reasoning in prose. An advisor that writes 400 words spends the tokens it is supposed to save.
@@ -48,7 +50,13 @@ escalate if: tests fail → standard/medium
 
 When delegating, `apply` names the agent or model to use, e.g. `apply: right-size-scout (haiku)` or `apply: spawn with model gpt-6-luna, effort low`.
 
+When the work stays inline and the session has barely started, the cheapest move is often to switch the session itself to the tier's model and effort. You can't switch it yourself, so say it in `apply`, e.g. `apply: inline; switch now with /model sonnet and /effort medium (session is fresh)`. Effort changes are cheap at any point on models whose cache survives them (see the harness notes). A model switch re-reads the whole conversation uncached, so suggest it only while the context is still small.
+
 When sizing several tickets or subtasks at once (for example before fanning out an implementation plan), write one `right-size:` line per item with a short `why`, followed by a single shared `escalate if:` line when they share a rule.
+
+## Router mode
+
+To size a task before any session starts, `scripts/route.py` in this skill's folder makes one cheap classifier call with `tiers.yaml` and launches Claude Code or Codex on the tier's model and effort. Headless (`--print`) it also escalates on its own when the session asks for it. When the user wants that, give them the command with the script's absolute path, e.g. `python <this folder>/scripts/route.py "fix the failing date test"`.
 
 ## Escalation
 

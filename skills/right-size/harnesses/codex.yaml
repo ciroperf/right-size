@@ -38,6 +38,7 @@ how_to_apply:
   - If the right_size_* agents exist in .codex/agents/ (created by right-size-setup), spawn them; they carry model and model_reasoning_effort.
   - Otherwise, set model and reasoning effort explicitly in the spawn request; explicit spawn values win over [agents] defaults.
   - For inline work, suggest a reasoning effort change only when the remaining work is substantial.
+  - Router mode (scripts/route.py) launches codex with -m and -c model_reasoning_effort for the tier, and passes its note through developer_instructions. Written against codex-cli 0.163.0 but not yet run end to end.
 
 notes:
   - model_reasoning_effort values are model-dependent; current docs list low, medium, high, xhigh, max, ultra. gpt-6-luna has no ultra.
