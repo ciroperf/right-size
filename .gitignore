@@ -34,3 +34,9 @@ CLAUDE.local.md
 # Logs and scratch
 *.log
 tmp/
+
+# Working context for building this repo (not shipped)
+CLAUDE.md
+AGENTS.md
+evals/
+.workspace/
