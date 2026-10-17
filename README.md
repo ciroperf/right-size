@@ -178,6 +178,32 @@ escalate if: tests red after a real attempt → one tier up; wrong approach → 
 
 > The examples are real outputs from the skill's test suite (Claude Opus 5.5, October 2026), lightly trimmed.
 
+### Router mode: size the whole session
+
+Inside a session, right-size can only save by delegating: the main session keeps the model it started with. The router moves the decision in front of the session. One classifier call on the cheapest tier (about $0.002 in Claude Code) sizes the task with the same `tiers.yaml`, then the harness starts on that tier's model and effort.
+
+```bash
+python .claude/skills/right-size/scripts/route.py "fix the failing date parsing test"
+```
+
+```
+right-size: route · tier=standard · model=sonnet · effort=medium
+why: bug fix with a clear reproduction, tests present, not a risk area
+escalate if: a real attempt fails → deep (opus, effort high)
+```
+
+The script ships inside the skill folder (`skills/right-size/scripts/route.py` in this repo, or wherever your install put the skill) and needs only Python 3.
+
+| Flag | What it does |
+|---|---|
+| `--print` | Run headless. If the session ends with `RIGHT-SIZE-ESCALATE: verifiable` or `reasoning`, the router resumes it one or two tiers up, within the ceiling |
+| `--dry-run` | Show the decision and the command, don't run anything |
+| `--tier <tier>` | Skip the classifier |
+| `--harness codex` | Launch Codex instead (`-m` plus `model_reasoning_effort`). Not yet tested end to end |
+| `-- <args>` | Pass the rest to the harness CLI, e.g. `-- --permission-mode acceptEdits` |
+
+Interactive sessions get the same note, and the agent tells you which `/model` and `/effort` to switch to if it gets stuck. Whether routing beats the harness default on cost at equal results is what the [benchmark](#benchmark) is measuring next.
+
 ## How it works
 
 ```mermaid
@@ -239,9 +265,29 @@ Delegation costs more than it saves when:
 
 ## Benchmark
 
-> 🚧 **In progress.** No savings figure will appear here until it's measured.
+**v0, 2026-10-17:** 10 real [honojs/hono](https://github.com/honojs/hono) bug fixes merged after the models' training cutoff, scored by each PR's own tests. Claude Code 2.1.302 headless, Opus 5.5 main model, one run per task and configuration. Method, tasks and every run record are in [`bench/`](bench/).
 
-The plan: 15–20 real tasks across 2–3 public repos, run in Claude Code and Codex under three setups (harness default, always the top model at high effort, right-size). We'll track total tokens (input, output, cache), wall time, list-price cost, and whether each task was solved, judged by tests or a checklist. Scripts and dated results will live in [`bench/`](bench/), regressions included.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/bench-2026-10-17-v0-dark.svg">
+  <img alt="Benchmark v0: cost per solved task default $0.33, max $1.30, right-size $0.42; wall time 9, 50 and 11 minutes; tasks solved 10, 10 and 9 of 10" src="assets/bench-2026-10-17-v0-light.svg">
+</picture>
+
+| Config | Solved | Total cost | Cost per solved task | Total tokens | Total time |
+|---|---|---|---|---|---|
+| `default` (Opus 5.5, default effort) | 10/10 | $3.31 | $0.33 | 4.40M | 9 min |
+| `max` (Opus 5.5, effort `max`) | 10/10 | $13.01 | $1.30 | 15.80M | 50 min |
+| `right-size` (skill + subagents) | 9/10 | $3.77 | $0.42 | 5.32M | 11 min |
+
+What it shows, regressions included:
+
+- **Maximum effort is the big waste.** `max` cost 3.9× as much and took 5.3× as long as the default, and solved nothing extra.
+- **right-size did not beat the default.** It cost 14% more: reading the skill and sizing the task is overhead, and it never delegated, which was the right call. Every task was a fix inside one module, with the files already in context, so a cold-start subagent would have cost more.
+- **One regression:** `trie-suffix-wildcard` failed under right-size, with 298 of 299 tests passing. It ran inline on the same model and effort as `default`, so this is most likely run-to-run variance. A single run per configuration can't prove it.
+- **The lesson:** inside a session, advice alone can't save on small fixes, because the session keeps its model. That's why [router mode](#router-mode-size-the-whole-session) exists.
+
+Next, benchmark v1: the `router` configuration, tasks where delegation can pay off (several independent tickets, large reading jobs), and three runs per configuration to measure variance.
+
+One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pass and failed in all three configurations. It was corrected and all three reran; the note is in [`bench/tasks/hono.yaml`](bench/tasks/hono.yaml).
 
 ## FAQ
 
@@ -271,7 +317,8 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 - [x] Advisor skill with tiers, risk floor and escalation
 - [x] Harness maps for Claude Code, Codex and Antigravity
 - [x] `right-size-setup`: generate native subagents (`scout`, `mechanical`, `standard`, `deep`) for Claude Code and Codex
-- [ ] Benchmark v0: one repo, one harness
+- [x] Router mode: pick the session's model and effort before it starts (`scripts/route.py`)
+- [x] Benchmark v0: one repo, one harness ([results](#benchmark))
 - [ ] Cursor, Copilot and Gemini CLI maps with smoke tests
 - [ ] Benchmark v1: Claude Code + Codex, published results
 

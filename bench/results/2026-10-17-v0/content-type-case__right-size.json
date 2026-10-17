@@ -1,0 +1,61 @@
+{
+  "task": "content-type-case",
+  "pr": 5067,
+  "config": "right-size",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 93.5,
+  "is_error": false,
+  "num_turns": 22,
+  "duration_ms": 92274,
+  "cost_usd": 0.43763300000000005,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 4531,
+      "cacheReadInputTokens": 693625,
+      "cacheCreationInputTokens": 26021,
+      "webSearchRequests": 0,
+      "costUSD": 0.43763300000000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 292,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "diff_lines": 10,
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts"
+  ],
+  "test_tail": "er |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    7.09 |     5.63 |   18.18 |    7.93 |                   \n  node.ts          |    6.15 |     5.79 |    12.5 |    6.83 | ...2,37-39,45-232 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |    43.5 |    38.03 |    42.1 |   44.24 |                   \n  body.ts          |   97.67 |    97.14 |     100 |   97.67 | 132               \n  buffer.ts        |   95.91 |    91.17 |     100 |   95.83 | 56,92             \n  cookie.ts        |   31.62 |    22.58 |   22.22 |   32.17 | ...60-261,270-273 \n  crypto.ts        |    62.5 |       70 |      60 |    62.5 | ...28-30,37,40,57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   35.37 |    27.19 |   26.31 |   36.36 | ...76,281,285,295 \n src/validator     |     100 |    96.66 |     100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 125               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.95% ( 662/1410 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.59% ( 642/1349 )\n================================================================================\n"
+}

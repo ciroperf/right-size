@@ -87,3 +87,44 @@ tasks:
       sub.post('/:slug'), app.route('/api', sub), then app.get('/assets*', ...).
       `/assets/*` (slash-star) is unaffected. A suffix wildcard should match
       regardless of what else is registered; the prefix before `*` is literal.
+
+  # Larger tasks (added for v0.1): multi-file or long-reasoning changes, where
+  # delegating to a cheaper model has room to pay off.
+
+  - id: etag-stream-digest
+    pr: 5205
+    solution: 26de73133b8552f56ba72e025ecd82b08900d796
+    expected_tier: standard
+    prompt: |
+      The etag middleware produces different ETags for the same streamed body
+      depending on how the ReadableStream is chunked. A response streaming 1,000,000
+      zero bytes in one chunk gets a different ETag from the same 1,000,000 bytes
+      sent as chunks of 1, 32,768 and 967,231 bytes. The ETag should depend only on
+      the bytes of the body, not on chunk boundaries.
+
+  - id: content-type-case
+    pr: 5067
+    solution: b20d4225c9aa9e615717ca74e437852cc9fd5b94
+    expected_tier: standard
+    prompt: |
+      `parseBody()` and `validator()` match Content-Type media types case-sensitively.
+      A request with `Content-Type: Application/JSON` or
+      `Application/X-WWW-Form-Urlencoded` is parsed fine by the platform Request,
+      but Hono's checks skip it and pass an empty object downstream. Media types are
+      case-insensitive (RFC 9110), so these requests should be parsed and validated
+      like their lower-case equivalents.
+
+  - id: accepts-wildcard
+    pr: 5255
+    solution: 28a9c128912de19f3fb28b00ae289c9b93f6f392
+    expected_tier: standard
+    # v0 prompt said `*/*` should match supported types, which the PR's tests reject
+    # (it falls through to the default). Corrected 2026-10-17; all three configs rerun.
+    prompt: |
+      The `accepts()` helper's default matcher ignores subtype wildcards sent by
+      clients. With supports ['application/json', 'text/html'], `Accept: application/*`
+      falls back to the default instead of returning application/json. A subtype
+      wildcard (`type/*`) should match a supported type of that type. At the same
+      quality value an exact match takes precedence over a wildcard match. The global
+      wildcards `*/*` and `*` keep their current behavior: they fall through to the
+      configured default rather than picking a supported value.

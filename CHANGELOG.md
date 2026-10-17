@@ -7,6 +7,12 @@ All notable changes to this project are documented here.
 - README: per-project install for every harness (Claude Code `--scope project|local`, Codex and others via `npx skills` into the repo).
 - Claude Code map: the `haiku` alias now resolves to Claude Haiku 5.5, which takes an effort level; scout and mechanical run at `low`.
 - Benchmark v0 harness: runner, task set from post-cutoff Hono PRs, method in `bench/README.md`.
+- Router mode: `skills/right-size/scripts/route.py` sizes a task with one classifier call on the scout model, launches Claude Code or Codex on the tier's model and effort, and in headless mode resumes the session one or two tiers up when it asks to escalate. Standard library only. The Codex path isn't tested end to end yet.
+- `right-size`: on a fresh session, inline work suggests switching the session to the tier's model and effort. Later on it suggests effort changes only, which keep the prompt cache on the 5.5 models.
+- Claude Code map: a skill's `model` frontmatter didn't switch the main session's model in Claude Code 2.1.302, so right-size doesn't rely on it.
+- Bench: `router` configuration (classifier cost included in the totals).
+- Benchmark v0 results: 10 Hono tasks. `default` solved 10/10 for $3.31, `max` 10/10 for $13.01, `right-size` 9/10 for $3.77, with no delegation. `accepts-wildcard` prompt corrected and rerun.
+- `right-size`: always print the decision block first. In 8 of 10 headless bench runs the decision stayed in the model's thinking.
 
 ## 0.2.0 — 2026-10-17
 

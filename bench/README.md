@@ -18,6 +18,9 @@ Does right-size save tokens without losing solved tasks? This folder holds the t
 | `default` | Opus 5.5 | Claude Code default | no |
 | `max` | Opus 5.5 | `max` | no |
 | `right-size` | Opus 5.5 | Claude Code default | skill + generated subagents, plus a one-line instruction to size the task first |
+| `router` | picked per task | picked per task | [`route.py`](../skills/right-size/scripts/route.py) sizes the task first and starts the session on the tier's model and effort; headless escalation on request. Added after v0, not in the v0 results |
+
+Claude Code's default effort on Opus 5.5 is `medium`.
 
 Fable 5.1, the top model, needs extra usage credits on the subscription used for these runs, so `max` uses Opus at the highest effort instead.
 
@@ -32,6 +35,10 @@ python bench/run.py summarize bench/results/<date>-v0
 ```
 
 Raw transcripts and diffs go to `bench/raw/` (not committed). Per-run records and `summary.md` go to `bench/results/`.
+
+## Results
+
+- [`results/2026-10-17-v0/`](results/2026-10-17-v0/): 10 tasks × `default`, `max`, `right-size`. See [`summary.md`](results/2026-10-17-v0/summary.md) and the [README](../README.md#benchmark) for the reading.
 
 ## Limits
 

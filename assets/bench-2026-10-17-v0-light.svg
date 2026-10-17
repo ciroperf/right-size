@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="230" viewBox="0 0 1080 230" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" role="img" aria-label="Benchmark: cost per solved task, wall time and tasks solved for each configuration">
+<rect width="1080" height="230" rx="12" fill="#fcfcfb"/>
+<text x="24" y="40" font-size="15" font-weight="600" fill="#0b0b0b">Cost per solved task (list price)</text>
+<text x="24" y="87" font-size="13" fill="#52514e">default</text>
+<rect x="116" y="70" width="50.3" height="26" rx="4" fill="#2a78d6"/>
+<text x="174.3" y="87" font-size="13" font-weight="600" fill="#0b0b0b">$0.33</text>
+<text x="24" y="127" font-size="13" fill="#52514e">max</text>
+<rect x="116" y="110" width="198.0" height="26" rx="4" fill="#eb6834"/>
+<text x="322.0" y="127" font-size="13" font-weight="600" fill="#0b0b0b">$1.30</text>
+<text x="24" y="167" font-size="13" fill="#52514e">right-size</text>
+<rect x="116" y="150" width="63.7" height="26" rx="4" fill="#1baf7a"/>
+<text x="187.7" y="167" font-size="13" font-weight="600" fill="#0b0b0b">$0.42</text>
+<line x1="116" y1="64" x2="116" y2="182" stroke="#e4e3df" stroke-width="1"/>
+<text x="410" y="40" font-size="15" font-weight="600" fill="#0b0b0b">Total wall time</text>
+<text x="410" y="87" font-size="13" fill="#52514e">default</text>
+<rect x="502" y="70" width="37.5" height="26" rx="4" fill="#2a78d6"/>
+<text x="547.5" y="87" font-size="13" font-weight="600" fill="#0b0b0b">9 min</text>
+<text x="410" y="127" font-size="13" fill="#52514e">max</text>
+<rect x="502" y="110" width="198.0" height="26" rx="4" fill="#eb6834"/>
+<text x="708.0" y="127" font-size="13" font-weight="600" fill="#0b0b0b">50 min</text>
+<text x="410" y="167" font-size="13" fill="#52514e">right-size</text>
+<rect x="502" y="150" width="42.1" height="26" rx="4" fill="#1baf7a"/>
+<text x="552.1" y="167" font-size="13" font-weight="600" fill="#0b0b0b">11 min</text>
+<line x1="502" y1="64" x2="502" y2="182" stroke="#e4e3df" stroke-width="1"/>
+<text x="796" y="40" font-size="15" font-weight="600" fill="#0b0b0b">Tasks solved (of 10)</text>
+<text x="796" y="87" font-size="13" fill="#52514e">default</text>
+<rect x="888" y="70" width="98.0" height="26" rx="4" fill="#2a78d6"/>
+<text x="994.0" y="87" font-size="13" font-weight="600" fill="#0b0b0b">10</text>
+<text x="796" y="127" font-size="13" fill="#52514e">max</text>
+<rect x="888" y="110" width="98.0" height="26" rx="4" fill="#eb6834"/>
+<text x="994.0" y="127" font-size="13" font-weight="600" fill="#0b0b0b">10</text>
+<text x="796" y="167" font-size="13" fill="#52514e">right-size</text>
+<rect x="888" y="150" width="88.2" height="26" rx="4" fill="#1baf7a"/>
+<text x="984.2" y="167" font-size="13" font-weight="600" fill="#0b0b0b">9</text>
+<line x1="888" y1="64" x2="888" y2="182" stroke="#e4e3df" stroke-width="1"/>
+<text x="24" y="214" font-size="12" fill="#52514e">honojs/hono, real PRs merged after the models' training cutoff · Claude Code 2.1.302 · Opus 5.5 · one run per task and configuration</text>
+</svg>

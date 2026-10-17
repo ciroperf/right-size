@@ -1,0 +1,23 @@
+{
+  "default": {
+    "runs": 10,
+    "solved": 10,
+    "cost_usd": 3.307,
+    "tokens": 4400274,
+    "wall_s": 567.4
+  },
+  "max": {
+    "runs": 10,
+    "solved": 10,
+    "cost_usd": 13.011,
+    "tokens": 15804825,
+    "wall_s": 2996.9
+  },
+  "right-size": {
+    "runs": 10,
+    "solved": 9,
+    "cost_usd": 3.7666,
+    "tokens": 5324295,
+    "wall_s": 637.9
+  }
+}
