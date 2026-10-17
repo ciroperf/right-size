@@ -1,0 +1,17 @@
+{
+  "name": "ciroperf",
+  "owner": {
+    "name": "Ciro Perfetto",
+    "url": "https://github.com/ciroperf"
+  },
+  "description": "Agent skills by Ciro Perfetto.",
+  "plugins": [
+    {
+      "name": "right-size",
+      "source": "./",
+      "description": "Decide whether a coding task deserves a subagent, which tier, and which reasoning effort.",
+      "category": "engineering",
+      "keywords": ["agent-skills", "subagents", "reasoning-effort", "model-routing", "token-cost"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="right-size: give every coding task the compute it deserves">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0f17"/><stop offset="1" stop-color="#111a2b"/></linearGradient>
+    <linearGradient id="g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="24" fill="url(#bg)"/>
+  <text x="80" y="150" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="76" font-weight="700" fill="#e6edf3">right<tspan fill="#5eead4">-</tspan>size</text>
+  <text x="82" y="200" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" fill="#9aa7b8">Give every coding task the compute it deserves.</text>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="16">
+    <rect x="80" y="236" width="560" height="44" rx="10" fill="#16233a"/>
+    <text x="100" y="264" fill="#9aa7b8">right-size: <tspan fill="#e6edf3">delegate=no</tspan> &#183; <tspan fill="#5eead4">tier=mechanical</tspan> &#183; <tspan fill="#a78bfa">effort=low</tspan></text>
+  </g>
+  <rect x="760" y="250" width="72" height="50" rx="10" fill="#3a4a63"/><text x="796.0" y="326" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" fill="#9aa7b8">inline</text><rect x="854" y="208" width="72" height="92" rx="10" fill="#3a4a63"/><text x="890.0" y="326" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" fill="#9aa7b8">scout</text><rect x="948" y="166" width="72" height="134" rx="10" fill="url(#g)"/><text x="984.0" y="326" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" fill="#5eead4">mechanical</text><rect x="1042" y="124" width="72" height="176" rx="10" fill="#3a4a63"/><text x="1078.0" y="326" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" fill="#9aa7b8">standard</text><rect x="1136" y="82" width="72" height="218" rx="10" fill="#3a4a63"/><text x="1172.0" y="326" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" fill="#9aa7b8">deep</text>
+  <circle cx="984.0" cy="148" r="6" fill="#a78bfa"/>
+</svg>

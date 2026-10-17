@@ -28,6 +28,7 @@ venv/
 
 # Agent harness local/personal config (shared config like .claude/agents/ stays tracked)
 .claude/settings.local.json
+.claude/launch.json
 CLAUDE.local.md
 .codex/config.local.toml
 

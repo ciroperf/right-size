@@ -1,0 +1,33 @@
+# Tier -> Antigravity configuration.
+# Verified against official docs on 2026-10-17:
+#   https://antigravity.google/docs/subagents
+#   https://antigravity.google/docs/models
+# Subagents accept a model tier (inherit, flash, pro) but no reasoning level,
+# so effort is text-only advice for the model picker.
+
+harness: antigravity
+verified: 2026-10-17
+
+tiers:
+  inline:
+    apply: Do the work in the main session.
+    effort: session
+  scout:
+    model: flash
+    effort: Low
+    tools: read-only
+  mechanical:
+    model: flash
+    effort: Low
+  standard:
+    model: flash
+    effort: High
+  deep:
+    model: pro
+    effort: High
+
+beyond_deep: null
+
+how_to_apply:
+  - Subagents can be given model flash or pro in .agents/agents/<name>.md; reasoning level is not configurable there.
+  - For inline work, tell the user which model and reasoning level to select in the picker.

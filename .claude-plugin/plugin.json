@@ -1,0 +1,22 @@
+{
+  "name": "right-size",
+  "version": "0.1.0",
+  "description": "Decide whether a coding task deserves a subagent, which tier, and which reasoning effort — then apply it in your harness.",
+  "author": {
+    "name": "Ciro Perfetto",
+    "url": "https://github.com/ciroperf"
+  },
+  "homepage": "https://github.com/ciroperf/right-size",
+  "repository": "https://github.com/ciroperf/right-size",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "subagents",
+    "reasoning-effort",
+    "model-routing",
+    "token-cost"
+  ],
+  "skills": [
+    "./skills/right-size"
+  ]
+}

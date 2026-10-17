@@ -1,0 +1,45 @@
+# Tier -> Codex configuration.
+# Verified against official docs on 2026-10-17:
+#   https://learn.chatgpt.com/docs/agent-configuration/subagents
+#   https://learn.chatgpt.com/docs/config-file/config-reference
+#   https://learn.chatgpt.com/docs/models
+# Model choices are initial and unbenchmarked. Availability depends on plan and sign-in method.
+
+harness: codex
+verified: 2026-10-17
+
+tiers:
+  inline:
+    apply: Do the work in the main session.
+    effort: session
+  scout:
+    model: gpt-6-luna
+    effort: low
+    agent: right_size_scout
+    tools: read-only
+  mechanical:
+    model: gpt-6-luna
+    effort: low
+    agent: right_size_mechanical
+  standard:
+    model: gpt-6.1-sol
+    effort: medium
+    agent: right_size_standard
+  deep:
+    model: gpt-6-astra
+    effort: high
+    agent: right_size_deep
+
+beyond_deep:
+  model: gpt-6-astra
+  effort: xhigh
+
+how_to_apply:
+  - If the right_size_* agents exist in .codex/agents/ (created by right-size-setup), spawn them; they carry model and model_reasoning_effort.
+  - Otherwise, set model and reasoning effort explicitly in the spawn request; explicit spawn values win over [agents] defaults.
+  - For inline work, suggest a reasoning effort change only when the remaining work is substantial.
+
+notes:
+  - model_reasoning_effort values are model-dependent; current docs list low, medium, high, xhigh, max, ultra. gpt-6-luna has no ultra.
+  - gpt-6.1-sol is still rolling out; if unavailable, use gpt-6-astra at medium for standard.
+  - An agent file that sets only model keeps the previously resolved effort, so always set both.

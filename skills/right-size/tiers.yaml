@@ -1,0 +1,118 @@
+# Abstract tiers used by the right-size advisor.
+# Model names never appear here: they live in harnesses/<harness>.yaml.
+# Numeric thresholds are initial heuristics, not measured values. The benchmark
+# in bench/ exists to calibrate them; update this file when it does.
+
+version: 1
+
+tiers:
+  inline:
+    rank: 0
+    delegate: false
+    summary: The main agent does the work itself, on the session model.
+    use_when:
+      - The files involved are already in context.
+      - The change is small (roughly 1-2 files, a short diff).
+      - The work needs back-and-forth with the user.
+      - Writing the brief for a subagent would take about as long as doing the work.
+    examples:
+      - Fix a typo or rename a local variable in an open file.
+      - Answer a quick question about code already read.
+    default_effort: session  # keep the session's effort; see harness notes on cache cost
+
+  scout:
+    rank: 1
+    delegate: true
+    writes: false
+    summary: Read and search only, return a short summary.
+    use_when:
+      - The answer requires reading many files but the main agent only needs the conclusion.
+    examples:
+      - Find where a function is defined and who calls it.
+      - Map the modules involved in a feature before planning it.
+    default_effort: low
+
+  mechanical:
+    rank: 2
+    delegate: true
+    writes: true
+    summary: Predictable transformations where the "how" is fully specified.
+    use_when:
+      - The change follows a pattern that can be stated in one or two sentences.
+      - Success is easy to verify (it compiles, tests pass, grep finds no old name).
+    examples:
+      - Rename a symbol across the codebase.
+      - Update imports after a move, generate boilerplate, apply formatting.
+    default_effort: low
+
+  standard:
+    rank: 3
+    delegate: true
+    writes: true
+    summary: Ordinary features and fixes that need some judgment.
+    use_when:
+      - The task needs design decisions inside an established pattern.
+    examples:
+      - Add an endpoint, a component, or tests for existing code.
+      - Fix a bug with a clear reproduction.
+    default_effort: medium
+
+  deep:
+    rank: 4
+    delegate: true
+    writes: true
+    summary: High risk or long chains of reasoning.
+    use_when:
+      - Mistakes are expensive or hard to detect.
+      - The task needs a plan across many interacting parts.
+    examples:
+      - Architecture changes, security review, auth, data migrations, payments.
+      - Concurrency bugs, performance regressions with unclear causes.
+    default_effort: high
+
+# Any task that changes code in these areas starts at deep, regardless of size.
+# Read-only questions about them stay at scout: reading can't break anything.
+risk_floor:
+  tier: deep
+  areas:
+    - authentication and authorization
+    - security-sensitive code (crypto, secrets, input sanitization)
+    - persistent data (schema changes, migrations, deletes)
+    - payments and billing
+    - public API contracts other people depend on
+    - concurrency and distributed state
+
+delegation:
+  default: inline
+  # Delegating has a fixed cost: the subagent starts with its own system prompt
+  # and must re-read whatever context it needs. Delegate only when that cost
+  # buys something.
+  delegate_when:
+    - Reading would pull a lot into the main context (roughly >10 files or >2k lines) and only a summary is needed.
+    - The work splits into independent units that can run in parallel.
+    - A self-contained chunk is large compared to the brief needed to hand it off.
+  stay_inline_when:
+    - The relevant files are already in the main context.
+    - The result is needed immediately for the next reasoning step.
+    - The user is iterating interactively on the change.
+
+adjustments:
+  # No tests, typecheck, or other automatic check means failures are found
+  # late (or by the user). Start one tier higher, except for read-only work.
+  no_safety_net: +1 tier, not applied to scout
+  # Reasoning-heavy but small tasks need thinking, not a bigger model.
+  reasoning_heavy: raise effort one step before raising the tier
+  # Read-mostly tasks stay at scout even when the codebase is large.
+  read_mostly: scout
+
+escalation:
+  # Applied after a failed attempt, capped by max_tier.
+  syntax_or_tooling_failure: retry once at the same tier with the error in the brief
+  verifiable_failure: +1 tier   # tests red, build broken after a real attempt
+  reasoning_failure: +2 tiers   # wrong approach, misread spec, plausible but wrong output
+
+ceiling:
+  # A project can cap the tier by setting max_tier in .right-size.yaml at the
+  # repo root. Going above the cap, or past deep, requires asking the user.
+  default_max_tier: deep
+  config_file: .right-size.yaml

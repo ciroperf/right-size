@@ -1,0 +1,3 @@
+interface:
+  display_name: "Right Size"
+  short_description: "Decide whether to delegate, at which tier, and with which reasoning effort."
