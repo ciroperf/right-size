@@ -1,0 +1,277 @@
+"""right-size benchmark runner.
+
+Usage:
+  python bench/run.py validate [--tasks id,id]
+  python bench/run.py run --out bench/results/<name> [--configs a,b] [--tasks id,id]
+  python bench/run.py summarize bench/results/<name>
+
+Each run checks out the commit before a real merged PR, gives the agent the
+task prompt in headless Claude Code, then copies the PR's own test files in and
+runs them. Token usage and list-price cost come from Claude Code's JSON result.
+"""
+
+import argparse
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+BENCH = ROOT / "bench"
+WORK = BENCH / "work" / "hono"
+RAW = BENCH / "raw"
+BUN = ["npx", "-y", "bun@1.2.20"]
+VITEST = ["npx", "vitest", "--run"]
+TIMEOUT_S = 40 * 60
+
+# The three setups compared. All run on the same main model; they differ in
+# effort and in whether right-size is installed.
+CONFIGS = {
+    "default": {"model": "opus", "effort": None, "right_size": False},
+    "max": {"model": "opus", "effort": "max", "right_size": False},
+    "right-size": {"model": "opus", "effort": None, "right_size": True},
+}
+
+RIGHT_SIZE_NUDGE = "Before starting, size the task with the right-size skill and follow its decision."
+
+ALLOWED_TOOLS = [
+    "Read", "Edit", "Write", "Glob", "Grep", "Agent", "Skill", "TodoWrite",
+    "Bash(npx vitest *)",
+    "Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
+]
+
+PROMPT_SUFFIX = (
+    "\n\nRun the relevant tests with: npx vitest --run <test file paths>\n"
+    "Do not commit."
+)
+
+
+def sh(cmd, cwd=WORK, check=True, timeout=None, input=None):
+    if isinstance(cmd, list):
+        cmd = [shutil.which(cmd[0]) or cmd[0], *cmd[1:]]  # npx and claude are .cmd shims on Windows
+    return subprocess.run(
+        cmd, cwd=cwd, check=check, timeout=timeout, input=input,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        shell=isinstance(cmd, str),
+    )
+
+
+def load_tasks(only=None):
+    spec = yaml.safe_load((BENCH / "tasks" / "hono.yaml").read_text(encoding="utf-8"))
+    tasks = spec["tasks"]
+    if only:
+        wanted = set(only.split(","))
+        tasks = [t for t in tasks if t["id"] in wanted]
+    return tasks
+
+
+def test_files(task):
+    out = sh(["git", "diff", "--name-only", f"{task['solution']}^", task["solution"]]).stdout
+    return [f for f in out.split() if f.startswith("src/") and (f.endswith(".test.ts") or f.endswith(".test.tsx"))]
+
+
+_installed_lock = None
+
+
+def checkout(rev):
+    """Clean checkout of rev, reinstalling dependencies only if the lockfile changed."""
+    global _installed_lock
+    sh(["git", "checkout", "-f", "-q", rev])
+    sh(["git", "clean", "-fdq"])  # keeps ignored node_modules
+    # Every task predates Hono's move to pnpm, so all bases install with bun.
+    lock = hashlib.md5((WORK / "bun.lock").read_bytes()).hexdigest()
+    if lock != _installed_lock:
+        sh(BUN + ["install", "--frozen-lockfile"], timeout=900)
+        _installed_lock = lock
+
+
+def run_tests(files):
+    r = sh(VITEST + files, check=False, timeout=900)
+    log = (r.stdout + r.stderr)[-4000:]
+    # Results are published: keep local paths out of them.
+    for p in (str(WORK), str(WORK).replace("\\", "/"), str(Path.home()), str(Path.home()).replace("\\", "/")):
+        log = log.replace(p, "<local>")
+    return r.returncode == 0, log
+
+
+def install_right_size():
+    """Install the right-size skill and the subagents right-size-setup would generate."""
+    skills = WORK / ".claude" / "skills"
+    agents = WORK / ".claude" / "agents"
+    skills.mkdir(parents=True, exist_ok=True)
+    agents.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(ROOT / "skills" / "right-size", skills / "right-size", dirs_exist_ok=True)
+    tiers = yaml.safe_load((ROOT / "skills/right-size/harnesses/claude-code.yaml").read_text(encoding="utf-8"))["tiers"]
+    for tier in ("scout", "mechanical", "standard", "deep"):
+        tpl = (ROOT / f"skills/right-size-setup/templates/claude-code/right-size-{tier}.md").read_text(encoding="utf-8")
+        effort = tiers[tier].get("effort")
+        out = (tpl.replace("{{model}}", tiers[tier]["model"])
+                  .replace("{{effort_line}}", f"effort: {effort}\n" if effort else ""))
+        (agents / f"right-size-{tier}.md").write_text(out, encoding="utf-8")
+
+
+def claude_cmd(cfg):
+    cmd = [shutil.which("claude") or "claude", "-p", "--output-format", "stream-json", "--verbose",
+           "--model", cfg["model"], "--setting-sources", "project", "--strict-mcp-config",
+           "--no-session-persistence", "--permission-mode", "dontAsk",
+           "--allowedTools", *ALLOWED_TOOLS]
+    if cfg["effort"]:
+        cmd += ["--effort", cfg["effort"]]
+    if cfg["right_size"]:
+        cmd += ["--append-system-prompt", RIGHT_SIZE_NUDGE]
+    return cmd
+
+
+def run_one(task, name, out_dir):
+    cfg = CONFIGS[name]
+    files = test_files(task)
+    checkout(f"{task['solution']}^")
+    if cfg["right_size"]:
+        install_right_size()
+
+    raw = RAW / out_dir.name
+    raw.mkdir(parents=True, exist_ok=True)
+    stream_path = raw / f"{task['id']}__{name}.jsonl"
+    started = time.time()
+    try:
+        r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=TIMEOUT_S)
+        stream, timed_out = r.stdout, False
+    except subprocess.TimeoutExpired as e:
+        stream, timed_out = (e.stdout or b"").decode("utf-8", "replace") if isinstance(e.stdout, bytes) else (e.stdout or ""), True
+    wall = time.time() - started
+    stream_path.write_text(stream, encoding="utf-8")
+
+    result = {}
+    for line in stream.splitlines():
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if ev.get("type") == "result":
+            result = ev
+
+    diff = sh(["git", "diff", "--", ".", ":(exclude)*.test.ts", ":(exclude)*.test.tsx"], check=False).stdout
+    (raw / f"{task['id']}__{name}.diff").write_text(diff, encoding="utf-8")
+
+    # Score with the PR's own tests, overwriting whatever the agent did to them.
+    sh(["git", "checkout", task["solution"], "--", *files])
+    solved, test_log = run_tests(files)
+
+    record = {
+        "task": task["id"], "pr": task["pr"], "config": name, "expected_tier": task["expected_tier"],
+        "solved": solved and not timed_out, "timed_out": timed_out, "wall_s": round(wall, 1),
+        "is_error": result.get("is_error"), "num_turns": result.get("num_turns"),
+        "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
+        "model_usage": result.get("modelUsage"), "subagents": result.get("subagent_stats"),
+        "permission_denials": len(result.get("permission_denials") or []),
+        "diff_lines": sum(1 for l in diff.splitlines() if l[:1] in "+-" and l[:3] not in ("+++", "---")),
+        "test_files": files, "test_tail": test_log[-1500:],
+    }
+    (out_dir / f"{task['id']}__{name}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+    return record
+
+
+def cmd_validate(args):
+    ok = True
+    for t in load_tasks(args.tasks):
+        files = test_files(t)
+        checkout(f"{t['solution']}^")
+        sh(["git", "checkout", t["solution"], "--", *files])
+        before, _ = run_tests(files)
+        checkout(t["solution"])
+        after, log = run_tests(files)
+        valid = (not before) and after
+        ok &= valid
+        print(f"{t['id']:<22} tests={len(files)} fail-before={not before} pass-after={after} {'OK' if valid else 'INVALID'}")
+        if not after:
+            print(log[-800:])
+    sys.exit(0 if ok else 1)
+
+
+def cmd_run(args):
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    configs = args.configs.split(",") if args.configs else list(CONFIGS)
+    meta = {"started": datetime.now(timezone.utc).isoformat(), "configs": {c: CONFIGS[c] for c in configs},
+            "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE,
+            "claude_version": sh(["claude", "--version"], check=False).stdout.strip()}
+    (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    for t in load_tasks(args.tasks):
+        for name in configs:  # interleave configs per task to spread time-of-day effects
+            if (out / f"{t['id']}__{name}.json").exists() and not args.force:
+                print(f"skip {t['id']} {name} (done)")
+                continue
+            rec = run_one(t, name, out)
+            print(f"{t['id']:<22} {name:<11} solved={rec['solved']} cost=${rec['cost_usd']} wall={rec['wall_s']}s "
+                  f"subagents={(rec['subagents'] or {}).get('spawned')}", flush=True)
+    checkout("origin/main")
+
+
+def tokens(mu):
+    t = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
+    for m in (mu or {}).values():
+        t["input"] += m.get("inputTokens", 0)
+        t["output"] += m.get("outputTokens", 0)
+        t["cache_read"] += m.get("cacheReadInputTokens", 0)
+        t["cache_write"] += m.get("cacheCreationInputTokens", 0)
+    t["total"] = sum(t.values())
+    return t
+
+
+def cmd_summarize(args):
+    d = Path(args.dir)
+    recs = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(d.glob("*__*.json"))]
+    configs = list(dict.fromkeys(r["config"] for r in recs))
+    lines = ["| Task | Expected tier | " + " | ".join(configs) + " |",
+             "|---|---|" + "---|" * len(configs)]
+    for task in dict.fromkeys(r["task"] for r in recs):
+        cells = []
+        for c in configs:
+            r = next((x for x in recs if x["task"] == task and x["config"] == c), None)
+            if not r:
+                cells.append("–")
+                continue
+            tk = tokens(r["model_usage"])
+            models = "+".join(sorted(m.split("-")[1] for m in (r["model_usage"] or {})))
+            cells.append(f"{'✅' if r['solved'] else '❌'} ${r['cost_usd'] or 0:.2f} · {tk['total']/1000:.0f}k tok · "
+                         f"{r['wall_s']:.0f}s · {models}")
+        exp = next(x["expected_tier"] for x in recs if x["task"] == task)
+        lines.append(f"| {task} | {exp} | " + " | ".join(cells) + " |")
+    totals = ["", "| Config | Solved | Total cost | Cost per solved task | Total tokens | Total time |", "|---|---|---|---|---|---|"]
+    agg = {}
+    for c in configs:
+        rs = [r for r in recs if r["config"] == c]
+        solved = sum(r["solved"] for r in rs)
+        cost = sum(r["cost_usd"] or 0 for r in rs)
+        tok = sum(tokens(r["model_usage"])["total"] for r in rs)
+        wall = sum(r["wall_s"] for r in rs)
+        agg[c] = {"runs": len(rs), "solved": solved, "cost_usd": round(cost, 4), "tokens": tok, "wall_s": round(wall, 1)}
+        cps = f"${cost / solved:.2f}" if solved else "–"
+        totals.append(f"| {c} | {solved}/{len(rs)} | ${cost:.2f} | {cps} | {tok/1e6:.2f}M | {wall/60:.0f} min |")
+    md = "\n".join(lines + totals) + "\n"
+    (d / "summary.md").write_text(md, encoding="utf-8")
+    (d / "summary.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
+    print(md)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    sub = p.add_subparsers(dest="cmd", required=True)
+    v = sub.add_parser("validate"); v.add_argument("--tasks")
+    r = sub.add_parser("run"); r.add_argument("--out", required=True); r.add_argument("--configs")
+    r.add_argument("--tasks"); r.add_argument("--force", action="store_true")
+    s = sub.add_parser("summarize"); s.add_argument("dir")
+    args = p.parse_args()
+    {"validate": cmd_validate, "run": cmd_run, "summarize": cmd_summarize}[args.cmd](args)
+
+
+if __name__ == "__main__":
+    main()

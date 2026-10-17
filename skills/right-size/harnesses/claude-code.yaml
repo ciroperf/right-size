@@ -5,7 +5,7 @@
 # Model choices are initial and unbenchmarked.
 
 harness: claude-code
-verified: 2026-10-17
+verified: 2026-10-17   # aliases checked live with `claude -p --output-format json`: haiku -> claude-haiku-5-5
 
 tiers:
   inline:
@@ -13,12 +13,12 @@ tiers:
     effort: session
   scout:
     model: haiku
-    effort: null          # Haiku 4.5 does not support effort
+    effort: low
     agent: right-size-scout
     tools: read-only
   mechanical:
     model: haiku
-    effort: null
+    effort: low
     agent: right-size-mechanical
   standard:
     model: sonnet
@@ -40,7 +40,8 @@ how_to_apply:
   - For inline work, suggest /effort only when the remaining work is substantial. Changing effort or model mid-conversation can invalidate the prompt cache, which may cost more than it saves.
 
 notes:
-  - Haiku 4.5 has a 200K context window. If a scout or mechanical task must read more than ~150K tokens, use sonnet instead.
+  - The haiku alias resolves to Claude Haiku 5.5 (1M context, accepts effort) as of 2026-10-17. On older Claude Code versions it may still be Haiku 4.5, which has a 200K window and no effort setting.
+  - Fable needs usage credits on subscription plans; if beyond_deep fails with a credits error, stay on opus at max effort.
   - Family aliases (opus, sonnet) resolve to the main session's exact model when it is in the same family.
   - CLAUDE_CODE_SUBAGENT_MODEL ranks below frontmatter since v2.1.251; CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1 overrides it. If either is set, tell the user the tier may not be honored.
   - The built-in Explore agent runs on the main model (on opus in Fable sessions), so a scout via Explore without a model parameter is not cheap.

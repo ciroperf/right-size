@@ -1,0 +1,89 @@
+# Benchmark v0 tasks: real honojs/hono PRs merged after 2026-07-01, i.e. after
+# the training cutoff of the models under test, so the fixes can't be recalled.
+#
+# For each task the runner checks out `solution^` (the commit before the
+# squash-merged PR), gives the agent `prompt`, then copies the PR's test files
+# from `solution` and runs them. The task counts as solved when they pass.
+#
+# Prompts describe the observable bug, as an issue would. They never point to
+# the fix itself. `expected_tier` is the author's label, used only for analysis;
+# the agent never sees it.
+
+repo: https://github.com/honojs/hono
+install_cmd: npx -y bun@1.2.20 install --frozen-lockfile   # every task predates Hono's move to pnpm
+test_cmd: npx vitest --run {test_files}
+
+tasks:
+  - id: compress-206
+    pr: 5020
+    solution: 67efb27f7bcba7a99cae7779b7eb71c3fcada8d8
+    expected_tier: mechanical
+    prompt: |
+      The compress middleware gzips 206 Partial Content responses. The
+      Content-Range header still describes the uncompressed byte range, and the
+      original Content-Length is dropped, so clients that stitch ranges together
+      get corrupted data. A 206 response should be passed through uncompressed.
+
+  - id: csrf-options
+    pr: 5250
+    solution: eea9735fe308e6549509c312d80e13cd9e18898b
+    expected_tier: deep
+    prompt: |
+      The csrf middleware rejects OPTIONS requests (for example CORS preflight)
+      when the Origin doesn't match. RFC 9110 defines OPTIONS as a safe method,
+      like GET and HEAD, so it should not be subject to CSRF validation.
+
+  - id: jwt-bad-signature
+    pr: 5379
+    solution: 52febbcc30bc509d5e4987577e63906fe08fc471
+    expected_tier: deep
+    prompt: |
+      JWT verification throws a raw DOMException (InvalidCharacterError) when the
+      token's signature part contains characters outside the base64url alphabet,
+      e.g. `header.payload.@@@@`. It should reject with Hono's JwtTokenInvalid
+      error, like any other malformed token.
+
+  - id: etag-ows
+    pr: 5222
+    solution: f8b7847d755d98009feb2d7d1e6dff0921f8c500
+    expected_tier: mechanical
+    prompt: |
+      The etag middleware returns 200 with the full body instead of 304 when the
+      If-None-Match header has whitespace before a comma, e.g. `"a" , "b"`, even
+      though the current ETag is in the list. RFC 9110 allows optional whitespace
+      on both sides of the list delimiter.
+
+  - id: accepts-case
+    pr: 5376
+    solution: f5a53463ad2ff791fc02418b645750ce75a260ad
+    expected_tier: standard
+    prompt: |
+      The `accepts()` helper matches case-sensitively. With supports ['text/html'],
+      `Accept: TEXT/HTML` returns the default instead of text/html, and with
+      supports ['en-US'], `Accept-Language: en-us` returns the default too.
+      `TEXT/*` doesn't match text/html either. Media types (RFC 9110 §8.3.1) and
+      language tags (RFC 4647 §2.1) are case-insensitive. The matched value
+      returned should keep the casing the application registered in `supports`.
+
+  - id: secure-headers-csp
+    pr: 5147
+    solution: 402eb3abe561914f41ee0f8e37f1d7f211f1ee51
+    expected_tier: deep
+    prompt: |
+      In the secure-headers middleware, using a nonce in one CSP mode breaks when
+      both `contentSecurityPolicy` and `contentSecurityPolicyReportOnly` are set:
+      for example a static enforced policy plus a report-only policy that uses a
+      nonce. The request ends in a 500 response. Each policy should work
+      independently, including when both use nonces.
+
+  - id: trie-suffix-wildcard
+    pr: 5236
+    solution: 63bbcf508c74d9fe7a3e20f4dfe7ffacc566dcce
+    expected_tier: deep
+    prompt: |
+      With the TrieRouter, suffix wildcard routes like `/assets*` return 404 for
+      `/assets/app.js` when a mounted sub-app registers a static route and a
+      `:param` route as siblings with the same method. For example: sub.post('/items'),
+      sub.post('/:slug'), app.route('/api', sub), then app.get('/assets*', ...).
+      `/assets/*` (slash-star) is unaffected. A suffix wildcard should match
+      regardless of what else is registered; the prefix before `*` is literal.

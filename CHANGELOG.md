@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+- README: per-project install for every harness (Claude Code `--scope project|local`, Codex and others via `npx skills` into the repo).
+- Claude Code map: the `haiku` alias now resolves to Claude Haiku 5.5, which takes an effort level; scout and mechanical run at `low`.
+- Benchmark v0 harness: runner, task set from post-cutoff Hono PRs, method in `bench/README.md`.
+
 ## 0.2.0 — 2026-10-17
 
 - `right-size-setup` skill (user-invoked): generates `right-size-scout`, `-mechanical`, `-standard` and `-deep` subagents for Claude Code and Codex from the harness maps, asks before overwriting, and warns about Cursor reading those folders.

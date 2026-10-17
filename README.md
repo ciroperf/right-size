@@ -55,22 +55,43 @@ escalate if: deep attempt fails → fable/xhigh, only after you confirm
 
 ## Install
 
+Install it for **every project** (global) or **just one project**. A project install lives in the repo, so you can try right-size on one codebase, or share it with your team, without touching anything else.
+
 <details open>
 <summary><strong>Claude Code</strong></summary>
+
+Global, for all your projects:
 
 ```bash
 claude plugin marketplace add ciroperf/right-size
 claude plugin install right-size@ciroperf
 ```
 
+Just this project, shared with the team through `.claude/settings.json` (teammates are offered the plugin when they open the repo):
+
+```bash
+claude plugin marketplace add ciroperf/right-size --scope project
+claude plugin install right-size@ciroperf --scope project
+```
+
+Use `--scope local` instead for this project only, without committing anything.
+
 </details>
 
 <details>
 <summary><strong>Codex</strong></summary>
 
+Global, as a plugin that updates itself:
+
 ```bash
 codex plugin marketplace add ciroperf/right-size
 codex plugin add right-size@ciroperf
+```
+
+Just this project: Codex plugins are always user-wide, so copy the skills into the repo's `.agents/skills/` instead:
+
+```bash
+npx skills@latest add ciroperf/right-size -a codex
 ```
 
 </details>
@@ -78,11 +99,13 @@ codex plugin add right-size@ciroperf
 <details>
 <summary><strong>Antigravity, Cursor, Copilot, Gemini CLI and others</strong> (manual updates)</summary>
 
+Just this project (the default when run inside a repo):
+
 ```bash
 npx skills@latest add ciroperf/right-size
 ```
 
-Update later with `npx skills update`.
+Global: add `-g`. Pick agents with `-a`, e.g. `-a cursor`. Update later with `npx skills update`.
 
 </details>
 
