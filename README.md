@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-0d9488.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-7c3aed.svg)](https://agentskills.io)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](#roadmap)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -86,6 +86,14 @@ Update later with `npx skills update`.
 
 </details>
 
+### Optional: generate the subagents
+
+```text
+> /right-size-setup
+```
+
+This writes one subagent per tier with model and effort preset: `.claude/agents/right-size-*.md` in Claude Code, `.codex/agents/right_size_*.toml` in Codex. It asks before overwriting anything. Without these agents right-size still works, but it can only pass a model per call, and effort then follows the session.
+
 ## Usage
 
 It runs on its own when an agent is about to delegate, plan multi-step work, or pick a model. You can also ask for it directly:
@@ -96,7 +104,7 @@ It runs on its own when an agent is about to delegate, plan multi-step work, or 
 > size these four tickets
 ```
 
-Each answer is a four-line block: the decision, the facts behind it, how to apply it in the harness you're in, and when to step up.
+Each answer is a four-line block: the decision, the facts behind it, how to apply it in the harness you're in, and when to step up. At most three short notes follow, only for assumptions to confirm or things the subagent's brief must include.
 
 <details>
 <summary><strong>Example: a rename across a monorepo (Claude Code)</strong></summary>
@@ -229,7 +237,7 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 
 - [x] Advisor skill with tiers, risk floor and escalation
 - [x] Harness maps for Claude Code, Codex and Antigravity
-- [ ] `right-size-setup`: generate native subagents (`scout`, `mechanical`, `standard`, `deep`)
+- [x] `right-size-setup`: generate native subagents (`scout`, `mechanical`, `standard`, `deep`) for Claude Code and Codex
 - [ ] Benchmark v0: one repo, one harness
 - [ ] Cursor, Copilot and Gemini CLI maps with smoke tests
 - [ ] Benchmark v1: Claude Code + Codex, published results

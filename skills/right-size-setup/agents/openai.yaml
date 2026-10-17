@@ -1,0 +1,5 @@
+interface:
+  display_name: "Right Size Setup"
+  short_description: "Generate right-size subagents with model and effort preset for this harness."
+policy:
+  allow_implicit_invocation: false

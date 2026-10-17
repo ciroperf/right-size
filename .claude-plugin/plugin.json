@@ -1,7 +1,7 @@
 {
   "name": "right-size",
-  "version": "0.1.0",
-  "description": "Decide whether a coding task deserves a subagent, which tier, and which reasoning effort — then apply it in your harness.",
+  "version": "0.2.0",
+  "description": "Decide whether a coding task deserves a subagent, which tier, and which reasoning effort \u00e2\u20ac\u201d then apply it in your harness.",
   "author": {
     "name": "Ciro Perfetto",
     "url": "https://github.com/ciroperf"
@@ -17,6 +17,7 @@
     "token-cost"
   ],
   "skills": [
-    "./skills/right-size"
+    "./skills/right-size",
+    "./skills/right-size-setup"
   ]
 }
