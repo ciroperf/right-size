@@ -1,0 +1,9 @@
+# Checked-out target repos and per-run working copies
+work/
+
+# Raw transcripts and harness logs (large, may contain local paths); summarized data goes in results/
+raw/
+*.jsonl
+
+# Keep results/ tracked
+!results/
