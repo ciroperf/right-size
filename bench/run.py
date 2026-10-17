@@ -42,7 +42,7 @@ RIGHT_SIZE_NUDGE = "Before starting, size the task with the right-size skill and
 
 ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Glob", "Grep", "Agent", "Skill", "TodoWrite",
-    "Bash(npx vitest *)",
+    "Bash(npx vitest *)", "PowerShell(npx vitest *)",
     "Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
 ]
 
@@ -212,7 +212,8 @@ def cmd_run(args):
             rec = run_one(t, name, out)
             print(f"{t['id']:<22} {name:<11} solved={rec['solved']} cost=${rec['cost_usd']} wall={rec['wall_s']}s "
                   f"subagents={(rec['subagents'] or {}).get('spawned')}", flush=True)
-    checkout("origin/main")
+    sh(["git", "checkout", "-f", "-q", "origin/main"])
+    sh(["git", "clean", "-fdq"])
 
 
 def tokens(mu):
