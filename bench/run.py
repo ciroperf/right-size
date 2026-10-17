@@ -154,7 +154,8 @@ def run_router(task, log_dir):
         raise SystemExit(f"router failed on {task['id']}: {r.stderr[-1500:]}")
     runs = [x["result"] or {} for x in summary["runs"]]
     usage = {}
-    for mu in [(summary["classifier"] or {}).get("model_usage")] + [x.get("modelUsage") for x in runs]:
+    # Per-run usage from route.py: a resumed session reports cumulative totals.
+    for mu in [(summary["classifier"] or {}).get("model_usage")] + [x.get("model_usage") for x in summary["runs"]]:
         for model, u in (mu or {}).items():
             acc = usage.setdefault(model, {})
             for k, v in u.items():
@@ -167,7 +168,7 @@ def run_router(task, log_dir):
         "is_error": last.get("is_error"),
         "num_turns": sum(x.get("num_turns") or 0 for x in runs),
         "duration_ms": sum(x.get("duration_ms") or 0 for x in runs),
-        "total_cost_usd": ((summary["classifier"] or {}).get("cost_usd") or 0) + sum(x.get("total_cost_usd") or 0 for x in runs),
+        "total_cost_usd": ((summary["classifier"] or {}).get("cost_usd") or 0) + sum(x.get("cost_usd") or 0 for x in summary["runs"]),
         "modelUsage": usage,
         "subagent_stats": last.get("subagent_stats"),
         "permission_denials": [d for x in runs for d in (x.get("permission_denials") or [])],

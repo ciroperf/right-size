@@ -37,7 +37,7 @@ beyond_deep:
 how_to_apply:
   - If the right-size-* agents exist (created by right-size-setup), delegate to them; they carry both model and effort.
   - Otherwise, pass the tier's model as the Agent tool's per-invocation model parameter (it overrides agent frontmatter) and delegate to a general-purpose or Explore agent. Effort then follows the session.
-  - For inline work on a fresh session (little context so far), suggest /model and /effort for the tier; the user runs them. Later in a session suggest /effort only: on Opus, Sonnet and Haiku 5.5 and Fable 5.1 (API key or subscription) it keeps the prompt cache, while a model switch re-reads the whole conversation uncached.
+  - For inline work on a fresh session (little context so far), suggest /model and /effort for the tier; the user runs them. Later in a session suggest /effort only, since on Opus, Sonnet and Haiku 5.5 and Fable 5.1 (API key or subscription) it keeps the prompt cache, while a model switch re-reads the whole conversation uncached.
   - Router mode (scripts/route.py) uses these same tier entries for the whole session, and the scout entry for its classifier call.
 
 notes:

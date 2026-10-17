@@ -20,6 +20,7 @@ Tasks for [`bench/`](bench/) must come from public repos and have an objective p
 
 ## Pull requests
 
+- Run `python -m unittest discover -s tests` if you touched the router or the YAML files.
 - Keep everything in English.
 - One topic per PR.
 - Add a line to [CHANGELOG.md](CHANGELOG.md) under **Unreleased**.

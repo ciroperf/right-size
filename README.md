@@ -14,6 +14,7 @@
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-7c3aed.svg)](https://agentskills.io)
 [![Release](https://img.shields.io/github/v/release/ciroperf/right-size?color=blue)](https://github.com/ciroperf/right-size/releases/latest)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](#roadmap)
+[![Tests](https://github.com/ciroperf/right-size/actions/workflows/tests.yml/badge.svg)](https://github.com/ciroperf/right-size/actions/workflows/tests.yml)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-D97757?logo=claude&logoColor=white)](#install)
@@ -192,17 +193,43 @@ why: bug fix with a clear reproduction, tests present, not a risk area
 escalate if: a real attempt fails → deep (opus, effort high)
 ```
 
-The script ships inside the skill folder (`skills/right-size/scripts/route.py` in this repo, or wherever your install put the skill) and needs only Python 3.
+The script ships inside the skill folder and needs only Python 3.9+, no packages. Where it lives depends on how you installed right-size; inside a session, asking "give me the right-size router command" makes the skill print it with the full path.
+
+| Install | Path to `route.py` |
+|---|---|
+| `npx skills add` (project) | `.claude/skills/right-size/scripts/route.py` (`.agents/skills/...` for Codex) |
+| `npx skills add -g` | `~/.claude/skills/right-size/scripts/route.py` |
+| Claude Code plugin | `~/.claude/plugins/cache/ciroperf/right-size/<version>/skills/right-size/scripts/route.py` |
+
+A short alias helps:
+
+```bash
+alias rs='python .claude/skills/right-size/scripts/route.py'          # bash / zsh
+```
+
+```powershell
+function rs { python .claude\skills\right-size\scripts\route.py @args }   # PowerShell
+ight-size\scripts
+oute.py @args }   # PowerShell
+```
 
 | Flag | What it does |
 |---|---|
-| `--print` | Run headless. If the session ends with `RIGHT-SIZE-ESCALATE: verifiable` or `reasoning`, the router resumes it one or two tiers up, within the ceiling |
+| `--print` | Run headless. If the session ends with `RIGHT-SIZE-ESCALATE: verifiable` or `reasoning`, the router resumes it one or two tiers up, within the ceiling, and prints the cost of each step |
+| `--file <path>` | Read the task from a file, or from stdin with `-` |
 | `--dry-run` | Show the decision and the command, don't run anything |
 | `--tier <tier>` | Skip the classifier |
 | `--harness codex` | Launch Codex instead (`-m` plus `model_reasoning_effort`). Not yet tested end to end |
+| `--json` | With `--print`: a JSON summary of the decision and every run |
 | `-- <args>` | Pass the rest to the harness CLI, e.g. `-- --permission-mode acceptEdits` |
 
-Interactive sessions get the same note, and the agent tells you which `/model` and `/effort` to switch to if it gets stuck. Whether routing beats the harness default on cost at equal results is what the [benchmark](#benchmark) is measuring next.
+```
+right-size: route · tier=mechanical · model=haiku · effort=low
+right-size: escalate · mechanical → standard (sonnet, effort medium) · tests still red
+right-size: done · mechanical (haiku) $0.01 → standard (sonnet) $0.07 · router $0.0002 · total $0.08
+```
+
+If the classifier can't run (CLI missing, not signed in, timeout), the router falls back to `standard` and says so. Interactive sessions get the same note, and the agent tells you which `/model` and `/effort` to switch to if it gets stuck. A switch resumes the same conversation, so nothing is lost, but the new model reads it once without cache. Whether routing beats the harness default on cost at equal results is what the [benchmark](#benchmark) is measuring next.
 
 ## How it works
 
