@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches plugin version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(jq -r .version .claude-plugin/plugin.json)
+          if [ "$tag" != "$version" ]; then
+            echo "Tag v$tag does not match plugin.json version $version" >&2
+            exit 1
+          fi
+
+      - name: Build packages
+        run: |
+          tag="$GITHUB_REF_NAME"
+          mkdir -p dist
+          # Both skills together: right-size-setup reads ../right-size/harnesses/.
+          zip -r "dist/right-size-${tag}.zip" skills/right-size skills/right-size-setup README.md LICENSE CHANGELOG.md
+          # Single-skill package for claude.ai (Settings > Capabilities > Skills).
+          (cd skills && zip -r ../dist/right-size.skill right-size)
+
+      - name: Extract release notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## " v " " { on=1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "No CHANGELOG section for $version" >&2; exit 1; }
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md

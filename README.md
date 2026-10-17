@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-0d9488.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-7c3aed.svg)](https://agentskills.io)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](CHANGELOG.md)
+[![Release](https://img.shields.io/github/v/release/ciroperf/right-size?color=blue)](https://github.com/ciroperf/right-size/releases/latest)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](#roadmap)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -83,6 +83,16 @@ npx skills@latest add ciroperf/right-size
 ```
 
 Update later with `npx skills update`.
+
+</details>
+
+<details>
+<summary><strong>Claude.ai or manual install</strong></summary>
+
+Download from the [latest release](https://github.com/ciroperf/right-size/releases/latest):
+
+- `right-size.skill`: upload it in Claude.ai under **Settings → Capabilities → Skills**.
+- `right-size-vX.Y.Z.zip`: both skills. Copy the `skills/` folders into your agent's skills directory (for example `.claude/skills/` or `.agents/skills/`), keeping them side by side.
 
 </details>
 
