@@ -216,6 +216,7 @@ function rs { python .claude\skills\right-size\scripts\route.py @args }   # Powe
 | `--file <path>` | Read the task from a file, or from stdin with `-` |
 | `--dry-run` | Show the decision and the command, don't run anything |
 | `--tier <tier>` | Skip the classifier |
+| `--split` | With `--print`: when the task is several independent requests, run each as its own session on its own tier. Measured so far: costs more than one session, see [`bench/`](bench/) |
 | `--harness codex` | Launch Codex instead (`-m` plus `model_reasoning_effort`). Not yet tested end to end |
 | `--json` | With `--print`: a JSON summary of the decision and every run |
 | `-- <args>` | Pass the rest to the harness CLI, e.g. `-- --permission-mode acceptEdits` |

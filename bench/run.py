@@ -41,6 +41,8 @@ CONFIGS = {
     "router": {"model": None, "effort": None, "right_size": False, "router": True},
     # Experiment: the router with its tier pinned, to see what a whole session on that tier costs.
     "router-standard": {"model": None, "effort": None, "right_size": False, "router": True, "tier": "standard"},
+    # The router with --split: independent parts run as separate sessions on their own tiers.
+    "router-split": {"model": None, "effort": None, "right_size": False, "router": True, "split": True},
     # Experiment, not a product setting: always delegate each independent part
     # to the right-size subagent for its tier, to measure what delegation costs.
     "delegate": {"model": "opus", "effort": None, "right_size": True, "nudge": "delegate"},
@@ -168,14 +170,15 @@ def claude_cmd(cfg):
     return cmd
 
 
-def run_router(task, log_dir, tier=None):
+def run_router(task, log_dir, tier=None, split=False):
     """Run a task through route.py and fold its runs into one result-like dict.
 
     Cost includes the classifier call. Sessions must persist so that an
     escalation can resume them, so --no-session-persistence is left out.
     """
     cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
-           *(["--tier", tier] if tier else []), task["prompt"] + PROMPT_SUFFIX, "--",
+           *(["--tier", tier] if tier else []), *(["--split"] if split else []),
+           task["prompt"] + PROMPT_SUFFIX, "--",
            "--setting-sources", "project", "--strict-mcp-config", "--permission-mode", "dontAsk",
            "--allowedTools", *ALLOWED_TOOLS]
     try:
@@ -207,7 +210,10 @@ def run_router(task, log_dir, tier=None):
         "modelUsage": usage,
         "subagent_stats": last.get("subagent_stats"),
         "permission_denials": [d for x in runs for d in (x.get("permission_denials") or [])],
-        "route": {"decision": summary["decision"], "profiles": [x["profile"] for x in summary["runs"]]},
+        "route": {"decision": summary["decision"], "profiles": [x["profile"] for x in summary["runs"]],
+                  "parts": [{"title": x["title"], "profiles": [r["profile"] for r in x["runs"]],
+                             "cost_usd": sum(r["cost_usd"] or 0 for r in x["runs"])}
+                            for x in summary.get("parts") or []] or None},
     }, False
 
 
@@ -223,7 +229,7 @@ def run_one(task, name, out_dir):
     stream_path = raw / f"{task['id']}__{name}.jsonl"
     started = time.time()
     if cfg.get("router"):
-        result, timed_out = run_router(task, raw / f"{task['id']}__{name}", cfg.get("tier"))
+        result, timed_out = run_router(task, raw / f"{task['id']}__{name}", cfg.get("tier"), cfg.get("split"))
     else:
         try:
             r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,

@@ -12,10 +12,13 @@ Usage:
   python route.py --print [options] "task"    # headless, with automatic escalation
   python route.py --dry-run "task"            # show the decision and the command only
   python route.py --file issue.md             # read the task from a file ("-" reads stdin)
+  python route.py --print --split "task"      # independent parts run as separate sessions
 
 Options:
   --harness claude-code|codex   default: claude-code
   --tier TIER                   skip the classifier and use this tier
+  --split                       headless only: when the task is several independent requests,
+                                run each as its own session on its own tier
   --file PATH                   read the task from PATH, or from stdin with "-"
   --max-escalations N           headless only, default 2
   --log DIR                     headless only: write each run's raw event stream there
@@ -118,15 +121,29 @@ def repo_facts():
 
 # --- classifier -------------------------------------------------------------
 
+_DECISION = {
+    "tier": {"enum": TIERS},
+    "effort": {"enum": EFFORTS[:3]},
+    "risk_area": {"type": ["string", "null"]},
+    "why": {"type": "string"},
+}
+
 SCHEMA = {
     "type": "object",
     "properties": {
-        "tier": {"enum": TIERS},
-        "effort": {"enum": EFFORTS[:3]},
-        "risk_area": {"type": ["string", "null"]},
-        "why": {"type": "string"},
+        **_DECISION,
+        "shared": {"type": "string"},
+        "parts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"title": {"type": "string"}, "text": {"type": "string"}, **_DECISION},
+                "required": ["title", "text", "tier", "effort", "risk_area", "why"],
+                "additionalProperties": False,
+            },
+        },
     },
-    "required": ["tier", "effort", "risk_area", "why"],
+    "required": ["tier", "effort", "risk_area", "why", "shared", "parts"],
     "additionalProperties": False,
 }
 
@@ -148,7 +165,16 @@ each tier as the profile of the model that runs the session.
 - Risk alone is not a reason to raise effort: the deep tier already covers it.
 - When unsure between two tiers, pick the lower one: the session escalates on failure.
 
-`why` is one line with the two or three facts that drove the choice."""
+`why` is one line with the two or three facts that drove the choice.
+
+The top-level tier is for the whole task done in one session. Also fill
+`parts`, but ONLY when the task is several independent requests (separate
+bugs, tickets or features) that touch different code and don't depend on
+each other's results. Then give one entry per request: a short `title`, its
+`text` copied verbatim from the task, and its own tier, effort, risk_area and
+why. Put instructions that apply to every part (how to run tests, "do not
+commit") in `shared`, verbatim. A single request, or steps of one change,
+get `parts: []` and `shared: ""`."""
 
 
 class ClassifierError(Exception):
@@ -215,7 +241,19 @@ def validate(out):
         raise ClassifierError(f"unexpected answer: {str(out)[:200]}")
     out.setdefault("why", "")
     out.setdefault("risk_area", None)
+    out["shared"] = out.get("shared") or ""
+    parts = out.get("parts") or []
+    # A split is all or nothing: one malformed part means run the task whole.
+    ok = all(isinstance(x, dict) and x.get("tier") in TIERS and str(x.get("text") or "").strip() for x in parts)
+    out["parts"] = parts if ok and len(parts) >= 2 else []
     return out
+
+
+def part_prompt(part, shared, n, total):
+    """The prompt for one part of a split task: its own text plus the shared instructions."""
+    head = (f"This is part {n} of {total} of a larger request. The other parts are handled in "
+            f"separate sessions: do only this one.")
+    return "\n\n".join(x for x in (head, part["text"].strip(), shared.strip()) if x)
 
 
 # --- decision ---------------------------------------------------------------
@@ -354,6 +392,38 @@ def cost_line(classifier, runs):
     return f"right-size: done · {' → '.join(parts)} · router ${router:.4f} · total ${total:.2f}"
 
 
+def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalations, log_dir, label=""):
+    """One routed headless session, with escalation. Returns (runs, final text)."""
+    nxt = next_profile(p, 1, top, hmap, tiers)
+    cmd = launch_cmd(harness, p, prompt, extra, note(p, why, nxt, interactive=False), True)
+    runs, text = [], ""
+    for attempt in range(max_escalations + 1):
+        log = log_dir / f"{label}run-{attempt}-{p['tier']}.jsonl" if log_dir else None
+        text, sid, result = headless_run(harness, cmd, prompt, log)
+        cost, usage = own_usage(result, runs[-1]["result"] if runs else None)
+        runs.append({"profile": p, "session_id": sid, "cost_usd": cost, "model_usage": usage, "result": result})
+        m = MARKER.search(text or "")
+        if not m:
+            break
+        reason = m.group(2).strip()
+        if attempt == max_escalations or not sid:
+            sys.stderr.write(f"right-size: escalation requested ({reason}) but the escalation limit was reached\n")
+            break
+        up = next_profile(p, 2 if m.group(1).lower() == "reasoning" else 1, top, hmap, tiers)
+        if up is None:
+            sys.stderr.write(f"right-size: escalation requested ({reason}) but {p['tier']} is the ceiling; "
+                             f"rerun with --tier or raise max_tier to go further\n")
+            break
+        sys.stderr.write(f"right-size: escalate · {label}{p['tier']} → {up['tier']} ({up['model']}, effort "
+                         f"{up['effort'] or 'default'}) · {reason}\n")
+        p = up
+        sys_note = note(p, f"escalated after: {reason}", next_profile(p, 1, top, hmap, tiers), interactive=False)
+        prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
+                  f"{reason}. Continue the task from where it stopped.")
+        cmd = launch_cmd(harness, p, prompt, extra, sys_note, True, resume=sid)
+    return runs, text
+
+
 def main():
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
@@ -363,6 +433,7 @@ def main():
     ap.add_argument("--harness", default="claude-code", choices=["claude-code", "codex"])
     ap.add_argument("--tier", choices=TIERS)
     ap.add_argument("--print", dest="headless", action="store_true")
+    ap.add_argument("--split", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--max-escalations", type=int, default=2)
     ap.add_argument("--log", type=Path)
@@ -378,7 +449,8 @@ def main():
 
     classifier = None
     if args.tier:
-        decision = {"tier": args.tier, "effort": None, "risk_area": None, "why": "tier set by the user"}
+        decision = {"tier": args.tier, "effort": None, "risk_area": None, "why": "tier set by the user",
+                    "shared": "", "parts": []}
     else:
         try:
             decision, classifier = classify(task, {k: v for k, v in facts.items() if k != "root"}, args.harness,
@@ -386,7 +458,7 @@ def main():
         except ClassifierError as e:
             sys.stderr.write(f"right-size: classifier unavailable ({e}); using {FALLBACK_TIER}\n")
             decision = {"tier": FALLBACK_TIER, "effort": None, "risk_area": None,
-                        "why": "classifier unavailable, router fallback"}
+                        "why": "classifier unavailable, router fallback", "shared": "", "parts": []}
     tier, capped = cap(decision["tier"], facts["max_tier"])
     p = profile(tier, decision.get("effort"), hmap, tiers)
     top = facts["max_tier"] or "deep"
@@ -402,6 +474,21 @@ def main():
         block.append(f"escalate if: a real attempt fails → {nxt['tier']} ({nxt['model']}, effort {nxt['effort'] or 'default'})")
     sys.stderr.write("\n".join(block) + "\n")
 
+    split = args.split and decision["parts"]
+    if args.split and not decision["parts"]:
+        sys.stderr.write("right-size: no independent parts found; running the task as one session\n")
+    if split:
+        plan = []
+        for n, part in enumerate(decision["parts"], 1):
+            t, was_capped = cap(part["tier"], facts["max_tier"])
+            pp = profile(t, part.get("effort"), hmap, tiers)
+            plan.append((part, pp, part["why"] + (f" (capped at max_tier={top})" if was_capped else "")))
+            sys.stderr.write(f"right-size: part {n}/{len(decision['parts'])} · {part['title']} · tier={t} · "
+                             f"model={pp['model']} · effort={pp['effort'] or 'default'}\n")
+        if not args.headless:
+            sys.stderr.write("right-size: split runs only with --print; starting one session for the whole task\n")
+            split = False
+
     if args.dry_run:
         print(json.dumps({"decision": decision, "profile": p, "facts": facts, "classifier": classifier,
                           "command": cmd}, indent=2))
@@ -410,43 +497,34 @@ def main():
         exe = shutil.which(cmd[0]) or cmd[0]
         return subprocess.call([exe, *cmd[1:]])
 
-    runs, prompt, text = [], task, ""
     if args.log:
         args.log.mkdir(parents=True, exist_ok=True)
-    for attempt in range(args.max_escalations + 1):
-        log = args.log / f"run-{attempt}-{p['tier']}.jsonl" if args.log else None
-        text, sid, result = headless_run(args.harness, cmd, prompt, log)
-        cost, usage = own_usage(result, runs[-1]["result"] if runs else None)
-        runs.append({"profile": p, "session_id": sid, "cost_usd": cost, "model_usage": usage, "result": result})
-        m = MARKER.search(text or "")
-        if not m:
-            break
-        reason = m.group(2).strip()
-        if attempt == args.max_escalations or not sid:
-            sys.stderr.write(f"right-size: escalation requested ({reason}) but the escalation limit was reached\n")
-            break
-        up = next_profile(p, 2 if m.group(1).lower() == "reasoning" else 1, top, hmap, tiers)
-        if up is None:
-            sys.stderr.write(f"right-size: escalation requested ({reason}) but {p['tier']} is the ceiling; "
-                             f"rerun with --tier or raise max_tier to go further\n")
-            break
-        sys.stderr.write(f"right-size: escalate · {p['tier']} → {up['tier']} ({up['model']}, effort "
-                         f"{up['effort'] or 'default'}) · {reason}\n")
-        p = up
-        sys_note = note(p, f"escalated after: {reason}", next_profile(p, 1, top, hmap, tiers),
-                        interactive=False)
-        prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
-                  f"{reason}. Continue the task from where it stopped.")
-        cmd = launch_cmd(args.harness, p, prompt, extra, sys_note, True, resume=sid)
+    if split:
+        # Parts run one after another in the same working tree; they were judged
+        # independent, so no part waits on another's result.
+        parts_out, texts = [], []
+        for n, (part, pp, part_why) in enumerate(plan, 1):
+            runs, text = run_headless(args.harness, pp, part_prompt(part, decision["shared"], n, len(plan)),
+                                      extra, part_why, top, hmap, tiers, args.max_escalations, args.log,
+                                      label=f"part{n}-")
+            parts_out.append({"title": part["title"], "runs": runs})
+            texts.append(f"## Part {n}: {part['title']}\n\n{text}")
+        runs = [r for x in parts_out for r in x["runs"]]
+        text = "\n\n".join(texts)
+        failed = any(not x["runs"][-1]["result"] or x["runs"][-1]["result"].get("is_error") for x in parts_out)
+    else:
+        runs, text = run_headless(args.harness, p, task, extra, why, top, hmap, tiers, args.max_escalations, args.log)
+        parts_out = None
+        failed = not runs[-1]["result"] or runs[-1]["result"].get("is_error")
 
     if args.harness == "claude-code":
         sys.stderr.write(cost_line(classifier, runs) + "\n")
     if args.json:
-        print(json.dumps({"decision": decision, "facts": facts, "classifier": classifier, "runs": runs}, indent=2))
+        print(json.dumps({"decision": decision, "facts": facts, "classifier": classifier, "runs": runs,
+                          "parts": parts_out}, indent=2))
     else:
         print(text)
-    last = runs[-1]["result"]
-    return 1 if not last or last.get("is_error") else 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

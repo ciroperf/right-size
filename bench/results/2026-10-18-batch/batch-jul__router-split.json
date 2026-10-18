@@ -1,0 +1,178 @@
+{
+  "task": "batch-jul",
+  "pr": [
+    5067,
+    5020,
+    5147
+  ],
+  "config": "router-split",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 118.9,
+  "is_error": false,
+  "num_turns": 25,
+  "duration_ms": 100892,
+  "cost_usd": 0.59511513,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 2765,
+      "cacheReadInputTokens": 10663,
+      "cacheCreationInputTokens": 9263,
+      "webSearchRequests": 0,
+      "costUSD": 0.0033421300000000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 916
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 20,
+      "outputTokens": 2427,
+      "cacheReadInputTokens": 380886,
+      "cacheCreationInputTokens": 32449,
+      "webSearchRequests": 0,
+      "costUSD": 0.1921946,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 46
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 18,
+      "outputTokens": 4101,
+      "cacheReadInputTokens": 418071,
+      "cacheCreationInputTokens": 29234,
+      "webSearchRequests": 0,
+      "costUSD": 0.3995782,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 321
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "security-sensitive code (CSP nonce handling in secure-headers)",
+      "why": "Three independent bugs in different files; one touches CSP nonce handling (security-sensitive, risk floor). 138 test files present, so no safety-net bump.",
+      "shared": "Run the relevant tests with: npx vitest --run <test file paths>\nDo not commit.",
+      "parts": [
+        {
+          "title": "Case-insensitive Content-Type in parseBody and validator",
+          "text": "`parseBody()` and `validator()` match Content-Type media types case-sensitively.\nA request with `Content-Type: Application/JSON` or\n`Application/X-WWW-Form-Urlencoded` is parsed fine by the platform Request,\nbut Hono's checks skip it and pass an empty object downstream. Media types are\ncase-insensitive (RFC 9110), so these requests should be parsed and validated\nlike their lower-case equivalents.",
+          "tier": "standard",
+          "effort": "medium",
+          "risk_area": null,
+          "why": "Clear spec, two call sites in one area; public API behavior but not a risk-floor code change; tests present."
+        },
+        {
+          "title": "Compress middleware must not gzip 206 responses",
+          "text": "The compress middleware gzips 206 Partial Content responses. The\nContent-Range header still describes the uncompressed byte range, and the\noriginal Content-Length is dropped, so clients that stitch ranges together\nget corrupted data. A 206 response should be passed through uncompressed.",
+          "tier": "standard",
+          "effort": "low",
+          "risk_area": null,
+          "why": "Single status-code check in one middleware with a clear expected behavior; tests present."
+        },
+        {
+          "title": "Secure-headers nonce with both CSP modes",
+          "text": "In the secure-headers middleware, using a nonce in one CSP mode breaks when\nboth `contentSecurityPolicy` and `contentSecurityPolicyReportOnly` are set:\nfor example a static enforced policy plus a report-only policy that uses a\nnonce. The request ends in a 500 response. Each policy should work\nindependently, including when both use nonces.",
+          "tier": "deep",
+          "effort": "medium",
+          "risk_area": "security-sensitive code (CSP nonce handling)",
+          "why": "Changes CSP nonce handling, which is security-sensitive and in the risk floor; tests present."
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "parts": [
+      {
+        "title": "Case-insensitive Content-Type in parseBody and validator",
+        "profiles": [
+          {
+            "tier": "standard",
+            "model": "sonnet",
+            "effort": "medium"
+          }
+        ],
+        "cost_usd": 0.108014
+      },
+      {
+        "title": "Compress middleware must not gzip 206 responses",
+        "profiles": [
+          {
+            "tier": "standard",
+            "model": "sonnet",
+            "effort": "medium"
+          }
+        ],
+        "cost_usd": 0.084181
+      },
+      {
+        "title": "Secure-headers nonce with both CSP modes",
+        "profiles": [
+          {
+            "tier": "deep",
+            "model": "opus",
+            "effort": "medium"
+          }
+        ],
+        "cost_usd": 0.399578
+      }
+    ]
+  },
+  "diff_lines": 28,
+  "parts_solved": {
+    "content-type-case": true,
+    "compress-206": true,
+    "secure-headers-csp": true
+  },
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts",
+    "src/middleware/compress/index.test.ts",
+    "src/middleware/secure-headers/index.test.ts"
+  ],
+  "test_tail": "100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 124               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.95% ( 662/1410 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.59% ( 642/1349 )\n================================================================================\n\n30.76 |   59.37 | ...42,61-66,79-95 \n  url.ts           |    20.4 |    10.52 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 43.62% ( 613/1405 )\nBranches     : 34.19% ( 291/851 )\nFunctions    : 40.78% ( 104/255 )\nLines        : 44.14% ( 592/1341 )\n================================================================================\n\n    0 |    8.97 | ...30-139,149-180 \n  url.ts           |    20.4 |     11.4 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 40.45% ( 496/1226 )\nBranches     : 32.72% ( 234/715 )\nFunctions    : 40.65% ( 100/246 )\nLines        : 40.89% ( 474/1159 )\n================================================================================\n"
+}

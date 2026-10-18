@@ -29,6 +29,13 @@
       "right_size": false,
       "router": true,
       "tier": "standard"
+    },
+    "router-split": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true,
+      "split": true
     }
   },
   "allowed_tools": [

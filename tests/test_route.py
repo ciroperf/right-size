@@ -155,6 +155,29 @@ class Classifier(unittest.TestCase):
                 self.call(**kwargs)
 
 
+class Split(unittest.TestCase):
+    def part(self, tier="standard", text="Fix the bug."):
+        return {"title": "t", "text": text, "tier": tier, "effort": "medium", "risk_area": None, "why": "w"}
+
+    def test_parts_are_all_or_nothing(self):
+        base = {"tier": "deep", "why": "w"}
+        two = route.validate({**base, "parts": [self.part(), self.part("deep")], "shared": "Do not commit."})
+        self.assertEqual(len(two["parts"]), 2)
+        self.assertEqual(route.validate({**base, "parts": [self.part()]})["parts"], [])  # one part: no split
+        bad = route.validate({**base, "parts": [self.part(), self.part("huge")]})
+        self.assertEqual(bad["parts"], [])
+        empty = route.validate({**base, "parts": [self.part(), self.part(text=" ")]})
+        self.assertEqual(empty["parts"], [])
+        self.assertEqual(route.validate(base)["shared"], "")
+
+    def test_part_prompt(self):
+        prompt = route.part_prompt(self.part(text="Fix csrf."), "Run the tests.", 2, 3)
+        self.assertTrue(prompt.startswith("This is part 2 of 3"))
+        self.assertIn("Fix csrf.", prompt)
+        self.assertTrue(prompt.endswith("Run the tests."))
+        self.assertNotIn(3 * chr(10), route.part_prompt(self.part(), "", 1, 2))  # no empty shared block
+
+
 class Misc(unittest.TestCase):
     def test_cost_line(self):
         runs = [{"profile": {"tier": "mechanical", "model": "haiku"}, "cost_usd": 0.05},
