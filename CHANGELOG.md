@@ -4,28 +4,34 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-- README: per-project install for every harness (Claude Code `--scope project|local`, Codex and others via `npx skills` into the repo).
-- Claude Code map: the `haiku` alias now resolves to Claude Haiku 5.5, which takes an effort level; scout and mechanical run at `low`.
-- Benchmark v0 harness: runner, task set from post-cutoff Hono PRs, method in `bench/README.md`.
-- Router mode: `skills/right-size/scripts/route.py` sizes a task with one classifier call on the scout model, launches Claude Code or Codex on the tier's model and effort, and in headless mode resumes the session one or two tiers up when it asks to escalate. Standard library only. The Codex path isn't tested end to end yet.
-- `right-size`: on a fresh session, inline work suggests switching the session to the tier's model and effort. Later on it suggests effort changes only, which keep the prompt cache on the 5.5 models.
-- Claude Code map: a skill's `model` frontmatter didn't switch the main session's model in Claude Code 2.1.302, so right-size doesn't rely on it.
-- Bench: `router` configuration (classifier cost included in the totals).
-- Router: `--file` and stdin input, fallback to `standard` when the classifier can't run, per-step cost line, exit code 1 when the session errors. The classifier call disables skills, which cut its prompt from about 6k to 1.4k tokens.
-- Router: resumed sessions report cumulative totals in Claude Code, so each run's own cost and usage is now the difference from the previous run. Escalation (haiku → sonnet via `--resume`) tested live.
-- Unit tests for the router (`tests/`, no model calls) and a CI workflow on Ubuntu and Windows, Python 3.9 and 3.13.
-- Claude Code map: fixed a `how_to_apply` line that YAML parsed as a mapping.
-- Benchmark v0 results: 10 Hono tasks. `default` solved 10/10 for $3.31, `max` 10/10 for $13.01, `right-size` 9/10 for $3.77, with no delegation. `accepts-wildcard` prompt corrected and rerun.
-- Harness maps for Cursor and Copilot (advice only: no generated config, no smoke test yet), checked against their docs on 2026-10-18. No Gemini CLI map: it was replaced by Antigravity CLI in June 2026.
-- `tests/test_harnesses.py` validates every harness map: name matches the file, ISO `verified` date, all tiers present, scout read-only.
-- Bench: batch tasks (several independent PRs in one prompt, each scored by its own tests, validated by applying every fix to the shared base) and a `delegate` experiment configuration. First run in `bench/results/2026-10-18-batch/`: forced delegation cost about twice the default.
-- `deep` now starts at medium effort (Claude Code: Opus at medium), with high as the first escalation step at the top tier, in the advisor, `tiers.yaml` and the router. Measured: Opus at medium solved every risk-floor task in the bench, and the router's `deep` at high cost more than the default without solving more. Codex and Antigravity keep high until measured there.
-- Router: `--split` runs a task made of independent requests as one session per part, each on its own tier, with shared instructions passed to every part. Measured on the two batches: $1.29 against $1.03 for the default, so it is an option, not a default.
-- `right-size-defaults` skill (user-invoked): recommends the project's default session model and effort from its safety net and risk profile (the standard tier at medium, or the deep tier at medium when risk dominates or tests are missing; never high or above), and writes `model`/`effortLevel` (Claude Code) or `model`/`model_reasoning_effort` (Codex) at project level on confirmation.
-- Plugin manifest: fixed a mis-encoded dash in the description.
-- Bench v1 prepared, not run: `opus-high` and `sonnet` reference configurations, `--reps`, named task sets (`--set v1`, 11 validated tasks including 4 new hard ones), and a summary with solve rate, mean cost per run and router escalations.
-- Bench: `router-standard` (router pinned to `standard`) solved both batches for $0.41 against $1.03 for the default.
-- `right-size`: always print the decision block first. In 8 of 10 headless bench runs the decision stayed in the model's thinking.
+## 0.3.0 — 2026-10-18
+
+The benchmark showed where the savings are: the model a session starts on, not delegation. This release acts on that.
+
+### Added
+
+- **`/right-size-defaults`** (user-invoked): recommends the project's default session model and effort from its safety net and risk profile (the standard tier at medium, or the deep tier at medium when risk dominates or tests are missing; never high or above) and, on confirmation, writes `model`/`effortLevel` (Claude Code) or `model`/`model_reasoning_effort` (Codex) at project level.
+- **Router mode**, `skills/right-size/scripts/route.py`: one classifier call on the scout model sizes the task, then Claude Code or Codex starts on the tier's model and effort. Headless runs escalate on request by resuming the session one or two tiers up, print a per-step cost line, and fall back to `standard` if the classifier can't run. Supports `--file`/stdin, `--dry-run`, `--tier` and `--split` (one session per independent part; measured as more expensive, so opt-in). Standard library only. The Codex path isn't tested end to end yet.
+- Advice-only harness maps for **Cursor** and **Copilot**, checked against their docs. No Gemini CLI map: it was replaced by Antigravity CLI in June 2026.
+- Unit tests (router, harness maps, skill folders; no model calls) and CI on Ubuntu and Windows, Python 3.9 and 3.13.
+
+### Changed
+
+- **`deep` starts at medium effort** (Claude Code: Opus at medium), with high as the first escalation step at the top tier, in the advisor, `tiers.yaml` and the router. Opus at medium solved every risk-floor task in the benchmark; high cost more without solving more. Codex and Antigravity keep high until measured there.
+- The advisor prints its decision block first, suggests `/model` and `/effort` for inline work on a fresh session (and only `/effort` later, which keeps the cache on current models), and keeps model names out of its text.
+- The `haiku` alias resolves to Claude Haiku 5.5, so scout and mechanical run at `low` effort.
+- README: per-project installs for every harness, measured results up front, the three ways to use right-size.
+
+### Fixed
+
+- A skill's `model` frontmatter didn't switch the main session's model in Claude Code 2.1.302 (headless or interactive), so right-size doesn't rely on it.
+- A Claude Code map line that YAML parsed as a mapping, and a mis-encoded dash in the plugin description.
+
+### Benchmark
+
+- **v0** (10 Hono fixes merged after the training cutoff): `default` 10/10 for $3.31, `max` 10/10 for $13.01, `right-size` 9/10 for $3.77, no delegation.
+- **Batches** (2 prompts × 3 independent bugs): Sonnet session 6/6 for $0.41, `default` $1.03, split $1.29, advisor $1.32, router at Opus high $1.48, forced delegation $2.09.
+- **v1 prepared, not run**: Opus-high and always-Sonnet references, `--reps`, the `v1` task set with four new hard tasks.
 
 ## 0.2.0 — 2026-10-17
 

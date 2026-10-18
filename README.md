@@ -8,7 +8,7 @@
 
 <br/>
 
-**An Agent Skill that decides whether a coding task deserves a subagent, which tier, and which reasoning effort — then applies it in your harness.**
+**Agent Skills and a small router that give every coding task the compute it deserves: the model and effort to start on, when to step up, and when a subagent is (rarely) worth it.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-0d9488.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-7c3aed.svg)](https://agentskills.io)
@@ -31,27 +31,41 @@
 
 ## Why
 
-Coding agents waste tokens in two predictable ways:
+Coding agents waste tokens in predictable ways:
 
 1. **Everything runs on the biggest model at the highest effort**, including renames and one-line fixes.
 2. **Work gets delegated to subagents when doing it inline would be cheaper.** A subagent starts cold: its own system prompt, its own context, re-reading files the main agent already has.
 
-`right-size` sizes the task first, then picks the smallest setup that still gets it done, and tells you when to step up.
+right-size sizes the work, starts on the smallest setup that still gets it done, and steps up only on evidence. What the [benchmark](#benchmark) has measured so far, on real bug fixes scored by their own tests:
+
+| Finding | Measured |
+|---|---|
+| Maximum effort buys nothing on ordinary fixes | Opus at `max`: **3.9× the cost, 5.3× the time**, same 10/10 solved |
+| A cheaper session model is where the saving is | Whole session on Sonnet: **60% cheaper, ~3× faster** than the Opus default, same 6/6 bugs solved |
+| Subagents rarely pay off on small, related fixes | Forcing delegation: **about 2× the cost** of doing it inline |
+
+These are single runs on one repo; [benchmark v1](bench/README.md#v1-prepared-not-run-yet), with repetitions and harder tasks, is prepared.
+
+**Three ways to use it**
+
+- ⚙️ **`/right-size-defaults`** sets the model and effort your sessions start on, from the project's tests and risk profile. Most of the measured saving comes from here.
+- 🧭 **Router mode** (`route.py`) sizes a task before the session starts, launches it on that tier's model and effort, and escalates if the session gets stuck.
+- 💬 **The `right-size` advisor** sizes work inside a session: inline or subagent, which tier, which effort, and when to step up.
 
 ```
-right-size: delegate=no · tier=deep · effort=high
+right-size: delegate=no · tier=deep · effort=medium
 why: auth + users schema change (risk floor → deep), no tests, ~3 files
-apply: inline; run the session on opus (/model opus) with /effort high (claude-code)
-escalate if: deep attempt fails → fable/xhigh, only after you confirm
+apply: inline; run the session on opus (/model opus) at medium effort (claude-code)
+escalate if: a verifiable failure → /effort high; past deep only after you confirm
 ```
 
 **What makes it different**
 
 - 🧭 **It can say "don't delegate".** Inline is the default; a subagent has to earn its start-up cost.
-- 🔌 **Multi-harness.** One decision, translated into each agent's native config: Claude Code, Codex, Antigravity, with more on the way.
-- 🛡️ **Risk-aware, not keyword-based.** Auth, payments, migrations and public APIs start at the top tier, however small the diff. Read-only questions about them stay cheap.
-- 📈 **Escalates on evidence.** Start low when tests exist; step up one tier on a verifiable failure, two on a reasoning failure.
-- 📏 **Measured, not claimed.** A reproducible benchmark is part of the repo, including the cases where right-size makes things worse.
+- 🔌 **Multi-harness.** One decision, translated into each agent's native config: Claude Code and Codex, with advice-only maps for Antigravity, Cursor and Copilot.
+- 🛡️ **Risk-aware, not keyword-based.** Auth, payments, migrations and public APIs go to the top tier, however small the diff. Read-only questions about them stay cheap.
+- 📈 **Escalates on evidence.** Start low when tests exist; step up one tier on a verifiable failure, two on a reasoning failure, and raise effort before going past the top tier.
+- 📏 **Measured, not claimed.** The benchmark is in the repo, including every case where right-size made things worse.
 
 ## Install
 
@@ -97,7 +111,7 @@ npx skills@latest add ciroperf/right-size -a codex
 </details>
 
 <details>
-<summary><strong>Antigravity, Cursor, Copilot, Gemini CLI and others</strong> (manual updates)</summary>
+<summary><strong>Antigravity, Cursor, Copilot and others</strong> (manual updates)</summary>
 
 Just this project (the default when run inside a repo):
 
@@ -115,7 +129,7 @@ Global: add `-g`. Pick agents with `-a`, e.g. `-a cursor`. Update later with `np
 Download from the [latest release](https://github.com/ciroperf/right-size/releases/latest):
 
 - `right-size.skill`: upload it in Claude.ai under **Settings → Capabilities → Skills**.
-- `right-size-vX.Y.Z.zip`: both skills. Copy the `skills/` folders into your agent's skills directory (for example `.claude/skills/` or `.agents/skills/`), keeping them side by side.
+- `right-size-vX.Y.Z.zip`: all three skills. Copy the `skills/` folders into your agent's skills directory (for example `.claude/skills/` or `.agents/skills/`), keeping them side by side.
 
 </details>
 
@@ -328,7 +342,22 @@ What it shows, regressions included:
 - **One regression:** `trie-suffix-wildcard` failed under right-size, with 298 of 299 tests passing. It ran inline on the same model and effort as `default`, so this is most likely run-to-run variance. A single run per configuration can't prove it.
 - **The lesson:** inside a session, advice alone can't save on small fixes, because the session keeps its model. That's why [router mode](#router-mode-size-the-whole-session) exists.
 
-Next, benchmark v1: the `router` configuration, tasks where delegation can pay off (several independent tickets, large reading jobs), and three runs per configuration to measure variance.
+**Batches, 2026-10-18:** two prompts with three independent Hono bugs each, every bug scored by its own PR's tests. One run per configuration. Records in [`bench/results/2026-10-18-batch/`](bench/results/2026-10-18-batch/).
+
+| Config | Bugs solved | Total cost | Total time |
+|---|---|---|---|
+| `router-standard` (whole session on Sonnet, medium) | 6/6 | **$0.41** | 1 min |
+| `default` (Opus 5.5, medium) | 6/6 | $1.03 | 3 min |
+| `router-split` (one session per bug, each on its own tier) | 6/6 | $1.29 | 4 min |
+| `right-size` (advisor; chose inline) | 6/6 | $1.32 | 3 min |
+| `router` (risk floor sent both batches to Opus at high effort) | 6/6 | $1.48 | 4 min |
+| `delegate` (experiment: every bug forced onto a subagent) | 6/6 | $2.09 | 4 min |
+
+- **The saving is the session model.** Sonnet solved all six, including the two security fixes, for 60% less than the default.
+- **Subagents didn't pay.** The Haiku and Sonnet subagents were cheap, but the Opus session's briefing and review, plus security parts sent to a cold Opus subagent, doubled the cost. The advisor's choice to stay inline was right.
+- **What changed because of it:** the `deep` tier now starts at medium effort, with high as its first escalation step, and `/right-size-defaults` exists.
+
+Next, [benchmark v1](bench/README.md#v1-prepared-not-run-yet): Opus at high effort and always-Sonnet as references against the router, four harder tasks where a cheaper model should fail, and three runs per configuration. Its question is whether routing beats simply starting on Sonnet.
 
 One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pass and failed in all three configurations. It was corrected and all three reran; the note is in [`bench/tasks/hono.yaml`](bench/tasks/hono.yaml).
 
@@ -337,7 +366,7 @@ One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pa
 <details>
 <summary><strong>Does it replace a model router or proxy?</strong></summary>
 
-No. It works at the agent level, with the subagents and settings your harness already has. API-level routers such as claude-code-router or OpenRouter are complementary.
+No. Router mode only picks the model and effort a harness session starts with, using the harness's own CLI flags; it never sits between the agent and the API. API-level routers such as claude-code-router or OpenRouter are complementary.
 
 </details>
 
@@ -345,6 +374,13 @@ No. It works at the agent level, with the subagents and settings your harness al
 <summary><strong>How is this different from other routing skills?</strong></summary>
 
 Some skills advise a tier and effort but leave the rest to you. Others hook every subagent spawn in a single harness. right-size also decides *whether* to delegate, maps the decision to native config in several harnesses, and backs it with a public benchmark.
+
+</details>
+
+<details>
+<summary><strong>Can the advisor change the model of the session I'm in?</strong></summary>
+
+No. Inside a running session nothing can switch the main model or effort for you: right-size can only tell you which `/model` or `/effort` to run. That's why the measured savings come from `/right-size-defaults` and router mode, which act before the session starts.
 
 </details>
 
@@ -363,9 +399,11 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 - [x] `right-size-defaults`: recommend and set the project's default model and effort
 - [x] Router mode: pick the session's model and effort before it starts (`scripts/route.py`)
 - [x] Benchmark v0: one repo, one harness ([results](#benchmark))
+- [x] Batch experiments: delegation, split and pinned-tier routing ([results](#benchmark))
 - [x] Cursor and Copilot maps (advice only)
 - [ ] Generated config and smoke tests for Antigravity, Cursor and Copilot
-- [ ] Benchmark v1: Claude Code + Codex, published results
+- [ ] Benchmark v1: router vs always-Sonnet and Opus high, harder tasks, three runs each (prepared)
+- [ ] Codex end-to-end runs of the router and benchmark
 
 ## Contributing
 
