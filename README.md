@@ -119,6 +119,14 @@ Download from the [latest release](https://github.com/ciroperf/right-size/releas
 
 </details>
 
+### Recommended: set the project's default model and effort
+
+```text
+> /right-size-defaults
+```
+
+It checks the project's safety net and risk profile, recommends the model and effort new sessions should start on, and writes them on your confirmation (`model` and `effortLevel` in `.claude/settings.local.json` or `.claude/settings.json`; `model` and `model_reasoning_effort` in `.codex/config.toml`). It never picks `high` or above as a default: those are escalation steps. This is where most of the measured saving comes from (see [Benchmark](#benchmark)).
+
 ### Optional: generate the subagents
 
 ```text
@@ -352,6 +360,7 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 - [x] Advisor skill with tiers, risk floor and escalation
 - [x] Harness maps for Claude Code, Codex and Antigravity
 - [x] `right-size-setup`: generate native subagents (`scout`, `mechanical`, `standard`, `deep`) for Claude Code and Codex
+- [x] `right-size-defaults`: recommend and set the project's default model and effort
 - [x] Router mode: pick the session's model and effort before it starts (`scripts/route.py`)
 - [x] Benchmark v0: one repo, one harness ([results](#benchmark))
 - [x] Cursor and Copilot maps (advice only)

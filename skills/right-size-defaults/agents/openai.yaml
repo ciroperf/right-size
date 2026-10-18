@@ -1,0 +1,5 @@
+interface:
+  display_name: "Right Size Defaults"
+  short_description: "Recommend and set this project's default model and reasoning effort."
+policy:
+  allow_implicit_invocation: false

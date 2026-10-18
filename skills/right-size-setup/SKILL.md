@@ -15,7 +15,7 @@ This creates one subagent per delegating tier, so that when the `right-size` ski
 3. **Fill the templates** in `templates/<harness>/` from this skill's folder, one file per tier:
    - `{{model}}` → the tier's `model`.
    - `{{effort}}` (Codex) → the tier's `effort`.
-   - `{{effort_line}}` (Claude Code) → `effort: <value>` plus a newline, or an empty string when the tier's effort is `null` (some models, such as Haiku 4.5, have no effort setting).
+   - `{{effort_line}}` (Claude Code) → `effort: <value>` plus a newline, or an empty string when the tier's effort is `null` (some models have no effort setting).
 
    Keep the rest of each template unchanged.
 

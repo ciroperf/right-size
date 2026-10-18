@@ -48,9 +48,9 @@ apply: inline; keep session effort (claude-code)
 escalate if: tests fail → standard/medium
 ```
 
-When delegating, `apply` names the agent or model to use, e.g. `apply: right-size-scout (haiku)` or `apply: spawn with model gpt-6-luna, effort low`.
+When delegating, `apply` names the agent or model to use, with the model taken from the harness map, e.g. `apply: right-size-scout (<scout model>)` or `apply: spawn with model <scout model>, effort low`.
 
-When the work stays inline and the session has barely started, the cheapest move is often to switch the session itself to the tier's model and effort. You can't switch it yourself, so say it in `apply`, e.g. `apply: inline; switch now with /model sonnet and /effort medium (session is fresh)`. Effort changes are cheap at any point on models whose cache survives them (see the harness notes). A model switch re-reads the whole conversation uncached, so suggest it only while the context is still small.
+When the work stays inline and the session has barely started, the cheapest move is often to switch the session itself to the tier's model and effort. You can't switch it yourself, so say it in `apply`, e.g. `apply: inline; switch now with /model <standard model> and /effort medium (session is fresh)`. Effort changes are cheap at any point on models whose cache survives them (see the harness notes). A model switch re-reads the whole conversation uncached, so suggest it only while the context is still small.
 
 When sizing several tickets or subtasks at once (for example before fanning out an implementation plan), write one `right-size:` line per item with a short `why`, followed by a single shared `escalate if:` line when they share a rule.
 
