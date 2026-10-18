@@ -35,6 +35,9 @@ TIMEOUT_S = 40 * 60
 CONFIGS = {
     "default": {"model": "opus", "effort": None, "right_size": False},
     "max": {"model": "opus", "effort": "max", "right_size": False},
+    # v1 references: Opus at high effort (a common manual setting) and always Sonnet.
+    "opus-high": {"model": "opus", "effort": "high", "right_size": False},
+    "sonnet": {"model": "sonnet", "effort": None, "right_size": False},
     "right-size": {"model": "opus", "effort": None, "right_size": True},
     # The router picks model and effort for the whole session before it starts
     # (skills/right-size/scripts/route.py), then escalates on request.
@@ -77,8 +80,10 @@ def sh(cmd, cwd=WORK, check=True, timeout=None, input=None):
     )
 
 
-def load_tasks(only=None):
+def load_tasks(only=None, task_set=None):
     spec = yaml.safe_load((BENCH / "tasks" / "hono.yaml").read_text(encoding="utf-8"))
+    if task_set:
+        only = ",".join(spec["sets"][task_set])
     by_id = {t["id"]: t for t in spec["tasks"]}
     for t in spec.get("batches", []):
         # A batch is several single-PR tasks in one prompt, on a commit where
@@ -217,8 +222,9 @@ def run_router(task, log_dir, tier=None, split=False):
     }, False
 
 
-def run_one(task, name, out_dir):
+def run_one(task, name, out_dir, rep=None):
     cfg = CONFIGS[name]
+    stem = f"{task['id']}__{name}" + (f"__r{rep}" if rep else "")
     files = [f for u in units(task) for f in test_files(u)]
     checkout(base_rev(task))
     if cfg["right_size"]:
@@ -226,10 +232,10 @@ def run_one(task, name, out_dir):
 
     raw = RAW / out_dir.name
     raw.mkdir(parents=True, exist_ok=True)
-    stream_path = raw / f"{task['id']}__{name}.jsonl"
+    stream_path = raw / f"{stem}.jsonl"
     started = time.time()
     if cfg.get("router"):
-        result, timed_out = run_router(task, raw / f"{task['id']}__{name}", cfg.get("tier"), cfg.get("split"))
+        result, timed_out = run_router(task, raw / stem, cfg.get("tier"), cfg.get("split"))
     else:
         try:
             r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,
@@ -254,7 +260,7 @@ def run_one(task, name, out_dir):
         raise SystemExit(f"rate limited on {task['id']} / {name}: {result.get('result')}")
 
     diff = sh(["git", "diff", "--", ".", ":(exclude)*.test.ts", ":(exclude)*.test.tsx"], check=False).stdout
-    (raw / f"{task['id']}__{name}.diff").write_text(diff, encoding="utf-8")
+    (raw / f"{stem}.diff").write_text(diff, encoding="utf-8")
 
     # Score with the PRs' own tests, overwriting whatever the agent did to them.
     scores = score(task)
@@ -262,7 +268,7 @@ def run_one(task, name, out_dir):
     test_log = "\n".join(log[-1500 // len(scores):] for _, log in scores.values())
 
     record = {
-        "task": task["id"], "pr": task["pr"], "config": name, "expected_tier": task["expected_tier"],
+        "task": task["id"], "pr": task["pr"], "config": name, "rep": rep, "expected_tier": task["expected_tier"],
         "solved": solved and not timed_out, "timed_out": timed_out, "wall_s": round(wall, 1),
         "is_error": result.get("is_error"), "num_turns": result.get("num_turns"),
         "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
@@ -273,7 +279,7 @@ def run_one(task, name, out_dir):
         "parts_solved": {k: ok for k, (ok, _) in scores.items()} if task.get("parts") else None,
         "test_files": files, "test_tail": test_log[-1500:],
     }
-    (out_dir / f"{task['id']}__{name}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+    (out_dir / f"{stem}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
     return record
 
 
@@ -301,7 +307,7 @@ def validate_batch(t):
 
 def cmd_validate(args):
     ok = True
-    for t in load_tasks(args.tasks):
+    for t in load_tasks(args.tasks, args.set):
         if t.get("parts"):
             ok &= validate_batch(t)
             continue
@@ -334,14 +340,20 @@ def cmd_run(args):
         if prev.get("claude_version") not in (None, meta["claude_version"]):
             meta["claude_version"] = f"{prev['claude_version']} / {meta['claude_version']}"
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    for t in load_tasks(args.tasks):
-        for name in configs:  # interleave configs per task to spread time-of-day effects
-            if (out / f"{t['id']}__{name}.json").exists() and not args.force:
-                print(f"skip {t['id']} {name} (done)")
-                continue
-            rec = run_one(t, name, out)
-            print(f"{t['id']:<22} {name:<11} solved={rec['solved']} cost=${rec['cost_usd']} wall={rec['wall_s']}s "
-                  f"subagents={(rec['subagents'] or {}).get('spawned')}", flush=True)
+    tasks = load_tasks(args.tasks, args.set)
+    # Repetitions outermost, configs innermost: every configuration sees each task
+    # at about the same time of day, and a stopped run still leaves complete reps.
+    for r in range(1, args.reps + 1):
+        for t in tasks:
+            for name in configs:
+                rep = r if args.reps > 1 else None
+                stem = f"{t['id']}__{name}" + (f"__r{rep}" if rep else "")
+                if (out / f"{stem}.json").exists() and not args.force:
+                    print(f"skip {stem} (done)")
+                    continue
+                rec = run_one(t, name, out, rep)
+                print(f"{stem:<40} solved={rec['solved']} cost=${rec['cost_usd']:.2f} wall={rec['wall_s']}s "
+                      f"subagents={(rec['subagents'] or {}).get('spawned')}", flush=True)
     sh(["git", "checkout", "-f", "-q", "origin/main"])
     sh(["git", "clean", "-fdq"])
 
@@ -357,6 +369,14 @@ def tokens(mu):
     return t
 
 
+def escalated(r):
+    """Whether a routed run escalated. A split run has one profile per part, so count within parts."""
+    route = r.get("route") or {}
+    if route.get("parts"):
+        return any(len(x["profiles"]) > 1 for x in route["parts"])
+    return len(route.get("profiles") or []) > 1
+
+
 def cmd_summarize(args):
     d = Path(args.dir)
     recs = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(d.glob("*__*.json"))]
@@ -366,17 +386,21 @@ def cmd_summarize(args):
     for task in dict.fromkeys(r["task"] for r in recs):
         cells = []
         for c in configs:
-            r = next((x for x in recs if x["task"] == task and x["config"] == c), None)
-            if not r:
+            rs = [x for x in recs if x["task"] == task and x["config"] == c]
+            if not rs:
                 cells.append("–")
                 continue
-            tk = tokens(r["model_usage"])
-            models = "+".join(sorted(m.split("-")[1] for m in (r["model_usage"] or {})))
-            cells.append(f"{'✅' if r['solved'] else '❌'} ${r['cost_usd'] or 0:.2f} · {tk['total']/1000:.0f}k tok · "
-                         f"{r['wall_s']:.0f}s · {models}")
+            ok = sum(x["solved"] for x in rs)
+            cost = sum(x["cost_usd"] or 0 for x in rs) / len(rs)
+            wall = sum(x["wall_s"] for x in rs) / len(rs)
+            models = "+".join(sorted({m.split("-")[1] for x in rs for m in (x["model_usage"] or {})}))
+            mark = "✅" if ok == len(rs) else ("❌" if ok == 0 else "⚠️")
+            cells.append(f"{mark} {ok}/{len(rs)} · ${cost:.2f} · {wall:.0f}s · {models}")
         exp = next(x["expected_tier"] for x in recs if x["task"] == task)
         lines.append(f"| {task} | {exp} | " + " | ".join(cells) + " |")
-    totals = ["", "| Config | Solved | Total cost | Cost per solved task | Total tokens | Total time |", "|---|---|---|---|---|---|"]
+    lines += ["", "Cells: solved runs / runs · mean cost per run · mean wall time · models used."]
+    totals = ["", "| Config | Solved | Total cost | Cost per solved task | Mean cost per run | Escalations | "
+              "Total tokens | Total time |", "|---|---|---|---|---|---|---|---|"]
     agg = {}
     for c in configs:
         rs = [r for r in recs if r["config"] == c]
@@ -384,9 +408,12 @@ def cmd_summarize(args):
         cost = sum(r["cost_usd"] or 0 for r in rs)
         tok = sum(tokens(r["model_usage"])["total"] for r in rs)
         wall = sum(r["wall_s"] for r in rs)
-        agg[c] = {"runs": len(rs), "solved": solved, "cost_usd": round(cost, 4), "tokens": tok, "wall_s": round(wall, 1)}
+        esc = sum(escalated(r) for r in rs)
+        agg[c] = {"runs": len(rs), "solved": solved, "cost_usd": round(cost, 4), "tokens": tok,
+                  "wall_s": round(wall, 1), "escalations": esc}
         cps = f"${cost / solved:.2f}" if solved else "–"
-        totals.append(f"| {c} | {solved}/{len(rs)} | ${cost:.2f} | {cps} | {tok/1e6:.2f}M | {wall/60:.0f} min |")
+        totals.append(f"| {c} | {solved}/{len(rs)} | ${cost:.2f} | {cps} | ${cost / len(rs):.2f} | "
+                      f"{esc if any(r.get('route') for r in rs) else '–'} | {tok/1e6:.2f}M | {wall/60:.0f} min |")
     md = "\n".join(lines + totals) + "\n"
     (d / "summary.md").write_text(md, encoding="utf-8")
     (d / "summary.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
@@ -397,9 +424,10 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")  # summaries and test logs aren't cp1252-safe
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
-    v = sub.add_parser("validate"); v.add_argument("--tasks")
+    v = sub.add_parser("validate"); v.add_argument("--tasks"); v.add_argument("--set")
     r = sub.add_parser("run"); r.add_argument("--out", required=True); r.add_argument("--configs")
-    r.add_argument("--tasks"); r.add_argument("--force", action="store_true")
+    r.add_argument("--tasks"); r.add_argument("--set"); r.add_argument("--force", action="store_true")
+    r.add_argument("--reps", type=int, default=1)
     s = sub.add_parser("summarize"); s.add_argument("dir")
     args = p.parse_args()
     {"validate": cmd_validate, "run": cmd_run, "summarize": cmd_summarize}[args.cmd](args)

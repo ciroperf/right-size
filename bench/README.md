@@ -24,6 +24,20 @@ Claude Code's default effort on Opus 5.5 is `medium`.
 
 Fable 5.1, the top model, needs extra usage credits on the subscription used for these runs, so `max` uses Opus at the highest effort instead.
 
+## v1 (prepared, not run yet)
+
+Question: does routing beat simply using a cheaper model, and the setting many people use by hand?
+
+- **Configurations:** `default` (Opus 5.5, Claude Code's default medium effort), `opus-high` (Opus at high effort), `sonnet` (always Sonnet 5.5), `router` (the classifier picks the tier, the session escalates on request).
+- **Tasks:** the `v1` set in [`tasks/hono.yaml`](tasks/hono.yaml), 11 in all. There are 5 from v0 (one mechanical, one standard, two small security fixes and the hardest one), the two batches, and 4 harder tasks: a router refactor, JSX arrays across five test files, a new middleware and QUERY caching. All validated.
+- **Repetitions:** 3 per task and configuration, so variance is visible. Reps are the outer loop, and an interrupted run resumes where it stopped.
+
+```bash
+python bench/run.py run --out bench/results/<date>-v1 --set v1 --configs default,opus-high,sonnet,router --reps 3
+```
+
+That is 132 runs. At v0 prices, expect roughly $60–70 at list price and a few hours. On a subscription, a usage limit stops the run cleanly, and the same command resumes it.
+
 ## Running it
 
 ```bash

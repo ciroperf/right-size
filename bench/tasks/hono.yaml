@@ -129,6 +129,69 @@ tasks:
       wildcards `*/*` and `*` keep their current behavior: they fall through to the
       configured default rather than picking a supported value.
 
+  # Hard tasks (added for v1): larger or subtler changes, picked so that a
+  # cheaper model has a real chance to fail and escalation gets exercised.
+
+  - id: regexp-router-unsupported
+    pr: 5171
+    solution: 8a0b18fd
+    expected_tier: deep
+    prompt: |
+      Unlike the other routers, `RegExpRouter` only throws `UnsupportedPathError`
+      when the matcher is built by the first `match()` call, not when the
+      unsupported route is added. Make it report unsupported paths during route
+      registration (`add()`), like the other routers, for example when an ALL route
+      and a specific-method route conflict in either registration order. Routing
+      results, route ordering, method inheritance and the matcher format used by
+      `PreparedRegExpRouter` must not change.
+
+  - id: jsx-array
+    pr: 5179
+    solution: 3feb3551
+    expected_tier: standard
+    prompt: |
+      In `hono/jsx`, a function component that returns an array (for example
+      `const Items = () => [<li>a</li>, <li>b</li>]`) doesn't render correctly,
+      although `hono/jsx/dom` already allows it. A function component should be
+      able to return an array, including nested arrays, arrays containing async
+      components, and async components that return arrays. Strings in the array
+      are escaped as usual. It must work in string rendering, streaming and the
+      jsx-renderer middleware, and a component typed as `FC` must be allowed to
+      return an array.
+
+  - id: method-not-allowed
+    pr: 5132
+    solution: 1f707c56
+    expected_tier: standard
+    prompt: |
+      Add an opt-in middleware at `src/middleware/method-not-allowed/index.ts`,
+      exported as `methodNotAllowed`. Called as `methodNotAllowed({ app,
+      onMethodNotAllowed? })`, it turns a 404 into `405 Method Not Allowed` (body
+      `Method Not Allowed`) with an `Allow` header listing every method the path is
+      registered for, in registration order, when the path exists for other methods.
+      GET routes also allow HEAD. Requests for an allowed method, and paths that
+      don't exist at all, are untouched. `onMethodNotAllowed(c)` replaces the default
+      response. Assign the response to `c.res` rather than throwing, follow Hono's
+      routing for custom and case-sensitive methods, work with sub-apps mounted via
+      `app.route()`, and don't replace a 404 produced by an error handler.
+
+  - id: cache-query
+    pr: 5119
+    solution: 3bc96ba9
+    expected_tier: deep
+    prompt: |
+      The cache middleware only caches GET. Add support for the HTTP QUERY method
+      (a safe method with a request body). A QUERY cache key must depend on the
+      method, a SHA-256 digest of the request body, the Content-Type,
+      Content-Encoding, Content-Language and Content-Location headers, and the
+      configured Vary values, so different bodies or content types never share an
+      entry, and GET and QUERY never share one either (a GET URL must not be able to
+      alias a QUERY key). Reading the body for the key must not consume it for the
+      handler. Add a `maxQueryBodySize` option (64 KiB by default): a body larger
+      than the limit, or one that can't be read, bypasses caching, and a body at
+      exactly the limit is cached. Without Web Crypto, QUERY requests bypass caching
+      while GET keeps working. A custom cache key must not be resolved as a URL.
+
 # Batches: several independent bug reports in one prompt, on a commit where all
 # of them are still present. Each part keeps its own PR's tests as the scorer.
 # They exist to give delegation room to pay off: the parts touch different
@@ -147,3 +210,20 @@ batches:
     expected_tier: standard
     intro: |
       Three independent bug reports came in for this repo. Fix all three.
+
+# Named task sets for `run --set` and `validate --set`.
+sets:
+  # v1: does routing beat "always Sonnet" and "Opus at high effort"? The hard
+  # tasks are where a cheap model should fail and escalation has to earn its keep.
+  v1:
+    - compress-206          # mechanical
+    - content-type-case     # standard
+    - csrf-options          # security, small
+    - jwt-bad-signature     # security, small
+    - trie-suffix-wildcard  # hardest v0 task
+    - regexp-router-unsupported
+    - jsx-array
+    - method-not-allowed
+    - cache-query
+    - batch-aug
+    - batch-jul

@@ -4,41 +4,47 @@
     "solved": 2,
     "cost_usd": 1.0251,
     "tokens": 1339667,
-    "wall_s": 171.2
+    "wall_s": 171.2,
+    "escalations": 0
   },
   "delegate": {
     "runs": 2,
     "solved": 2,
     "cost_usd": 2.0912,
     "tokens": 3104624,
-    "wall_s": 252.8
+    "wall_s": 252.8,
+    "escalations": 0
   },
   "right-size": {
     "runs": 2,
     "solved": 2,
     "cost_usd": 1.3236,
     "tokens": 1552473,
-    "wall_s": 196.2
+    "wall_s": 196.2,
+    "escalations": 0
   },
   "router-split": {
     "runs": 2,
     "solved": 2,
     "cost_usd": 1.2884,
     "tokens": 1938400,
-    "wall_s": 241.1
+    "wall_s": 241.1,
+    "escalations": 0
   },
   "router-standard": {
     "runs": 2,
     "solved": 2,
     "cost_usd": 0.4149,
     "tokens": 619395,
-    "wall_s": 83.3
+    "wall_s": 83.3,
+    "escalations": 0
   },
   "router": {
     "runs": 2,
     "solved": 2,
     "cost_usd": 1.478,
     "tokens": 2082719,
-    "wall_s": 257.2
+    "wall_s": 257.2,
+    "escalations": 0
   }
 }
