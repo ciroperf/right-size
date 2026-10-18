@@ -9,7 +9,7 @@
     {
       "name": "right-size",
       "source": "./",
-      "description": "Decide whether a coding task deserves a subagent, which tier, and which reasoning effort.",
+      "description": "Pick the model, reasoning effort and delegation a coding task deserves, set a project's default model and effort, and apply it in your harness.",
       "category": "engineering",
       "keywords": ["agent-skills", "subagents", "reasoning-effort", "model-routing", "token-cost"]
     }

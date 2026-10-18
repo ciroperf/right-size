@@ -1,6 +1,6 @@
 ---
 name: right-size
-description: Decide how much compute a coding task deserves before doing it — whether to delegate to a subagent or work inline, which tier (inline, scout, mechanical, standard, deep), and which reasoning effort — then apply that choice in the current harness. Use before spawning a subagent, when splitting work into tickets or parallel tasks, when the user asks which model or effort to use, whether something is worth a subagent, or how to save tokens or cost on a task. Also use when another skill is about to fan work out to subagents. Skip it for trivial one-step edits where the answer is obviously "just do it".
+description: Decide how much compute a coding task deserves before doing it: whether to delegate to a subagent or work inline, which tier (inline, scout, mechanical, standard, deep) and which reasoning effort. Then apply that choice in the current harness. Use before spawning a subagent, when splitting work into tickets or parallel tasks, when the user asks which model or effort to use, whether something is worth a subagent, or how to save tokens or cost on a task. Also use when another skill is about to fan work out to subagents. Skip it for trivial one-step edits where the answer is obviously "just do it".
 ---
 
 Most token waste in coding agents comes from two habits: sending everything to the biggest model at the highest effort, and delegating to subagents when doing the work inline would be cheaper. This skill picks the smallest setup that still solves the task, and says when to step up.

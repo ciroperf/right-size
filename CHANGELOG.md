@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-## 0.3.0 — 2026-10-18
+## 0.3.0 - 2026-10-18
 
 The benchmark showed where the savings are: the model a session starts on, not delegation. This release acts on that.
 
@@ -33,14 +33,14 @@ The benchmark showed where the savings are: the model a session starts on, not d
 - **Batches** (2 prompts × 3 independent bugs): Sonnet session 6/6 for $0.41, `default` $1.03, split $1.29, advisor $1.32, router at Opus high $1.48, forced delegation $2.09.
 - **v1 prepared, not run**: Opus-high and always-Sonnet references, `--reps`, the `v1` task set with four new hard tasks.
 
-## 0.2.0 — 2026-10-17
+## 0.2.0 - 2026-10-17
 
 - `right-size-setup` skill (user-invoked): generates `right-size-scout`, `-mechanical`, `-standard` and `-deep` subagents for Claude Code and Codex from the harness maps, asks before overwriting, and warns about Cursor reading those folders.
 - `right-size`: replies are now the decision block plus at most three bullets.
 - `right-size`: read-only lookups that a grep can answer stay inline; `scout` is for large reading jobs.
 - Release workflow: each `v*` tag publishes `right-size-vX.Y.Z.zip` (both skills) and `right-size.skill` (Claude.ai upload).
 
-## 0.1.0 — 2026-10-17
+## 0.1.0 - 2026-10-17
 
 - `right-size` advisor skill: delegate-or-not decision, five tiers, risk floor, escalation ladder and per-project ceiling.
 - Harness maps for Claude Code, Codex and Antigravity, verified against official docs on 2026-10-17.

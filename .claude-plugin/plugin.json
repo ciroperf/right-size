@@ -1,7 +1,7 @@
 {
   "name": "right-size",
   "version": "0.3.0",
-  "description": "Decide how much compute a coding task deserves: delegate or not, which tier and reasoning effort, and which model and effort a project should default to. Then apply it in your harness.",
+  "description": "Pick the model, reasoning effort and delegation a coding task deserves, set a project's default model and effort, and apply it in your harness.",
   "author": {
     "name": "Ciro Perfetto",
     "url": "https://github.com/ciroperf"
