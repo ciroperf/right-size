@@ -63,7 +63,8 @@ To size a task before any session starts, `scripts/route.py` in this skill's fol
 After a failed attempt, step up according to `escalation` in `tiers.yaml`:
 - syntax or tooling error → retry once at the same tier with the error in the brief;
 - verifiable failure (tests red, build broken after a real attempt) → one tier up;
-- reasoning failure (wrong approach, misread spec) → two tiers up.
+- reasoning failure (wrong approach, misread spec) → two tiers up;
+- already at `deep` → raise effort one step, up to high, before anything past `deep`.
 
 Always respect the ceiling. Report each escalation with a fresh `right-size:` line so the user can see where the cost went.
 

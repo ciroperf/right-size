@@ -24,7 +24,7 @@ tiers:
     effort: High
   deep:
     model: pro
-    effort: High
+    effort: High   # tiers.yaml defaults deep to medium (measured on Claude Code); kept High until measured here
 
 beyond_deep: null
 

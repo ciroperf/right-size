@@ -145,6 +145,7 @@ each tier as the profile of the model that runs the session.
 - Ordinary features and fixes -> standard.
 - No tests in the repo -> one tier higher (not for scout).
 - Small but reasoning-heavy -> raise effort one step above the tier's default_effort instead of raising the tier.
+- Risk alone is not a reason to raise effort: the deep tier already covers it.
 - When unsure between two tiers, pick the lower one: the session escalates on failure.
 
 `why` is one line with the two or three facts that drove the choice."""
@@ -230,10 +231,18 @@ def profile(tier, effort, hmap, tiers):
     return {"tier": tier, "model": entry["model"], "effort": effort}
 
 
-def next_profile(cur, steps, top, hmap, tiers):
-    """The profile `steps` tiers above `cur`, or None when `cur` is already at `top`."""
-    i = min(TIERS.index(cur) + steps, TIERS.index(top))
-    return None if i <= TIERS.index(cur) else profile(TIERS[i], None, hmap, tiers)
+def next_profile(p, steps, top, hmap, tiers):
+    """The escalation target from profile `p`, or None when there is nowhere left to go.
+
+    Steps up `steps` tiers within `top`. Already at `top`, it raises effort one
+    step instead, up to high (tiers.yaml escalation.at_top_tier).
+    """
+    i = min(TIERS.index(p["tier"]) + steps, TIERS.index(top))
+    if i > TIERS.index(p["tier"]):
+        return profile(TIERS[i], None, hmap, tiers)
+    if p["effort"] in EFFORTS and EFFORTS.index(p["effort"]) < EFFORTS.index("high"):
+        return {**p, "effort": EFFORTS[EFFORTS.index(p["effort"]) + 1]}
+    return None
 
 
 def cap(tier, max_tier):
@@ -383,7 +392,7 @@ def main():
     top = facts["max_tier"] or "deep"
 
     why = decision["why"] + (f" (capped at max_tier={top})" if capped else "")
-    nxt = next_profile(tier, 1, top, hmap, tiers)
+    nxt = next_profile(p, 1, top, hmap, tiers)
     sys_note = note(p, why, nxt, interactive=not args.headless)
     cmd = launch_cmd(args.harness, p, task, extra, sys_note, args.headless)
 
@@ -416,7 +425,7 @@ def main():
         if attempt == args.max_escalations or not sid:
             sys.stderr.write(f"right-size: escalation requested ({reason}) but the escalation limit was reached\n")
             break
-        up = next_profile(p["tier"], 2 if m.group(1).lower() == "reasoning" else 1, top, hmap, tiers)
+        up = next_profile(p, 2 if m.group(1).lower() == "reasoning" else 1, top, hmap, tiers)
         if up is None:
             sys.stderr.write(f"right-size: escalation requested ({reason}) but {p['tier']} is the ceiling; "
                              f"rerun with --tier or raise max_tier to go further\n")
@@ -424,7 +433,7 @@ def main():
         sys.stderr.write(f"right-size: escalate · {p['tier']} → {up['tier']} ({up['model']}, effort "
                          f"{up['effort'] or 'default'}) · {reason}\n")
         p = up
-        sys_note = note(p, f"escalated after: {reason}", next_profile(p["tier"], 1, top, hmap, tiers),
+        sys_note = note(p, f"escalated after: {reason}", next_profile(p, 1, top, hmap, tiers),
                         interactive=False)
         prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
                   f"{reason}. Continue the task from where it stopped.")

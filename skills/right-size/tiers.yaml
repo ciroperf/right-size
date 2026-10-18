@@ -68,7 +68,10 @@ tiers:
     examples:
       - Architecture changes, security review, auth, data migrations, payments.
       - Concurrency bugs, performance regressions with unclear causes.
-    default_effort: high
+    # Measured 2026-10-18 (bench/results): the top model at medium effort solved
+    # every risk-floor task, and high effort cost more without solving more.
+    # High is the first escalation step at this tier.
+    default_effort: medium
 
 # Any task that changes code in these areas starts at deep, regardless of size.
 # Read-only questions about them stay at scout: reading can't break anything.
@@ -110,6 +113,8 @@ escalation:
   syntax_or_tooling_failure: retry once at the same tier with the error in the brief
   verifiable_failure: +1 tier   # tests red, build broken after a real attempt
   reasoning_failure: +2 tiers   # wrong approach, misread spec, plausible but wrong output
+  # At the top tier, raise effort one step (up to high) before going past it.
+  at_top_tier: raise effort to high, then ask before going past deep
 
 ceiling:
   # A project can cap the tier by setting max_tier in .right-size.yaml at the

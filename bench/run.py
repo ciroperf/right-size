@@ -39,6 +39,8 @@ CONFIGS = {
     # The router picks model and effort for the whole session before it starts
     # (skills/right-size/scripts/route.py), then escalates on request.
     "router": {"model": None, "effort": None, "right_size": False, "router": True},
+    # Experiment: the router with its tier pinned, to see what a whole session on that tier costs.
+    "router-standard": {"model": None, "effort": None, "right_size": False, "router": True, "tier": "standard"},
     # Experiment, not a product setting: always delegate each independent part
     # to the right-size subagent for its tier, to measure what delegation costs.
     "delegate": {"model": "opus", "effort": None, "right_size": True, "nudge": "delegate"},
@@ -166,14 +168,14 @@ def claude_cmd(cfg):
     return cmd
 
 
-def run_router(task, log_dir):
+def run_router(task, log_dir, tier=None):
     """Run a task through route.py and fold its runs into one result-like dict.
 
     Cost includes the classifier call. Sessions must persist so that an
     escalation can resume them, so --no-session-persistence is left out.
     """
     cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
-           task["prompt"] + PROMPT_SUFFIX, "--",
+           *(["--tier", tier] if tier else []), task["prompt"] + PROMPT_SUFFIX, "--",
            "--setting-sources", "project", "--strict-mcp-config", "--permission-mode", "dontAsk",
            "--allowedTools", *ALLOWED_TOOLS]
     try:
@@ -221,7 +223,7 @@ def run_one(task, name, out_dir):
     stream_path = raw / f"{task['id']}__{name}.jsonl"
     started = time.time()
     if cfg.get("router"):
-        result, timed_out = run_router(task, raw / f"{task['id']}__{name}")
+        result, timed_out = run_router(task, raw / f"{task['id']}__{name}", cfg.get("tier"))
     else:
         try:
             r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,

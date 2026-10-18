@@ -20,6 +20,13 @@
     "tokens": 1552473,
     "wall_s": 196.2
   },
+  "router-standard": {
+    "runs": 2,
+    "solved": 2,
+    "cost_usd": 0.4149,
+    "tokens": 619395,
+    "wall_s": 83.3
+  },
   "router": {
     "runs": 2,
     "solved": 2,

@@ -27,7 +27,7 @@ tiers:
     agent: right_size_standard
   deep:
     model: gpt-6-astra
-    effort: high
+    effort: high   # tiers.yaml defaults deep to medium (measured on Claude Code); kept high until measured on Codex
     agent: right_size_deep
 
 beyond_deep:

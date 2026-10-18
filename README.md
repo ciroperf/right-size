@@ -189,7 +189,7 @@ python .claude/skills/right-size/scripts/route.py "fix the failing date parsing 
 ```
 right-size: route · tier=standard · model=sonnet · effort=medium
 why: bug fix with a clear reproduction, tests present, not a risk area
-escalate if: a real attempt fails → deep (opus, effort high)
+escalate if: a real attempt fails → deep (opus, effort medium)
 ```
 
 The script ships inside the skill folder and needs only Python 3.9+, no packages. Where it lives depends on how you installed right-size; inside a session, asking "give me the right-size router command" makes the skill print it with the full path.
@@ -257,7 +257,7 @@ Model names live only in the harness maps. The skill reasons in abstract tiers:
 | `scout` | Read and search only | `haiku` · low | `gpt-6-luna` · low | Flash · Low |
 | `mechanical` | Renames, boilerplate, import updates | `haiku` · low | `gpt-6-luna` · low | Flash · Low |
 | `standard` | Ordinary features and fixes | `sonnet` · medium | `gpt-6.1-sol` · medium | Flash · High |
-| `deep` | Auth, security, migrations, payments, concurrency | `opus` · high | `gpt-6-astra` · high | Pro · High |
+| `deep` | Auth, security, migrations, payments, concurrency | `opus` · medium | `gpt-6-astra` · high | Pro · High |
 
 Advice-only maps, with no generated config yet:
 

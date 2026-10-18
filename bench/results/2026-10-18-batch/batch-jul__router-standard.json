@@ -1,0 +1,84 @@
+{
+  "task": "batch-jul",
+  "pr": [
+    5067,
+    5020,
+    5147
+  ],
+  "config": "router-standard",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 44.6,
+  "is_error": false,
+  "num_turns": 17,
+  "duration_ms": 43192,
+  "cost_usd": 0.173165,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 4402,
+      "cacheReadInputTokens": 315734,
+      "cacheCreationInputTokens": 24386,
+      "webSearchRequests": 0,
+      "costUSD": 0.1731654,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 243
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user"
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ]
+  },
+  "diff_lines": 26,
+  "parts_solved": {
+    "content-type-case": true,
+    "compress-206": true,
+    "secure-headers-csp": true
+  },
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts",
+    "src/middleware/compress/index.test.ts",
+    "src/middleware/secure-headers/index.test.ts"
+  ],
+  "test_tail": "100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 124               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.98% ( 663/1411 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.62% ( 643/1350 )\n================================================================================\n\n30.76 |   59.37 | ...42,61-66,79-95 \n  url.ts           |    20.4 |    10.52 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 43.59% ( 613/1406 )\nBranches     : 34.19% ( 291/851 )\nFunctions    : 40.78% ( 104/255 )\nLines        : 44.11% ( 592/1342 )\n================================================================================\n\n    0 |    8.97 | ...30-139,149-180 \n  url.ts           |    20.4 |     11.4 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 40.42% ( 496/1227 )\nBranches     : 32.72% ( 234/715 )\nFunctions    : 40.65% ( 100/246 )\nLines        : 40.86% ( 474/1160 )\n================================================================================\n"
+}

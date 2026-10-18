@@ -26,7 +26,7 @@ tiers:
     agent: right-size-standard
   deep:
     model: opus
-    effort: high
+    effort: medium   # measured 2026-10-18: medium solved every risk-floor task; high is the escalation step
     agent: right-size-deep
 
 # Past deep: only after deep failed, and only with the user's confirmation.

@@ -67,12 +67,17 @@ class Profiles(unittest.TestCase):
         self.assertEqual(p("mechanical", "high"), "medium")  # two steps up is clamped
 
     def test_next_profile_respects_the_ceiling(self):
-        nxt = lambda cur, steps, top: route.next_profile(cur, steps, top, CLAUDE, TIERS_YAML)
+        def nxt(tier, steps, top, effort=None):
+            p = route.profile(tier, effort, CLAUDE, TIERS_YAML)
+            return route.next_profile(p, steps, top, CLAUDE, TIERS_YAML)
         self.assertEqual(nxt("mechanical", 1, "deep")["tier"], "standard")
         self.assertEqual(nxt("mechanical", 2, "deep")["tier"], "deep")
         self.assertEqual(nxt("mechanical", 2, "standard")["tier"], "standard")
-        self.assertIsNone(nxt("deep", 1, "deep"))
-        self.assertIsNone(nxt("standard", 1, "standard"))
+        # At the top tier, effort goes up one step before giving up.
+        self.assertEqual(nxt("deep", 1, "deep"), {"tier": "deep", "model": "opus", "effort": "high"})
+        self.assertIsNone(nxt("deep", 1, "deep", effort="high"))
+        self.assertEqual(nxt("standard", 1, "standard")["effort"], "high")
+        self.assertIsNone(nxt("standard", 1, "standard", effort="high"))
 
     def test_cap(self):
         self.assertEqual(route.cap("deep", "standard"), ("standard", True))
