@@ -128,3 +128,22 @@ tasks:
       quality value an exact match takes precedence over a wildcard match. The global
       wildcards `*/*` and `*` keep their current behavior: they fall through to the
       configured default rather than picking a supported value.
+
+# Batches: several independent bug reports in one prompt, on a commit where all
+# of them are still present. Each part keeps its own PR's tests as the scorer.
+# They exist to give delegation room to pay off: the parts touch different
+# modules and can be fixed in parallel.
+batches:
+  - id: batch-aug
+    base: a19462879716e7b600daed8eb3a1b2af4bd68feb   # parent of #5250, before all three fixes
+    parts: [csrf-options, etag-ows, accepts-wildcard]
+    expected_tier: standard
+    intro: |
+      Three independent bug reports came in for this repo. Fix all three.
+
+  - id: batch-jul
+    base: 9728702911073aec5a63a3ba2840b7240e5d3205   # parent of #5067, before all three fixes
+    parts: [content-type-case, compress-206, secure-headers-csp]
+    expected_tier: standard
+    intro: |
+      Three independent bug reports came in for this repo. Fix all three.

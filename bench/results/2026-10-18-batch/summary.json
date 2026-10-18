@@ -1,0 +1,23 @@
+{
+  "default": {
+    "runs": 2,
+    "solved": 2,
+    "cost_usd": 1.0251,
+    "tokens": 1339667,
+    "wall_s": 171.2
+  },
+  "delegate": {
+    "runs": 2,
+    "solved": 2,
+    "cost_usd": 2.0912,
+    "tokens": 3104624,
+    "wall_s": 252.8
+  },
+  "right-size": {
+    "runs": 2,
+    "solved": 2,
+    "cost_usd": 1.3236,
+    "tokens": 1552473,
+    "wall_s": 196.2
+  }
+}

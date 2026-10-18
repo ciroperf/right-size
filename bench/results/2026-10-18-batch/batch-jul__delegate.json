@@ -1,0 +1,90 @@
+{
+  "task": "batch-jul",
+  "pr": [
+    5067,
+    5020,
+    5147
+  ],
+  "config": "delegate",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 155.7,
+  "is_error": false,
+  "num_turns": 10,
+  "duration_ms": 154363,
+  "cost_usd": 1.1333024,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 38,
+      "outputTokens": 11962,
+      "cacheReadInputTokens": 854579,
+      "cacheCreationInputTokens": 85041,
+      "webSearchRequests": 0,
+      "costUSD": 0.9141127999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1755,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 6639,
+      "cacheReadInputTokens": 541296,
+      "cacheCreationInputTokens": 39444,
+      "webSearchRequests": 0,
+      "costUSD": 0.21918960000000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 178,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 3,
+    "requested": {
+      "background": 0,
+      "foreground": 1,
+      "unset": 2
+    },
+    "started_in_background": 2,
+    "max_depth": 1,
+    "spawned_by_subagents": 0,
+    "completed": 3,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {
+      "right-size-standard": 2,
+      "right-size-deep": 1
+    }
+  },
+  "permission_denials": 4,
+  "route": null,
+  "diff_lines": 30,
+  "parts_solved": {
+    "content-type-case": true,
+    "compress-206": true,
+    "secure-headers-csp": true
+  },
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts",
+    "src/middleware/compress/index.test.ts",
+    "src/middleware/secure-headers/index.test.ts"
+  ],
+  "test_tail": "100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 124               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.95% ( 662/1410 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.59% ( 642/1349 )\n================================================================================\n\n30.76 |   59.37 | ...42,61-66,79-95 \n  url.ts           |    20.4 |    10.52 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 43.62% ( 613/1405 )\nBranches     : 34.19% ( 291/851 )\nFunctions    : 40.78% ( 104/255 )\nLines        : 44.14% ( 592/1341 )\n================================================================================\n\n    0 |    8.97 | ...30-139,149-180 \n  url.ts           |    20.4 |     11.4 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 40.55% ( 498/1228 )\nBranches     : 32.72% ( 234/715 )\nFunctions    : 40.65% ( 100/246 )\nLines        : 40.99% ( 476/1161 )\n================================================================================\n"
+}

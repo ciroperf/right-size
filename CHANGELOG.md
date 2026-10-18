@@ -18,6 +18,7 @@ All notable changes to this project are documented here.
 - Benchmark v0 results: 10 Hono tasks. `default` solved 10/10 for $3.31, `max` 10/10 for $13.01, `right-size` 9/10 for $3.77, with no delegation. `accepts-wildcard` prompt corrected and rerun.
 - Harness maps for Cursor and Copilot (advice only: no generated config, no smoke test yet), checked against their docs on 2026-10-18. No Gemini CLI map: it was replaced by Antigravity CLI in June 2026.
 - `tests/test_harnesses.py` validates every harness map: name matches the file, ISO `verified` date, all tiers present, scout read-only.
+- Bench: batch tasks (several independent PRs in one prompt, each scored by its own tests, validated by applying every fix to the shared base) and a `delegate` experiment configuration. First run in `bench/results/2026-10-18-batch/`: forced delegation cost about twice the default.
 - `right-size`: always print the decision block first. In 8 of 10 headless bench runs the decision stayed in the model's thinking.
 
 ## 0.2.0 — 2026-10-17

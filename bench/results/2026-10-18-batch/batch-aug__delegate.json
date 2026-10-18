@@ -1,0 +1,103 @@
+{
+  "task": "batch-aug",
+  "pr": [
+    5250,
+    5222,
+    5255
+  ],
+  "config": "delegate",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 97.1,
+  "is_error": false,
+  "num_turns": 3,
+  "duration_ms": 17749,
+  "cost_usd": 0.9579180649999999,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 52,
+      "outputTokens": 7771,
+      "cacheReadInputTokens": 953696,
+      "cacheCreationInputTokens": 72846,
+      "webSearchRequests": 0,
+      "costUSD": 0.7963762,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1020,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    },
+    "claude-haiku-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 2158,
+      "cacheReadInputTokens": 219854,
+      "cacheCreationInputTokens": 39545,
+      "webSearchRequests": 0,
+      "costUSD": 0.008222064999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 285,
+      "canonicalModel": "claude-haiku-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 2723,
+      "cacheReadInputTokens": 225518,
+      "cacheCreationInputTokens": 41404,
+      "webSearchRequests": 0,
+      "costUSD": 0.1533198,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 255,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 3,
+    "requested": {
+      "background": 3,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 3,
+    "max_depth": 1,
+    "spawned_by_subagents": 0,
+    "completed": 3,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {
+      "right-size-deep": 1,
+      "right-size-mechanical": 1,
+      "right-size-standard": 1
+    }
+  },
+  "permission_denials": 0,
+  "route": null,
+  "diff_lines": 27,
+  "parts_solved": {
+    "csrf-options": true,
+    "etag-ows": true,
+    "accepts-wildcard": true
+  },
+  "test_files": [
+    "src/middleware/csrf/index.test.ts",
+    "src/middleware/etag/index.test.ts",
+    "src/helper/accepts/accepts.test.ts"
+  ],
+  "test_tail": "-|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.9% ( 484/1213 )\nBranches     : 28.16% ( 207/735 )\nFunctions    : 41.22% ( 94/228 )\nLines        : 39.82% ( 460/1155 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n--|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.39% ( 496/1259 )\nBranches     : 29.53% ( 228/772 )\nFunctions    : 34.95% ( 79/226 )\nLines        : 39.71% ( 479/1206 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n----|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 35.94% ( 481/1338 )\nBranches     : 26.8% ( 223/832 )\nFunctions    : 30.6% ( 71/232 )\nLines        : 36.05% ( 463/1284 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

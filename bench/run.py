@@ -39,11 +39,17 @@ CONFIGS = {
     # The router picks model and effort for the whole session before it starts
     # (skills/right-size/scripts/route.py), then escalates on request.
     "router": {"model": None, "effort": None, "right_size": False, "router": True},
+    # Experiment, not a product setting: always delegate each independent part
+    # to the right-size subagent for its tier, to measure what delegation costs.
+    "delegate": {"model": "opus", "effort": None, "right_size": True, "nudge": "delegate"},
 }
 
 ROUTER = ROOT / "skills" / "right-size" / "scripts" / "route.py"
 
 RIGHT_SIZE_NUDGE = "Before starting, size the task with the right-size skill and follow its decision."
+DELEGATE_NUDGE = ("Size each independent part of the task with the right-size skill, then delegate every part "
+                  "to the right-size-* subagent for its tier, in parallel where the parts are independent. "
+                  "Do not fix any part yourself; review and verify the subagents' results.")
 
 ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Glob", "Grep", "Agent", "Skill", "TodoWrite",
@@ -69,16 +75,43 @@ def sh(cmd, cwd=WORK, check=True, timeout=None, input=None):
 
 def load_tasks(only=None):
     spec = yaml.safe_load((BENCH / "tasks" / "hono.yaml").read_text(encoding="utf-8"))
-    tasks = spec["tasks"]
+    by_id = {t["id"]: t for t in spec["tasks"]}
+    for t in spec.get("batches", []):
+        # A batch is several single-PR tasks in one prompt, on a commit where
+        # every bug is still present. Each part is scored with its own PR's tests.
+        t["parts"] = [by_id[i] for i in t["parts"]]
+        t["pr"] = [x["pr"] for x in t["parts"]]
+        t["prompt"] = (t["intro"].strip() + "\n\n" + "\n".join(
+            f"{n}. {x['prompt'].strip()}\n" for n, x in enumerate(t["parts"], 1)))
+    tasks = spec["tasks"] + spec.get("batches", [])
     if only:
         wanted = set(only.split(","))
         tasks = [t for t in tasks if t["id"] in wanted]
     return tasks
 
 
+def units(task):
+    """The single-PR tasks a task is scored on: itself, or a batch's parts."""
+    return task.get("parts") or [task]
+
+
+def base_rev(task):
+    return task["base"] if task.get("parts") else f"{task['solution']}^"
+
+
 def test_files(task):
     out = sh(["git", "diff", "--name-only", f"{task['solution']}^", task["solution"]]).stdout
     return [f for f in out.split() if f.startswith("src/") and (f.endswith(".test.ts") or f.endswith(".test.tsx"))]
+
+
+def score(task):
+    """Copy each unit's PR test files in and run them. Returns {unit id: (solved, log)}."""
+    out = {}
+    for u in units(task):
+        files = test_files(u)
+        sh(["git", "checkout", u["solution"], "--", *files])
+        out[u["id"]] = run_tests(files)
+    return out
 
 
 _installed_lock = None
@@ -129,7 +162,7 @@ def claude_cmd(cfg):
     if cfg["effort"]:
         cmd += ["--effort", cfg["effort"]]
     if cfg["right_size"]:
-        cmd += ["--append-system-prompt", RIGHT_SIZE_NUDGE]
+        cmd += ["--append-system-prompt", DELEGATE_NUDGE if cfg.get("nudge") == "delegate" else RIGHT_SIZE_NUDGE]
     return cmd
 
 
@@ -178,8 +211,8 @@ def run_router(task, log_dir):
 
 def run_one(task, name, out_dir):
     cfg = CONFIGS[name]
-    files = test_files(task)
-    checkout(f"{task['solution']}^")
+    files = [f for u in units(task) for f in test_files(u)]
+    checkout(base_rev(task))
     if cfg["right_size"]:
         install_right_size()
 
@@ -215,9 +248,10 @@ def run_one(task, name, out_dir):
     diff = sh(["git", "diff", "--", ".", ":(exclude)*.test.ts", ":(exclude)*.test.tsx"], check=False).stdout
     (raw / f"{task['id']}__{name}.diff").write_text(diff, encoding="utf-8")
 
-    # Score with the PR's own tests, overwriting whatever the agent did to them.
-    sh(["git", "checkout", task["solution"], "--", *files])
-    solved, test_log = run_tests(files)
+    # Score with the PRs' own tests, overwriting whatever the agent did to them.
+    scores = score(task)
+    solved = all(ok for ok, _ in scores.values())
+    test_log = "\n".join(log[-1500 // len(scores):] for _, log in scores.values())
 
     record = {
         "task": task["id"], "pr": task["pr"], "config": name, "expected_tier": task["expected_tier"],
@@ -228,15 +262,41 @@ def run_one(task, name, out_dir):
         "permission_denials": len(result.get("permission_denials") or []),
         "route": result.get("route"),
         "diff_lines": sum(1 for l in diff.splitlines() if l[:1] in "+-" and l[:3] not in ("+++", "---")),
+        "parts_solved": {k: ok for k, (ok, _) in scores.items()} if task.get("parts") else None,
         "test_files": files, "test_tail": test_log[-1500:],
     }
     (out_dir / f"{task['id']}__{name}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
     return record
 
 
+def validate_batch(t):
+    """At the base every part's tests fail; with every part's own fix applied they pass."""
+    checkout(t["base"])
+    before = score(t)
+    patch = RAW / "validate.patch"  # a file, not stdin: text-mode pipes add CRs on Windows
+    patch.parent.mkdir(parents=True, exist_ok=True)
+    for u in units(t):
+        sh(["git", "diff", f"--output={patch}", f"{u['solution']}^", u["solution"], "--", "src",
+            ":(exclude)*.test.ts", ":(exclude)*.test.tsx"])
+        sh(["git", "apply", str(patch)])
+    after = score(t)
+    valid = True
+    for u in units(t):
+        b, a = before[u["id"]][0], after[u["id"]][0]
+        valid &= (not b) and a
+        print(f"  {u['id']:<20} fail-before={not b} pass-after={a}")
+        if not a:
+            print(after[u["id"]][1][-800:])
+    print(f"{t['id']:<22} {'OK' if valid else 'INVALID'}")
+    return valid
+
+
 def cmd_validate(args):
     ok = True
     for t in load_tasks(args.tasks):
+        if t.get("parts"):
+            ok &= validate_batch(t)
+            continue
         files = test_files(t)
         checkout(f"{t['solution']}^")
         sh(["git", "checkout", t["solution"], "--", *files])
@@ -256,8 +316,15 @@ def cmd_run(args):
     out.mkdir(parents=True, exist_ok=True)
     configs = args.configs.split(",") if args.configs else list(CONFIGS)
     meta = {"started": datetime.now(timezone.utc).isoformat(), "configs": {c: CONFIGS[c] for c in configs},
-            "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE,
+            "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE, "delegate_nudge": DELEGATE_NUDGE,
             "claude_version": sh(["claude", "--version"], check=False).stdout.strip()}
+    if (out / "meta.json").exists():
+        # A later batch of runs into the same folder adds to the record instead of replacing it.
+        prev = json.loads((out / "meta.json").read_text(encoding="utf-8"))
+        meta["started"] = prev.get("started", meta["started"])
+        meta["configs"] = {**prev.get("configs", {}), **meta["configs"]}
+        if prev.get("claude_version") not in (None, meta["claude_version"]):
+            meta["claude_version"] = f"{prev['claude_version']} / {meta['claude_version']}"
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     for t in load_tasks(args.tasks):
         for name in configs:  # interleave configs per task to spread time-of-day effects
