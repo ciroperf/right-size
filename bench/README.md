@@ -40,7 +40,7 @@ Raw transcripts and diffs go to `bench/raw/` (not committed). Per-run records an
 
 - [`results/2026-10-17-v0/`](results/2026-10-17-v0/): 10 tasks × `default`, `max`, `right-size`. See [`summary.md`](results/2026-10-17-v0/summary.md) and the [README](../README.md#benchmark) for the reading.
 
-- [`results/2026-10-18-batch/`](results/2026-10-18-batch/): two batches of three independent Hono fixes in one prompt, `default` vs `right-size`, plus `delegate`, an experiment that forces every part onto the right-size subagent for its tier. All solved 2/2. Totals: `default` $1.03, `right-size` $1.32 (it chose not to delegate), `delegate` $2.09. Haiku and Sonnet subagents were cheap, but the Opus orchestrator's briefing and review, plus security parts sent to the `deep` subagent on Opus at high effort, cost more than doing everything inline.
+- [`results/2026-10-18-batch/`](results/2026-10-18-batch/): two batches of three independent Hono fixes in one prompt, `default` vs `right-size`, plus `delegate`, an experiment that forces every part onto the right-size subagent for its tier. All solved 2/2. Totals: `default` $1.03, `right-size` $1.32 (it chose not to delegate), `delegate` $2.09. Haiku and Sonnet subagents were cheap, but the Opus orchestrator's briefing and review, plus security parts sent to the `deep` subagent on Opus at high effort, cost more than doing everything inline. `router` also solved 2/2 for $1.48: each batch contained one security fix, so the risk floor put the whole session on `deep` (Opus at high effort), above Claude Code's default of medium.
 
 ## Limits
 

@@ -1,0 +1,95 @@
+{
+  "task": "batch-jul",
+  "pr": [
+    5067,
+    5020,
+    5147
+  ],
+  "config": "router",
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 162.9,
+  "is_error": false,
+  "num_turns": 37,
+  "duration_ms": 156068,
+  "cost_usd": 0.87549552,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 590,
+      "cacheReadInputTokens": 912,
+      "cacheCreationInputTokens": 7891,
+      "webSearchRequests": 0,
+      "costUSD": 0.0018825200000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 381
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 44,
+      "outputTokens": 11109,
+      "cacheReadInputTokens": 1332485,
+      "cacheCreationInputTokens": 48095,
+      "webSearchRequests": 0,
+      "costUSD": 0.8736130000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 996
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "high",
+      "risk_area": "security-sensitive code (CSP nonce handling in secure-headers middleware)",
+      "why": "Code changes touch the secure-headers CSP path, a risk_floor area, so deep applies regardless of size; repo has 138 test files, so no safety-net bump, and deep's default effort is high."
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "high"
+      }
+    ]
+  },
+  "diff_lines": 31,
+  "parts_solved": {
+    "content-type-case": true,
+    "compress-206": true,
+    "secure-headers-csp": true
+  },
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts",
+    "src/middleware/compress/index.test.ts",
+    "src/middleware/secure-headers/index.test.ts"
+  ],
+  "test_tail": "100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 125               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.95% ( 662/1410 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.59% ( 642/1349 )\n================================================================================\n\n30.76 |   59.37 | ...42,61-66,79-95 \n  url.ts           |    20.4 |    10.52 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 43.62% ( 613/1405 )\nBranches     : 34.19% ( 291/851 )\nFunctions    : 40.78% ( 104/255 )\nLines        : 44.14% ( 592/1341 )\n================================================================================\n\n    0 |    8.97 | ...30-139,149-180 \n  url.ts           |    20.4 |     11.4 |   15.78 |   20.97 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 40.45% ( 496/1226 )\nBranches     : 32.72% ( 234/715 )\nFunctions    : 40.65% ( 100/246 )\nLines        : 40.89% ( 474/1159 )\n================================================================================\n"
+}

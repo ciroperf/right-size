@@ -19,5 +19,12 @@
     "cost_usd": 1.3236,
     "tokens": 1552473,
     "wall_s": 196.2
+  },
+  "router": {
+    "runs": 2,
+    "solved": 2,
+    "cost_usd": 1.478,
+    "tokens": 2082719,
+    "wall_s": 257.2
   }
 }

@@ -16,6 +16,12 @@
       "effort": null,
       "right_size": true,
       "nudge": "delegate"
+    },
+    "router": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true
     }
   },
   "allowed_tools": [
