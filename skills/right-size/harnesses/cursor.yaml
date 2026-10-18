@@ -1,0 +1,43 @@
+# Tier -> Cursor configuration. Advice only: right-size-setup doesn't generate
+# Cursor agents yet, and no smoke test has checked that a subagent runs on the
+# configured model.
+# Verified against official docs on 2026-10-18:
+#   https://cursor.com/docs/agent/subagents
+#   https://cursor.com/docs/models
+# Model choices are initial and unbenchmarked. Availability depends on plan.
+
+harness: cursor
+verified: 2026-10-18
+
+tiers:
+  inline:
+    apply: Do the work in the main session.
+    effort: session
+  scout:
+    model: composer-2.5
+    effort: low
+    tools: read-only
+  mechanical:
+    model: composer-2.5
+    effort: low
+  standard:
+    model: composer-2.5
+    effort: medium
+  deep:
+    model: "claude-opus-5[effort=high]"
+    effort: high
+
+beyond_deep:
+  model: "claude-opus-5[effort=max]"
+  effort: max
+
+how_to_apply:
+  - Subagents live in .cursor/agents/<name>.md (project) or ~/.cursor/agents/ (user). Frontmatter fields are name, description, model, readonly and is_background; set readonly true for scout.
+  - The model field takes inherit or a model ID, with options in brackets, for example claude-opus-5[effort=high] or claude-opus-5[effort=high,context=300k]. Available options depend on the model.
+  - For inline work, tell the user which model and effort to pick in the model picker.
+
+notes:
+  - Cursor also reads .claude/agents/ and .codex/agents/ (project and user). On a name conflict .cursor/ wins, so Claude or Codex model names in those folders can reach Cursor.
+  - The docs show config IDs composer-2.5 and claude-opus-5 but not one for Opus 5.5, so deep uses the documented claude-opus-5.
+  - Composer 2.5 has a fast variant; the docs only show composer-2.5[fast=false], so the map doesn't rely on fast=true.
+  - The deep and beyond_deep effort values are encoded in the model ID; the effort fields repeat them for the advice text.

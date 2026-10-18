@@ -20,9 +20,8 @@
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-D97757?logo=claude&logoColor=white)](#install)
 [![Codex](https://img.shields.io/badge/Codex-supported-111111)](#install)
 [![Antigravity](https://img.shields.io/badge/Antigravity-advice-4285F4?logo=google&logoColor=white)](#harness-support)
-[![Cursor](https://img.shields.io/badge/Cursor-planned-555555)](#harness-support)
-[![Copilot](https://img.shields.io/badge/Copilot-planned-555555?logo=githubcopilot&logoColor=white)](#harness-support)
-[![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-planned-555555?logo=googlegemini&logoColor=white)](#harness-support)
+[![Cursor](https://img.shields.io/badge/Cursor-advice-555555)](#harness-support)
+[![Copilot](https://img.shields.io/badge/Copilot-advice-555555?logo=githubcopilot&logoColor=white)](#harness-support)
 
 [Install](#install) · [Usage](#usage) · [How it works](#how-it-works) · [Tiers](#tiers) · [Harness support](#harness-support) · [Benchmark](#benchmark) · [FAQ](#faq)
 
@@ -255,20 +254,30 @@ Model names live only in the harness maps. The skill reasons in abstract tiers:
 | Tier | For | Claude Code | Codex | Antigravity |
 |---|---|---|---|---|
 | `inline` | Small changes, files already in context | session model | session model | session model |
-| `scout` | Read and search only | `haiku` | `gpt-6-luna` · low | Flash · Low |
-| `mechanical` | Renames, boilerplate, import updates | `haiku` | `gpt-6-luna` · low | Flash · Low |
+| `scout` | Read and search only | `haiku` · low | `gpt-6-luna` · low | Flash · Low |
+| `mechanical` | Renames, boilerplate, import updates | `haiku` · low | `gpt-6-luna` · low | Flash · Low |
 | `standard` | Ordinary features and fixes | `sonnet` · medium | `gpt-6.1-sol` · medium | Flash · High |
 | `deep` | Auth, security, migrations, payments, concurrency | `opus` · high | `gpt-6-astra` · high | Pro · High |
 
-Mappings were verified against each vendor's docs on 2026-10-17 and are not yet benchmarked. They live in [`skills/right-size/harnesses/`](skills/right-size/harnesses/), and keeping them current is most of this project's maintenance.
+Advice-only maps, with no generated config yet:
+
+| Tier | Cursor | Copilot |
+|---|---|---|
+| `scout`, `mechanical` | `composer-2.5` | Claude Haiku 5.5 |
+| `standard` | `composer-2.5` | Claude Sonnet 5.5 |
+| `deep` | `claude-opus-5[effort=high]` | Claude Opus 5.5 |
+
+Mappings were verified against each vendor's docs (Cursor and Copilot on 2026-10-18, the others on 2026-10-17) and are not yet benchmarked. They live in [`skills/right-size/harnesses/`](skills/right-size/harnesses/), and keeping them current is most of this project's maintenance.
 
 ## Harness support
 
 | Level | Harnesses | What you get |
 |---|---|---|
 | **Full** | Claude Code, Codex | Advice, native config, benchmark |
-| **Config** *(planned)* | Cursor, Copilot, Gemini CLI, Antigravity | Advice, native subagent config, smoke test |
+| **Advice + map** | Antigravity, Cursor, Copilot | Advice with native model names; generated config and a smoke test are planned |
 | **Advice** | Any harness that loads Agent Skills | Advice in tier terms |
+
+Gemini CLI was replaced by Antigravity CLI in June 2026, so it has no map of its own.
 
 ## Configuration
 
@@ -344,7 +353,8 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 - [x] `right-size-setup`: generate native subagents (`scout`, `mechanical`, `standard`, `deep`) for Claude Code and Codex
 - [x] Router mode: pick the session's model and effort before it starts (`scripts/route.py`)
 - [x] Benchmark v0: one repo, one harness ([results](#benchmark))
-- [ ] Cursor, Copilot and Gemini CLI maps with smoke tests
+- [x] Cursor and Copilot maps (advice only)
+- [ ] Generated config and smoke tests for Antigravity, Cursor and Copilot
 - [ ] Benchmark v1: Claude Code + Codex, published results
 
 ## Contributing

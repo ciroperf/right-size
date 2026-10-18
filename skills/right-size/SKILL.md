@@ -9,7 +9,7 @@ The decision itself must stay cheap. Use what is already in context plus at most
 
 ## Steps
 
-1. **Read the reference files.** `tiers.yaml` (next to this file) defines the tiers, risk areas, delegation rules, and escalation ladder. `harnesses/<harness>.yaml` maps tiers to the harness you are running in: `claude-code`, `codex`, or `antigravity`. For any other harness, give the decision in tier terms and say that no native mapping exists yet.
+1. **Read the reference files.** `tiers.yaml` (next to this file) defines the tiers, risk areas, delegation rules, and escalation ladder. `harnesses/<harness>.yaml` maps tiers to the harness you are running in: `claude-code`, `codex`, `antigravity`, `cursor`, or `copilot`. For any other harness, give the decision in tier terms and say that no native mapping exists yet.
 
 2. **Size the task.** Estimate, roughly:
    - how many files and lines will change, and how much must be read first;
