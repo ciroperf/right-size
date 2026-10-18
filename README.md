@@ -209,8 +209,6 @@ alias rs='python .claude/skills/right-size/scripts/route.py'          # bash / z
 
 ```powershell
 function rs { python .claude\skills\right-size\scripts\route.py @args }   # PowerShell
-ight-size\scripts
-oute.py @args }   # PowerShell
 ```
 
 | Flag | What it does |
