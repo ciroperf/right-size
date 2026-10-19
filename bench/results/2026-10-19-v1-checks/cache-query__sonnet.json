@@ -1,0 +1,62 @@
+{
+  "task": "cache-query",
+  "pr": 5119,
+  "config": "sonnet",
+  "rep": null,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 54.5,
+  "is_error": false,
+  "num_turns": 10,
+  "duration_ms": 53584,
+  "cost_usd": 0.1579412,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 6760,
+      "cacheReadInputTokens": 220372,
+      "cacheCreationInputTokens": 17070,
+      "webSearchRequests": 0,
+      "costUSD": 0.1579412,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1386,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": null,
+  "diff_lines": 108,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/cache/index.test.ts"
+  ],
+  "test_tail": "iled (1)\n      Tests  2 failed | 149 passed (151)\n   Start at  14:18:22\n   Duration  1.18s (transform 438ms, setup 0ms, import 500ms, tests 179ms, environment 0ms)\n\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 2 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Customizing Caching Keys > Should use dynamically generated cache key\nAssertionError: expected null not to be null\n \u276f src/middleware/cache/index.test.ts:107:26\n    105|       'http://localhost/.hono/cache?__hono_cache_key=dynamic-cache-key\u2026\n    106|     )\n    107|     expect(response).not.toBeNull()\n       |                          ^\n    108|   })\n    109|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/2]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Middleware > Should call onCacheNotAvailable when caches is not defined\nAssertionError: expected \"vi.fn()\" to be called with arguments: [ Array(1) ]\n\nReceived:\n\n  1st vi.fn() call:\n\n- [\n-   \"Cache Middleware is not enabled because caches is not defined.\",\n- ]\n+ []\n\n\nNumber of calls: 1\n\n \u276f src/middleware/cache/index.test.ts:410:17\n    408|     expect(res.status).toBe(200)\n    409|     expect(spy).toHaveBeenCalledOnce()\n    410|     expect(spy).toHaveBeenCalledWith(\n       |                 ^\n    411|       'Cache Middleware is not enabled because caches is not defined.'\n    412|     )\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/2]\u23af\n\n"
+}

@@ -1,0 +1,18 @@
+{
+  "ladder": {
+    "runs": 6,
+    "solved": 4,
+    "cost_usd": 0.1475,
+    "tokens": 4386355,
+    "wall_s": 676.8,
+    "escalations": 0
+  },
+  "sonnet": {
+    "runs": 6,
+    "solved": 4,
+    "cost_usd": 1.5301,
+    "tokens": 3946233,
+    "wall_s": 658.8,
+    "escalations": 0
+  }
+}

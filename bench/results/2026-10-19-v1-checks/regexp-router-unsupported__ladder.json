@@ -1,0 +1,76 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "ladder",
+  "rep": null,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 181.6,
+  "is_error": false,
+  "num_turns": 21,
+  "duration_ms": 180248,
+  "cost_usd": 0.037018,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 24,
+      "outputTokens": 36615,
+      "cacheReadInputTokens": 689143,
+      "cacheCreationInputTokens": 59082,
+      "webSearchRequests": 0,
+      "costUSD": 0.03701773,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 26827
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 59,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "Start at  14:01:36\n   Duration  686ms (transform 284ms, setup 0ms, import 320ms, tests 80ms, environment 0ms)\n\n % Coverage report from v8\n-------------------|---------|----------|---------|---------|-------------------\nFile               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \n-------------------|---------|----------|---------|---------|-------------------\nAll files          |   69.19 |       59 |   70.96 |   68.38 |                   \n ...reg-exp-router |   93.79 |    86.63 |   97.61 |   93.38 |                   \n  node.ts          |   86.76 |     81.7 |     100 |   86.76 | 25,31-42,104      \n  router.ts        |   95.55 |     90.8 |   96.66 |   95.08 | ...10,174,280,289 \n  trie.ts          |   97.56 |    83.33 |     100 |   97.36 | 69                \n src/utils         |   25.17 |    13.27 |      15 |   25.17 |                   \n  url.ts           |   25.17 |    13.27 |      15 |   25.17 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 69.19% ( 283/409 )\nBranches     : 59% ( 177/300 )\nFunctions    : 70.96% ( 44/62 )\nLines        : 68.38% ( 266/389 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

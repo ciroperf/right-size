@@ -1,0 +1,62 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "default",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 975.4,
+  "is_error": false,
+  "num_turns": 88,
+  "duration_ms": 974417,
+  "cost_usd": 3.492988,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 98,
+      "outputTokens": 80291,
+      "cacheReadInputTokens": 4657760,
+      "cacheCreationInputTokens": 119403,
+      "webSearchRequests": 0,
+      "costUSD": 3.492988,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 41836,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": null,
+  "diff_lines": 168,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "failed | 88 passed | 7 skipped (97)\n   Start at  12:46:55\n   Duration  683ms (transform 234ms, setup 0ms, import 266ms, tests 80ms, environment 0ms)\n\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 2 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Single character regexp pattern > Should throw an error for a single meta character pattern\nAssertionError: expected function to throw an error, but it didn't\n \u276f src/router/reg-exp-router/router.test.ts:233:10\n    231|       expect(() => {\n    232|         router.add('GET', '/:x{.}', 'meta')\n    233|       }).toThrowError(UnsupportedPathError)\n       |          ^\n    234|     })\n    235|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/2]\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Capture a param of a label node created by a middle wildcard > Should capture the param\nAssertionError: expected undefined to be '123' // Object.is equality\n\n- Expected:\n\"123\"\n\n+ Received:\nundefined\n\n \u276f src/router/reg-exp-router/router.test.ts:246:73\n    244|       expect(res.length).toBe(1)\n    245|       expect(res[0][0]).toBe('label')\n    246|       expect((stash as ParamStash)[(res[0][1] as ParamIndexMap)['id']]\u2026\n       |                                                                         ^\n    247|     })\n    248|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/2]\u23af\n\n"
+}

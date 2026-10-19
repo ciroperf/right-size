@@ -1,0 +1,89 @@
+{
+  "task": "content-type-case",
+  "pr": 5067,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 60.2,
+  "is_error": false,
+  "num_turns": 19,
+  "duration_ms": 52637,
+  "cost_usd": 0.32109684,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 604,
+      "cacheReadInputTokens": 1324,
+      "cacheCreationInputTokens": 3357,
+      "webSearchRequests": 0,
+      "costUSD": 0.0009868400000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 340
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 4453,
+      "cacheReadInputTokens": 491811,
+      "cacheCreationInputTokens": 16573,
+      "webSearchRequests": 0,
+      "costUSD": 0.3201102,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 232
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "security-sensitive code (input parsing of untrusted request bodies, public API behavior of parseBody and validator)",
+      "why": "Changes how untrusted request bodies are selected for parsing in parseBody and validator, which is a risk-floor area; repo has 138 test files, so no safety-net bump; the fix itself is small.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 8,
+  "parts_solved": null,
+  "test_files": [
+    "src/utils/body.test.ts",
+    "src/utils/buffer.test.ts",
+    "src/validator/validator.test.ts"
+  ],
+  "test_tail": "er |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    7.09 |     5.63 |   18.18 |    7.93 |                   \n  node.ts          |    6.15 |     5.79 |    12.5 |    6.83 | ...2,37-39,45-232 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |    43.5 |    38.03 |    42.1 |   44.24 |                   \n  body.ts          |   97.67 |    97.14 |     100 |   97.67 | 131               \n  buffer.ts        |   95.91 |    91.17 |     100 |   95.83 | 56,92             \n  cookie.ts        |   31.62 |    22.58 |   22.22 |   32.17 | ...60-261,270-273 \n  crypto.ts        |    62.5 |       70 |      60 |    62.5 | ...28-30,37,40,57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   35.37 |    27.19 |   26.31 |   36.36 | ...76,281,285,295 \n src/validator     |     100 |    96.66 |     100 |     100 |                   \n  validator.ts     |     100 |    96.66 |     100 |     100 | 124               \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 46.95% ( 662/1410 )\nBranches     : 37.48% ( 319/851 )\nFunctions    : 45.67% ( 111/243 )\nLines        : 47.59% ( 642/1349 )\n================================================================================\n"
+}

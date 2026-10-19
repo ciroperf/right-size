@@ -1,0 +1,62 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "sonnet",
+  "rep": null,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 170.3,
+  "is_error": false,
+  "num_turns": 26,
+  "duration_ms": 169148,
+  "cost_usd": 0.3843544,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 34,
+      "outputTokens": 15383,
+      "cacheReadInputTokens": 868484,
+      "cacheCreationInputTokens": 35902,
+      "webSearchRequests": 0,
+      "costUSD": 0.3843544,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 5369,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 4,
+  "route": null,
+  "diff_lines": 50,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "Start at  13:58:31\n   Duration  762ms (transform 270ms, setup 0ms, import 317ms, tests 96ms, environment 0ms)\n\n % Coverage report from v8\n-------------------|---------|----------|---------|---------|-------------------\nFile               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \n-------------------|---------|----------|---------|---------|-------------------\nAll files          |      70 |    57.82 |   73.13 |   69.01 |                   \n ...reg-exp-router |   94.05 |    85.63 |   97.87 |    93.6 |                   \n  node.ts          |   86.76 |     81.7 |     100 |   86.76 | 25,31-42,104      \n  router.ts        |   95.89 |    88.88 |   97.14 |   95.38 | ...10,172,281,290 \n  trie.ts          |   97.56 |    83.33 |     100 |   97.36 | 69                \n src/utils         |   25.17 |    13.27 |      15 |   25.17 |                   \n  url.ts           |   25.17 |    13.27 |      15 |   25.17 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 70% ( 294/420 )\nBranches     : 57.82% ( 170/294 )\nFunctions    : 73.13% ( 49/67 )\nLines        : 69.01% ( 274/397 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

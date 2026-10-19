@@ -1,0 +1,63 @@
+{
+  "task": "trie-suffix-wildcard",
+  "pr": 5236,
+  "config": "sonnet",
+  "rep": null,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 86.8,
+  "is_error": false,
+  "num_turns": 18,
+  "duration_ms": 85617,
+  "cost_usd": 0.1758568,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 24,
+      "outputTokens": 5691,
+      "cacheReadInputTokens": 471548,
+      "cacheCreationInputTokens": 17936,
+      "webSearchRequests": 0,
+      "costUSD": 0.1758568,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1612,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 15,
+  "parts_solved": null,
+  "test_files": [
+    "src/hono.test.ts",
+    "src/router/trie-router/node.test.ts"
+  ],
+  "test_tail": "   66.66 |     100 |   87.87 | 23,43,54,65       \n ...er/trie-router |   94.73 |    94.25 |     100 |   95.55 |                   \n  node.ts          |   97.87 |    95.29 |     100 |   97.61 | 38-40             \n  router.ts        |   54.54 |       50 |     100 |   66.66 | 16-19             \n src/utils         |   41.11 |    32.36 |   44.44 |   41.01 |                   \n  body.ts          |   52.83 |    42.22 |   55.55 |   51.92 | ...99-209,226-245 \n  buffer.ts        |      18 |        0 |   28.57 |   18.36 | ...2,81-95,99-103 \n  color.ts         |      70 |       50 |   66.66 |      70 | 45-50             \n  cookie.ts        |   11.01 |        0 |       0 |    11.2 | ...66-267,276-279 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   88.43 |    76.99 |      95 |   88.11 | ...70,276,281,285 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 60.61% ( 931/1536 )\nBranches     : 50.78% ( 487/959 )\nFunctions    : 64.39% ( 170/264 )\nLines        : 60.34% ( 887/1470 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

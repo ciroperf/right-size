@@ -1,0 +1,42 @@
+{
+  "default": {
+    "runs": 10,
+    "solved": 6,
+    "cost_usd": 7.1462,
+    "tokens": 9629589,
+    "wall_s": 1752.9,
+    "escalations": 0
+  },
+  "ladder": {
+    "runs": 10,
+    "solved": 6,
+    "cost_usd": 0.1218,
+    "tokens": 4881358,
+    "wall_s": 544.6,
+    "escalations": 0
+  },
+  "opus-high": {
+    "runs": 10,
+    "solved": 5,
+    "cost_usd": 8.4551,
+    "tokens": 11063853,
+    "wall_s": 2045.2,
+    "escalations": 0
+  },
+  "router": {
+    "runs": 10,
+    "solved": 6,
+    "cost_usd": 4.2254,
+    "tokens": 6602651,
+    "wall_s": 961.8,
+    "escalations": 1
+  },
+  "sonnet": {
+    "runs": 10,
+    "solved": 6,
+    "cost_usd": 1.179,
+    "tokens": 2742589,
+    "wall_s": 497.5,
+    "escalations": 0
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "sonnet",
+  "rep": null,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 223.7,
+  "is_error": false,
+  "num_turns": 45,
+  "duration_ms": 222567,
+  "cost_usd": 0.4527764,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 66,
+      "outputTokens": 14184,
+      "cacheReadInputTokens": 1614204,
+      "cacheCreationInputTokens": 37346,
+      "webSearchRequests": 0,
+      "costUSD": 0.4527764,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3725,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": null,
+  "diff_lines": 25,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "d\n+ Received\n\n- false\n+ true\n\n \u276f src/jsx/streaming.test.tsx:988:29\n    986|     const reader = stream.getReader()\n    987|     const firstChunk = await reader.read()\n    988|     expect(firstChunk.done).toBe(false)\n       |                             ^\n    989|\n    990|     // Simulate client disconnect\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[21/23]\u23af\n\n FAIL  |main| src/jsx/streaming.test.tsx > Streaming > should not call onError when reader is cancelled during a slow callback resolution\nError: Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n \u276f src/jsx/streaming.test.tsx:1002:3\n    1000|   })\n    1001|\n    1002|   it('should not call onError when reader is cancelled during a slow c\u2026\n       |   ^\n    1003|     const unhandled: unknown[] = []\n    1004|     const onRejection = (e: unknown) => unhandled.push(e)\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[22/23]\u23af\n\n FAIL  |main| src/jsx/streaming.test.tsx > Streaming > isolates context between concurrent streaming renders\nAssertionError: expected '' to contain 'role:admin'\n\n- Expected\n+ Received\n\n- role:admin\n\n \u276f src/jsx/streaming.test.tsx:1152:23\n    1150|     const [adminHtml, guestHtml] = await Promise.all([adminDrain, gues\u2026\n    1151|\n    1152|     expect(adminHtml).toContain('role:admin')\n       |                       ^\n    1153|     expect(adminHtml).not.toContain('role:guest')\n    1154|     expect(guestHtml).toContain('role:guest')\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[23/23]\u23af\n\n"
+}
