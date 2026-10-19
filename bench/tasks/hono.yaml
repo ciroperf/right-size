@@ -86,7 +86,10 @@ tasks:
       `:param` route as siblings with the same method. For example: sub.post('/items'),
       sub.post('/:slug'), app.route('/api', sub), then app.get('/assets*', ...).
       `/assets/*` (slash-star) is unaffected. A suffix wildcard should match
-      regardless of what else is registered; the prefix before `*` is literal.
+      regardless of what else is registered; the prefix before `*` is literal,
+      including regular expression characters (`/file.+*` matches `/file.+js`,
+      not `/fileZZjs`). Registration order must not matter either: `/assets*`
+      must still match when a longer route such as `/assets*/x` was added first.
 
   # Larger tasks (added for v0.1): multi-file or long-reasoning changes, where
   # delegating to a cheaper model has room to pay off.
@@ -143,7 +146,10 @@ tasks:
       registration (`add()`), like the other routers, for example when an ALL route
       and a specific-method route conflict in either registration order. Routing
       results, route ordering, method inheritance and the matcher format used by
-      `PreparedRegExpRouter` must not change.
+      `PreparedRegExpRouter` must not change. While there, fix two related
+      registration bugs: a single meta-character pattern such as `/:x{.}` must
+      be reported as unsupported, and after `/w/*/x` and then `/w/:id/y` are
+      added, matching `/w/123/y` must capture `id` as `123`.
 
   - id: jsx-array
     pr: 5179
@@ -157,7 +163,8 @@ tasks:
       components, and async components that return arrays. Strings in the array
       are escaped as usual. It must work in string rendering, streaming and the
       jsx-renderer middleware, and a component typed as `FC` must be allowed to
-      return an array.
+      return an array. Document metadata keeps working too: a `<title>` returned
+      in an array by an async component is still hoisted into `<head>`.
 
   - id: method-not-allowed
     pr: 5132
@@ -169,28 +176,41 @@ tasks:
       onMethodNotAllowed? })`, it turns a 404 into `405 Method Not Allowed` (body
       `Method Not Allowed`) with an `Allow` header listing every method the path is
       registered for, in registration order, when the path exists for other methods.
-      GET routes also allow HEAD. Requests for an allowed method, and paths that
-      don't exist at all, are untouched. `onMethodNotAllowed(c)` replaces the default
-      response. Assign the response to `c.res` rather than throwing, follow Hono's
-      routing for custom and case-sensitive methods, work with sub-apps mounted via
-      `app.route()`, and don't replace a 404 produced by an error handler.
+      GET routes also allow HEAD. Requests for an allowed method, and paths that don't
+      exist at all, are untouched. `onMethodNotAllowed(c, allowedMethods)` replaces
+      the default response; `allowedMethods` is the same list as the `Allow` header,
+      as an array of method names. Assign the response to `c.res` rather than
+      throwing, follow Hono's routing for custom and case-sensitive methods, work with
+      sub-apps mounted via `app.route()`, and don't replace a 404 produced by an error
+      handler. Representation headers from the not-found response (for example a stale
+      `Allow` or `Content-Length`) must not leak into the 405, but headers that other
+      middleware sets after `next()` are kept, and outer middleware sees the final 405
+      status. ALL routes and explicit HEAD routes don't count as allowed methods,
+      since Hono never dispatches a HEAD request to a HEAD route. The middleware must
+      also work when installed inside a sub-app that has a `basePath` and is mounted
+      with `app.route()`.
 
   - id: cache-query
     pr: 5119
     solution: 3bc96ba9
     expected_tier: deep
     prompt: |
-      The cache middleware only caches GET. Add support for the HTTP QUERY method
-      (a safe method with a request body). A QUERY cache key must depend on the
-      method, a SHA-256 digest of the request body, the Content-Type,
-      Content-Encoding, Content-Language and Content-Location headers, and the
-      configured Vary values, so different bodies or content types never share an
-      entry, and GET and QUERY never share one either (a GET URL must not be able to
-      alias a QUERY key). Reading the body for the key must not consume it for the
-      handler. Add a `maxQueryBodySize` option (64 KiB by default): a body larger
-      than the limit, or one that can't be read, bypasses caching, and a body at
-      exactly the limit is cached. Without Web Crypto, QUERY requests bypass caching
-      while GET keeps working. A custom cache key must not be resolved as a URL.
+      The cache middleware only caches GET. Add support for the HTTP QUERY method (a
+      safe method with a request body). A QUERY cache key must depend on the method, a
+      SHA-256 digest of the request body, the Content-Type, Content-Encoding,
+      Content-Language and Content-Location headers, and the configured Vary values,
+      so different bodies or content types never share an entry, and GET and QUERY
+      never share one either (a GET URL must not be able to alias a QUERY key).
+      Reading the body for the key must not consume it for the handler. Add a
+      `maxQueryBodySize` option (64 KiB by default): a body larger than the limit, or
+      one that can't be read, bypasses caching, and a body at exactly the limit is
+      cached. Without Web Crypto, QUERY requests bypass caching while GET keeps
+      working, and the middleware reports it once, when it is created, through
+      `onCacheNotAvailable` with the message `Cache Middleware cannot cache QUERY
+      requests because Web Crypto is not available.` A QUERY whose body an earlier
+      middleware already read through `c.req` as text, JSON or bytes must still be
+      cached; if it was only read as parsed form data, caching is bypassed. A custom
+      cache key must not be resolved as a URL.
 
 # Batches: several independent bug reports in one prompt, on a commit where all
 # of them are still present. Each part keeps its own PR's tests as the scorer.
