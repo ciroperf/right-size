@@ -156,7 +156,9 @@ There is no inline tier and no delegation here: the routed session does the
 work itself. Ignore `inline`, `delegate` and the delegation rules, and treat
 each tier as the profile of the model that runs the session.
 
-- Code changes in a risk_floor area -> deep, whatever the size. Name the area in risk_area.
+- Code changes in a risk_floor area -> at least the risk_floor tier, whatever the size, and its
+  design_change_tier for a design change in that area (not a bug fix with a clear reproduction).
+  Name the area in risk_area.
 - Read-only questions, even about risk areas -> scout.
 - A pattern you can state in one sentence, easy to verify -> mechanical.
 - Ordinary features and fixes -> standard.

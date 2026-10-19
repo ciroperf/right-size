@@ -21,7 +21,7 @@ The decision itself must stay cheap. Use what is already in context plus at most
 3. **Decide whether to delegate.** Start from inline. A subagent starts cold: it gets its own system prompt and has to re-read whatever context it needs. So delegate only when that start-up cost buys something: keeping a large amount of reading out of the main context, running independent parts in parallel, or handing off a chunk that is large compared to its brief. If the relevant files are already in context, or the next reasoning step needs the result right away, stay inline.
 
 4. **Pick the tier.**
-   - Changes in a risk area → `deep`, whatever the size.
+   - Changes in a risk area → at least `risk_floor.tier` (`standard`), whatever the size; `deep` when the change is a design change in that area (a new auth flow, a migration) rather than a bug fix with a clear reproduction.
    - Mostly reading, and a lot of it → `scout`, even in a risk area: reading can't break anything. A lookup that a grep or two can answer stays `inline`.
    - Pattern you can state in a sentence, easy to verify → `mechanical`.
    - Ordinary feature or fix → `standard`.

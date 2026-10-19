@@ -73,16 +73,23 @@ tiers:
     # High is the first escalation step at this tier.
     default_effort: medium
 
-# Any task that changes code in these areas starts at deep, regardless of size.
+# Code changes in these areas never go below `tier`, whatever their size.
+# They go to deep when there is no safety net (the no_safety_net adjustment), or
+# when the change is a design change in the area (a new auth flow, a migration,
+# a crypto scheme) rather than a bug fix with a clear reproduction.
 # Read-only questions about them stay at scout: reading can't break anything.
+# Measured 2026-10-19 (bench/results, v1 pilot): on bug fixes in these areas with
+# tests, Sonnet at medium solved every task Opus solved, at about a quarter of the
+# cost, and Haiku at low solved them too. The floor used to be deep.
 risk_floor:
-  tier: deep
+  tier: standard
+  design_change_tier: deep
   areas:
     - authentication and authorization
     - security-sensitive code (crypto, secrets, input sanitization)
     - persistent data (schema changes, migrations, deletes)
     - payments and billing
-    - public API contracts other people depend on
+    - breaking changes to public API contracts other people depend on (adding a capability is not one)
     - concurrency and distributed state
 
 delegation:
