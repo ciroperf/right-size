@@ -67,6 +67,10 @@ ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Glob", "Grep", "Agent", "Skill", "TodoWrite",
     "Bash(npx vitest *)", "PowerShell(npx vitest *)",
     "Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
+    # Read-only commands and cleanup, so compound commands (cd x && npx vitest ...) and
+    # removing a scratch test are not denied. No installs: they would change node_modules.
+    "Bash(cd *)", "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(grep *)",
+    "Bash(wc *)", "Bash(rm *)",
 ]
 
 PROMPT_SUFFIX = (
@@ -141,6 +145,23 @@ def checkout(rev):
     if lock != _installed_lock:
         sh(BUN + ["install", "--frozen-lockfile"], timeout=900)
         _installed_lock = lock
+    # Checked on every checkout: an incremental install once left vitest resolving an old
+    # top-level vite, and an agent's rm could break node_modules. Either way, start clean.
+    if not vitest_starts():
+        shutil.rmtree(WORK / "node_modules", ignore_errors=True)
+        sh(BUN + ["install", "--frozen-lockfile"], timeout=900)
+        if not vitest_starts():
+            raise SystemExit(f"vitest does not start after a clean install at {rev}")
+
+
+def vitest_starts():
+    """Start vitest for real (config and vite load) without running any test."""
+    r = sh(VITEST + ["--passWithNoTests", "no-such-test-file"], check=False, timeout=300)
+    return r.returncode == 0 and not any(e in r.stdout + r.stderr for e in ENV_ERRORS)
+
+
+# vitest failing before any test runs: a broken environment, not a failed fix.
+ENV_ERRORS = ("Startup Error", "ERR_PACKAGE_PATH_NOT_EXPORTED")
 
 
 def run_tests(files):
@@ -270,6 +291,9 @@ def run_one(task, name, out_dir, rep=None):
 
     # Score with the PRs' own tests, overwriting whatever the agent did to them.
     scores = score(task)
+    if any(e in log for _, log in scores.values() for e in ENV_ERRORS):
+        # Like a usage limit: record nothing so a rerun picks it up.
+        raise SystemExit(f"test environment broken on {task['id']} / {name}: vitest did not start")
     solved = all(ok for ok, _ in scores.values())
     test_log = "\n".join(log[-1500 // len(scores):] for _, log in scores.values())
 

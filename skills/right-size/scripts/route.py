@@ -305,6 +305,9 @@ def note(p, why, nxt, interactive):
                      "approach is wrong), stop and end your reply with exactly one line: "
                      "`RIGHT-SIZE-ESCALATE: verifiable - <reason>` (a check fails) or "
                      "`RIGHT-SIZE-ESCALATE: reasoning - <reason>` (wrong approach or misread spec). "
+                     "A fix you could not get a check to pass on counts as failed: escalate with verifiable. "
+                     "Nobody answers questions in this session: instead of asking, act on the most likely "
+                     "reading, or escalate with reasoning if you can't tell what is wanted. "
                      "Syntax or tooling errors are not a reason: fix them and retry once.")
     return " ".join(lines)
 
