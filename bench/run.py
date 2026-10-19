@@ -44,6 +44,11 @@ CONFIGS = {
     "router": {"model": None, "effort": None, "right_size": False, "router": True},
     # Experiment: the router with its tier pinned, to see what a whole session on that tier costs.
     "router-standard": {"model": None, "effort": None, "right_size": False, "router": True, "tier": "standard"},
+    # Cheapest first, escalate on failure: the router with its classifier skipped, starting on
+    # mechanical (Haiku, low). Three escalations reach deep at high effort, like the router's ceiling.
+    # Isolates what the classifier is worth: same escalation, no picked starting point.
+    "ladder": {"model": None, "effort": None, "right_size": False, "router": True, "tier": "mechanical",
+               "escalations": 3},
     # The router with --split: independent parts run as separate sessions on their own tiers.
     "router-split": {"model": None, "effort": None, "right_size": False, "router": True, "split": True},
     # Experiment, not a product setting: always delegate each independent part
@@ -175,7 +180,7 @@ def claude_cmd(cfg):
     return cmd
 
 
-def run_router(task, log_dir, tier=None, split=False):
+def run_router(task, log_dir, tier=None, split=False, escalations=None):
     """Run a task through route.py and fold its runs into one result-like dict.
 
     Cost includes the classifier call. Sessions must persist so that an
@@ -183,6 +188,7 @@ def run_router(task, log_dir, tier=None, split=False):
     """
     cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
            *(["--tier", tier] if tier else []), *(["--split"] if split else []),
+           *(["--max-escalations", str(escalations)] if escalations is not None else []),
            task["prompt"] + PROMPT_SUFFIX, "--",
            "--setting-sources", "project", "--strict-mcp-config", "--permission-mode", "dontAsk",
            "--allowedTools", *ALLOWED_TOOLS]
@@ -235,7 +241,7 @@ def run_one(task, name, out_dir, rep=None):
     stream_path = raw / f"{stem}.jsonl"
     started = time.time()
     if cfg.get("router"):
-        result, timed_out = run_router(task, raw / stem, cfg.get("tier"), cfg.get("split"))
+        result, timed_out = run_router(task, raw / stem, cfg.get("tier"), cfg.get("split"), cfg.get("escalations"))
     else:
         try:
             r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,
