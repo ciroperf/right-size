@@ -244,6 +244,8 @@ sets:
     - regexp-router-unsupported
     - jsx-array
     - method-not-allowed
-    - cache-query
+    # cache-query is out: its PR tests pin the internal cache key format
+    # (`/.hono/cache?__hono_cache_key=...&__hono_cache_method=GET`) and reword an
+    # unrelated existing message, which no prompt can ask for without dictating the fix.
     - batch-aug
     - batch-jul
