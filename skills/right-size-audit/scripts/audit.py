@@ -201,7 +201,7 @@ def report(by_model, by_kind, by_agent, switches, sessions, unpriced, prices, ti
                     f"carries move the bill.")
     if switches:
         sc = sum(x["cost"] for x in switches)
-        findings.append(f"{len(switches)} model switches inside a conversation cost ${sc:.2f} in uncached "
+        findings.append(f"{len(switches)} model switch{'es' if len(switches) != 1 else ''} inside a conversation cost ${sc:.2f} in uncached "
                         f"re-reads. Switch models at the start of a session, or change effort instead "
                         f"(effort changes keep the cache).")
     sub = sum(s["subagent_cost"] for s in sessions)
