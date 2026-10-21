@@ -161,7 +161,9 @@ each tier as the profile of the model that runs the session.
   Name the area in risk_area.
 - Read-only questions, even about risk areas -> scout.
 - A pattern you can state in one sentence, easy to verify -> mechanical.
-- Ordinary features and fixes -> standard.
+- A bug fix with a clear reproduction in a repo with tests -> mechanical: the session
+  escalates when a check stays red.
+- Features, and fixes that need design decisions -> standard.
 - No tests in the repo -> one tier higher (not for scout).
 - Small but reasoning-heavy -> raise effort one step above the tier's default_effort instead of raising the tier.
 - Risk alone is not a reason to raise effort: the deep tier already covers it.
@@ -294,7 +296,10 @@ def cap(tier, max_tier):
 def note(p, why, nxt, interactive):
     lines = [f"right-size router: this session runs on the {p['tier']} profile "
              f"({p['model']}, effort {p['effort'] or 'default'}), chosen because: {why}.",
-             "Work inline. Spawn subagents only if the task clearly splits into independent parts."]
+             "Work inline. Spawn subagents only if the task clearly splits into independent parts.",
+             # v1 pilot: fixes that broke existing tests were reported as done, so nothing escalated.
+             "Before calling the task done, run the existing tests of every module you changed, not only "
+             "tests you wrote: an existing test that turns red is a failed check."]
     if nxt is None:
         lines.append("This is the highest tier the router may pick on its own; if it isn't enough, say so plainly.")
     elif interactive:

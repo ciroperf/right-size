@@ -24,7 +24,8 @@ The decision itself must stay cheap. Use what is already in context plus at most
    - Changes in a risk area → at least `risk_floor.tier` (`standard`), whatever the size; `deep` when the change is a design change in that area (a new auth flow, a migration) rather than a bug fix with a clear reproduction.
    - Mostly reading, and a lot of it → `scout`, even in a risk area: reading can't break anything. A lookup that a grep or two can answer stays `inline`.
    - Pattern you can state in a sentence, easy to verify → `mechanical`.
-   - Ordinary feature or fix → `standard`.
+   - Bug fix with a clear reproduction, in a repo with tests → `mechanical`: escalate if a check stays red.
+   - Feature, or a fix that needs design decisions → `standard`.
    - No safety net → one tier higher (not for `scout`), because failures will surface late.
 
 5. **Pick the effort.** Start from the tier's `default_effort`. If the task is small but needs careful thought (a subtle bug, a tricky algorithm), raise effort one step before raising the tier: it needs thinking, not a bigger model.
@@ -62,7 +63,7 @@ To size a task before any session starts, `scripts/route.py` in this skill's fol
 
 After a failed attempt, step up according to `escalation` in `tiers.yaml`:
 - syntax or tooling error → retry once at the same tier with the error in the brief;
-- verifiable failure (tests red, build broken after a real attempt) → one tier up;
+- verifiable failure (tests red, build broken after a real attempt) → one tier up. Before calling a fix done, run the existing tests of the modules it touched, not only new ones: a fix that breaks them has failed;
 - reasoning failure (wrong approach, misread spec) → two tiers up;
 - already at `deep` → raise effort one step, up to high, before anything past `deep`.
 

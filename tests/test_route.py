@@ -99,6 +99,7 @@ class Escalation(unittest.TestCase):
         self.assertIn("RIGHT-SIZE-ESCALATE", route.note(p, "why", nxt, interactive=False))
         self.assertIn("/model sonnet", route.note(p, "why", nxt, interactive=True))
         self.assertIn("highest tier", route.note(p, "why", None, interactive=False))
+        self.assertIn("existing tests", route.note(p, "why", nxt, interactive=False))
 
 
 class Commands(unittest.TestCase):

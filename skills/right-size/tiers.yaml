@@ -40,9 +40,15 @@ tiers:
     use_when:
       - The change follows a pattern that can be stated in one or two sentences.
       - Success is easy to verify (it compiles, tests pass, grep finds no old name).
+      - A bug fix with a clear reproduction, in a repo with tests.
     examples:
       - Rename a symbol across the codebase.
       - Update imports after a move, generate boilerplate, apply formatting.
+      - Fix a bug that a failing test or a short repro pins down.
+    # Measured 2026-10-19 (bench/results, v1 pilot): on 10 Hono bug fixes with
+    # tests, Haiku at low effort, escalating on failure, solved every task any
+    # setup solved, at 1/60 of Opus's cost and 1/10 of Sonnet's. Starting here and
+    # escalating on a red check is cheaper than picking a higher tier up front.
     default_effort: low
 
   standard:
@@ -54,7 +60,7 @@ tiers:
       - The task needs design decisions inside an established pattern.
     examples:
       - Add an endpoint, a component, or tests for existing code.
-      - Fix a bug with a clear reproduction.
+      - Fix a bug whose fix needs a design decision, or that has no clear reproduction.
     default_effort: medium
 
   deep:
