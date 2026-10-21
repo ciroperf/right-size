@@ -481,8 +481,11 @@ def check_attempt(ck, p, hmap, tiers):
         return "the attempt changed no files", records
     if ck["verify_cmd"]:
         try:
+            # CI=1 and no stdin: runners like vitest and jest otherwise start in watch mode
+            # from a terminal (a detected `npm run test` is often plain `vitest`) and never exit.
             r = subprocess.run(ck["verify_cmd"], shell=True, cwd=ck["root"], capture_output=True, text=True,
-                               encoding="utf-8", errors="replace", timeout=1200)
+                               encoding="utf-8", errors="replace", timeout=1200,
+                               stdin=subprocess.DEVNULL, env={**os.environ, "CI": "1"})
             ok, out = r.returncode == 0, (r.stdout or "") + (r.stderr or "")
         except subprocess.TimeoutExpired:
             ok, out = False, "timed out after 1200s"
