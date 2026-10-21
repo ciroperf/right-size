@@ -30,6 +30,21 @@ Two things rerun after `../2026-10-21-v1-checks/`, one run each:
 3. One run per cell: Haiku solving jsx and cache-query on the first try here, after
    failing them in the first pass, is as likely variance as improvement.
 
-With these rows replacing the invalid ones, v1 rep 1 stands at
+With these rows replacing the invalid ones, v1 rep 1 stood at (superseded, see below)
 sonnet 10/11 $2.13, ladder 11/11 $1.70, router 11/11 $10.03 (the router's other
 rows are from `../2026-10-21-v1-checks/`, before the fresh brief).
+
+## Superseded by a23f756
+
+After this run the reviewer got the project's test runner, so reviews can run
+probes. Rows whose result passed through a review measured a read-only review and
+don't describe the router that ships:
+
+- still valid: every `sonnet` row (no router); `regexp-router-unsupported` and
+  `trie-suffix-wildcard` on `ladder` (decided by the tests alone, no review ran);
+- superseded: `jsx-array` and `cache-query` on `ladder`, `trie-suffix-wildcard` on
+  `router`, and the `ladder` and `router` rows of `../2026-10-21-v1-checks/` where a
+  mechanical attempt was reviewed.
+
+The finding on fresh-brief escalation stands. Published totals come from a final
+run with one frozen version of route.py.

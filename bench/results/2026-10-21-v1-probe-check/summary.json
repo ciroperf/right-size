@@ -1,0 +1,10 @@
+{
+  "ladder": {
+    "runs": 1,
+    "solved": 1,
+    "cost_usd": 0.1923,
+    "tokens": 1150891,
+    "wall_s": 144.0,
+    "escalations": 1
+  }
+}
