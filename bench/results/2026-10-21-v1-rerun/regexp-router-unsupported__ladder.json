@@ -1,0 +1,106 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "ladder",
+  "rep": null,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 164.1,
+  "is_error": false,
+  "num_turns": 25,
+  "duration_ms": 142577,
+  "cost_usd": 0.15976,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 28,
+      "outputTokens": 17807,
+      "cacheReadInputTokens": 795741,
+      "cacheCreationInputTokens": 42995,
+      "webSearchRequests": 0,
+      "costUSD": 0.025462709999999996,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 10107
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 1783,
+      "cacheReadInputTokens": 216994,
+      "cacheCreationInputTokens": 23687,
+      "webSearchRequests": 0,
+      "costUSD": 0.13429739999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 96
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 17,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "   Start at  21:14:17\n   Duration  530ms (transform 80ms, setup 0ms, import 152ms, tests 41ms, environment 0ms)\n\n % Coverage report from v8\n-------------------|---------|----------|---------|---------|-------------------\nFile               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \n-------------------|---------|----------|---------|---------|-------------------\nAll files          |   68.73 |     58.5 |      70 |    67.8 |                   \n ...reg-exp-router |   93.65 |    86.74 |    97.5 |   93.19 |                   \n  node.ts          |    86.3 |    82.22 |     100 |    86.3 | 25,31-42,85,112   \n  router.ts        |   95.96 |    91.78 |   96.42 |   95.45 | ...10,146,247,256 \n  trie.ts          |   97.56 |    83.33 |     100 |   97.36 | 69                \n src/utils         |   25.17 |    13.27 |      15 |   25.17 |                   \n  url.ts           |   25.17 |    13.27 |      15 |   25.17 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 68.73% ( 277/403 )\nBranches     : 58.5% ( 172/294 )\nFunctions    : 70% ( 42/60 )\nLines        : 67.8% ( 259/382 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

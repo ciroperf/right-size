@@ -1,0 +1,105 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "ladder",
+  "rep": null,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 143.6,
+  "is_error": false,
+  "num_turns": 23,
+  "duration_ms": 99470,
+  "cost_usd": 0.13915270000000002,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 22,
+      "outputTokens": 16573,
+      "cacheReadInputTokens": 655696,
+      "cacheCreationInputTokens": 51566,
+      "webSearchRequests": 0,
+      "costUSD": 0.02515886,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 11692
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 2597,
+      "cacheReadInputTokens": 76957,
+      "cacheCreationInputTokens": 20076,
+      "webSearchRequests": 0,
+      "costUSD": 0.1139937,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 931
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I couldn't run tests because Bash was denied, so this is a static review of src/jsx/base.ts only. Sync arrays, nested arrays and async components that return arrays go through the shared child-to-buffer path. Callbacks on escaped strings are now kept in both the sync and async paths, which covers hoisting a `<title>` from an async array. The old `suspendedContext` mutation is replaced by a per-render captured context, so two providers sharing one promise each see their own value. `FC` now permits `Child[]` and `Promise<Child[]>`. I didn't check the jsx-renderer middleware beyond reading the diff.",
+        "cost_usd": 0.1139937
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 48,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": " 41.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.09% ( 1799/2897 )\nBranches     : 56.9% ( 1042/1831 )\nFunctions    : 57.7% ( 307/532 )\nLines        : 62.47% ( 1730/2769 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}
