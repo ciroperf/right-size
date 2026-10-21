@@ -1,0 +1,60 @@
+{
+  "started": "2026-10-19T12:07:16.015005+00:00",
+  "configs": {
+    "default": {
+      "model": "opus",
+      "effort": null,
+      "right_size": false
+    },
+    "opus-high": {
+      "model": "opus",
+      "effort": "high",
+      "right_size": false
+    },
+    "sonnet": {
+      "model": "sonnet",
+      "effort": null,
+      "right_size": false
+    },
+    "router": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true
+    },
+    "ladder": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true,
+      "tier": "mechanical",
+      "escalations": 3
+    }
+  },
+  "allowed_tools": [
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "Agent",
+    "Skill",
+    "TodoWrite",
+    "Bash(npx vitest *)",
+    "PowerShell(npx vitest *)",
+    "Bash(git diff *)",
+    "Bash(git status *)",
+    "Bash(git log *)",
+    "Bash(cd *)",
+    "Bash(ls *)",
+    "Bash(cat *)",
+    "Bash(head *)",
+    "Bash(tail *)",
+    "Bash(grep *)",
+    "Bash(wc *)",
+    "Bash(rm *)"
+  ],
+  "nudge": "Before starting, size the task with the right-size skill and follow its decision.",
+  "delegate_nudge": "Size each independent part of the task with the right-size skill, then delegate every part to the right-size-* subagent for its tier, in parallel where the parts are independent. Do not fix any part yourself; review and verify the subagents' results.",
+  "claude_version": "2.1.303 (Claude Code)"
+}

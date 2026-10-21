@@ -184,10 +184,14 @@ each tier as the profile of the model that runs the session.
   local fix in a security module is still a small, local fix.
 - Code changes in a risk_floor area: name the area in risk_area and size the tier
   as for any other task. The router has the diff reviewed on the deep tier.
-  Only when the repo has no tests (test_files is 0) does a risk area start at deep.
+  A design change in that area (a new auth flow, a migration, a crypto scheme)
+  -> deep. Only when the repo has no tests (test_files is 0) does any change in
+  a risk area start at deep.
 - Read-only questions, even about risk areas -> scout.
 - A pattern you can state in one sentence, easy to verify -> mechanical.
-- Ordinary features and fixes -> standard.
+- A bug fix with a clear reproduction in a repo with tests -> mechanical: the session
+  is checked and escalates when a check fails.
+- Features, and fixes that need design decisions -> standard.
 - Changes that thread through several modules, or must keep many existing
   behaviors intact -> deep.
 - No tests in the repo -> one tier higher (not for scout).
@@ -476,7 +480,10 @@ def cap(tier, max_tier):
 def note(p, why, nxt, interactive, checks=None):
     lines = [f"right-size router: this session runs on the {p['tier']} profile "
              f"({p['model']}, effort {p['effort'] or 'default'}), chosen because: {why}.",
-             "Work inline. Spawn subagents only if the task clearly splits into independent parts."]
+             "Work inline. Spawn subagents only if the task clearly splits into independent parts.",
+             # v1 pilot: fixes that broke existing tests were reported as done, so nothing escalated.
+             "Before calling the task done, run the existing tests of every module you changed, not only "
+             "tests you wrote: an existing test that turns red is a failed check."]
     if checks and not interactive and p["tier"] != "scout":
         what = ["it fails if no file changed"]
         if checks["verify_cmd"]:
@@ -497,6 +504,9 @@ def note(p, why, nxt, interactive, checks=None):
                      "approach is wrong), stop and end your reply with exactly one line: "
                      "`RIGHT-SIZE-ESCALATE: verifiable - <reason>` (a check fails) or "
                      "`RIGHT-SIZE-ESCALATE: reasoning - <reason>` (wrong approach or misread spec). "
+                     "A fix you could not get a check to pass on counts as failed: escalate with verifiable. "
+                     "Nobody answers questions in this session: instead of asking, act on the most likely "
+                     "reading, or escalate with reasoning if you can't tell what is wanted. "
                      "Syntax or tooling errors are not a reason: fix them and retry once.")
     return " ".join(lines)
 

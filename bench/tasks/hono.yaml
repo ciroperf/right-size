@@ -80,13 +80,19 @@ tasks:
     pr: 5236
     solution: 63bbcf508c74d9fe7a3e20f4dfe7ffacc566dcce
     expected_tier: deep
+    # Corrected 2026-10-21 (v1-results branch): the PR's tests also check that regex
+    # characters in the prefix are literal and that registration order doesn't matter.
+    # Sonnet and the router failed exactly those two tests in the checks run.
     prompt: |
       With the TrieRouter, suffix wildcard routes like `/assets*` return 404 for
       `/assets/app.js` when a mounted sub-app registers a static route and a
       `:param` route as siblings with the same method. For example: sub.post('/items'),
       sub.post('/:slug'), app.route('/api', sub), then app.get('/assets*', ...).
       `/assets/*` (slash-star) is unaffected. A suffix wildcard should match
-      regardless of what else is registered; the prefix before `*` is literal.
+      regardless of what else is registered; the prefix before `*` is literal,
+      including regular expression characters (`/file.+*` matches `/file.+js`,
+      not `/fileZZjs`). Registration order must not matter either: `/assets*`
+      must still match when a longer route such as `/assets*/x` was added first.
 
   # Larger tasks (added for v0.1): multi-file or long-reasoning changes, where
   # delegating to a cheaper model has room to pay off.
@@ -276,6 +282,9 @@ sets:
     - regexp-router-unsupported
     - jsx-array
     - method-not-allowed
+    # cache-query was dropped on the v1-results branch because its PR tests pin the
+    # stored key format. Back in 2026-10-21: the prompt now states that format as part
+    # of the spec, and with it Sonnet and the router solved the task.
     - cache-query
     - batch-aug
     - batch-jul

@@ -1,0 +1,76 @@
+{
+  "task": "cache-query",
+  "pr": 5119,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 113.0,
+  "is_error": false,
+  "num_turns": 20,
+  "duration_ms": 111892,
+  "cost_usd": 0.023766,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 40,
+      "outputTokens": 16668,
+      "cacheReadInputTokens": 972611,
+      "cacheCreationInputTokens": 28508,
+      "webSearchRequests": 0,
+      "costUSD": 0.023765710000000006,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 8075
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 128,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/cache/index.test.ts"
+  ],
+  "test_tail": "\"get response\"\nReceived: \"query response\"\n\n \u276f src/middleware/cache/index.test.ts:925:33\n    923|     })\n    924|\n    925|     expect(await getRes.text()).toBe('get response')\n       |                                 ^\n    926|     expect(await queryRes.text()).toBe('query response')\n    927|     expect(mockCache.put).toHaveBeenCalledTimes(2)\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/5]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should bypass QUERY caching when Web Crypto is not available\nAssertionError: expected \"vi.fn()\" to be called once, but got 0 times\n \u276f src/middleware/cache/index.test.ts:1012:35\n    1010|       })\n    1011|\n    1012|       expect(onCacheNotAvailable).toHaveBeenCalledOnce()\n       |                                   ^\n    1013|       expect(onCacheNotAvailable).toHaveBeenCalledWith(\n    1014|         'Cache Middleware cannot cache QUERY requests because Web Cryp\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/5]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should cache QUERY after the body was read through HonoRequest\nAssertionError: expected '2' to be '1' // Object.is equality\n\nExpected: \"1\"\nReceived: \"2\"\n\n \u276f src/middleware/cache/index.test.ts:1133:40\n    1131|\n    1132|     expect(await res.text()).toBe('{}')\n    1133|     expect(res.headers.get('X-Count')).toBe('1')\n       |                                        ^\n    1134|     expect(mockCache.put).toHaveBeenCalledOnce()\n    1135|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[5/5]\u23af\n\n"
+}

@@ -1,0 +1,62 @@
+{
+  "task": "method-not-allowed",
+  "pr": 5132,
+  "config": "default",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 117.6,
+  "is_error": false,
+  "num_turns": 20,
+  "duration_ms": 116407,
+  "cost_usd": 0.5763806,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 11284,
+      "cacheReadInputTokens": 585103,
+      "cacheCreationInputTokens": 29197,
+      "webSearchRequests": 0,
+      "costUSD": 0.5763806,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3798,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 9,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/method-not-allowed/index.test.ts"
+  ],
+  "test_tail": "|     expect(res.status).toBe(405)\n       |                        ^\n    186|     expect(res.headers.get('Allow')).toBe('GET, HEAD, POST')\n    187|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/4]\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > replaces stale representation headers from the not-found response\nAssertionError: expected true to be false // Object.is equality\n\n- Expected\n+ Received\n\n- false\n+ true\n\n \u276f src/middleware/method-not-allowed/index.test.ts:251:47\n    249|     expect(res.status).toBe(405)\n    250|     expect(res.headers.get('Allow')).toBe('GET, HEAD, POST')\n    251|     expect(res.headers.has('Content-Length')).toBe(false)\n       |                                               ^\n    252|     expect(await res.text()).toBe('Method Not Allowed')\n    253|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/4]\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > supports a custom method-not-allowed response\nAssertionError: expected 500 to be 405 // Object.is equality\n\n- Expected\n+ Received\n\n- 405\n+ 500\n\n \u276f src/middleware/method-not-allowed/index.test.ts:271:24\n    269|     const res = await app.request('/resource', { method: 'PUT' })\n    270|\n    271|     expect(res.status).toBe(405)\n       |                        ^\n    272|     expect(res.headers.get('Allow')).toBe('GET, HEAD, POST')\n    273|     expect(res.headers.get('Content-Type')).toMatch(/^application\\/jso\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/4]\u23af\n\n"
+}

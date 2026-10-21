@@ -1,0 +1,62 @@
+{
+  "task": "csrf-options",
+  "pr": 5250,
+  "config": "default",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 31.6,
+  "is_error": false,
+  "num_turns": 9,
+  "duration_ms": 30394,
+  "cost_usd": 0.1446612,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 1534,
+      "cacheReadInputTokens": 235786,
+      "cacheCreationInputTokens": 8346,
+      "webSearchRequests": 0,
+      "costUSD": 0.1446612,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 32,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": null,
+  "diff_lines": 2,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/csrf/index.test.ts"
+  ],
+  "test_tail": "|    42.85 |      75 |    65.9 | ...45-49,61,73-78 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.89 |        0 |       0 |    7.47 |                   \n  node.ts          |     5.4 |        0 |       0 |    5.88 | 29-214            \n  router.ts        |      40 |        0 |       0 |      40 | 10-16             \n src/utils         |   22.19 |    12.39 |    19.6 |   22.47 |                   \n  body.ts          |   50.94 |       40 |   55.55 |      50 | ...99-209,226-245 \n  buffer.ts        |      18 |        0 |   28.57 |   18.36 | ...2,81-95,99-103 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   21.08 |    10.61 |      15 |   21.67 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.9% ( 484/1213 )\nBranches     : 28.16% ( 207/735 )\nFunctions    : 41.22% ( 94/228 )\nLines        : 39.82% ( 460/1155 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

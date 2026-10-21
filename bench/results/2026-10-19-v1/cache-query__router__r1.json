@@ -1,0 +1,87 @@
+{
+  "task": "cache-query",
+  "pr": 5119,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 170.5,
+  "is_error": false,
+  "num_turns": 26,
+  "duration_ms": 164720,
+  "cost_usd": 0.7321109400000001,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 607,
+      "cacheReadInputTokens": 1324,
+      "cacheCreationInputTokens": 3495,
+      "webSearchRequests": 0,
+      "costUSD": 0.00101594,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 323
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 32,
+      "outputTokens": 15702,
+      "cacheReadInputTokens": 778834,
+      "cacheCreationInputTokens": 32645,
+      "webSearchRequests": 0,
+      "costUSD": 0.7310948000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 5022
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "security-sensitive code (crypto, input sanitization); public API contracts (new maxQueryBodySize option)",
+      "why": "Changes cache key construction using SHA-256 and Web Crypto, where key aliasing between GET and QUERY would be a security bug; code change in a risk_floor area. Repo has 138 test files, so no safety-net bump; deep's default effort is medium.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 88,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/cache/index.test.ts"
+  ],
+  "test_tail": "fined.\",\n- ]\n+ []\n\n\nNumber of calls: 1\n\n \u276f src/middleware/cache/index.test.ts:410:17\n    408|     expect(res.status).toBe(200)\n    409|     expect(spy).toHaveBeenCalledOnce()\n    410|     expect(spy).toHaveBeenCalledWith(\n       |                 ^\n    411|       'Cache Middleware is not enabled because caches is not defined.'\n    412|     )\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/4]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should bypass QUERY caching when Web Crypto is not available\nAssertionError: expected \"vi.fn()\" to be called once, but got 0 times\n \u276f src/middleware/cache/index.test.ts:1012:35\n    1010|       })\n    1011|\n    1012|       expect(onCacheNotAvailable).toHaveBeenCalledOnce()\n       |                                   ^\n    1013|       expect(onCacheNotAvailable).toHaveBeenCalledWith(\n    1014|         'Cache Middleware cannot cache QUERY requests because Web Cryp\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/4]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should cache QUERY after the body was read through HonoRequest\nAssertionError: expected '2' to be '1' // Object.is equality\n\nExpected: \"1\"\nReceived: \"2\"\n\n \u276f src/middleware/cache/index.test.ts:1133:40\n    1131|\n    1132|     expect(await res.text()).toBe('{}')\n    1133|     expect(res.headers.get('X-Count')).toBe('1')\n       |                                        ^\n    1134|     expect(mockCache.put).toHaveBeenCalledOnce()\n    1135|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/4]\u23af\n\n"
+}

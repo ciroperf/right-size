@@ -23,10 +23,11 @@ The decision itself must stay cheap. Use what is already in context plus at most
 4. **Pick the tier.** Size by the structure of the change, not by its domain: how many places must change together and how many existing behaviors must keep working.
    - Mostly reading, and a lot of it → `scout`, even in a risk area: reading can't break anything. A lookup that a grep or two can answer stays `inline`.
    - Pattern you can state in a sentence, easy to verify → `mechanical`.
-   - Ordinary feature or fix → `standard`.
+   - Bug fix with a clear reproduction, in a repo with tests → `mechanical`: escalate if a check fails.
+   - Feature, or a fix that needs design decisions → `standard`.
    - Change that threads through several modules or must keep many behaviors intact → `deep`.
    - No safety net → one tier higher (not for `scout`), because failures will surface late.
-   - Risk area: size it like anything else, but plan the verification now: tests must pass and the diff gets a review from the `deep` tier before you call it done. Without tests, start at `deep`.
+   - Risk area: size it like anything else, but plan the verification now: tests must pass and the diff gets a review from the `deep` tier before you call it done. Without tests, or for a design change in the area (a new auth flow, a migration), start at `deep`.
 
 5. **Pick the effort.** Start from the tier's `default_effort`. If the task is small but needs careful thought (a subtle bug, a tricky algorithm), raise effort one step before raising the tier: it needs thinking, not a bigger model.
 
@@ -67,7 +68,7 @@ When escalating to a bigger model, hand it a fresh brief (the task, the current 
 
 After a failed attempt or check, step up according to `escalation` in `tiers.yaml`:
 - syntax or tooling error → retry once at the same tier with the error in the brief;
-- verifiable failure (tests red, build broken after a real attempt) → one tier up;
+- verifiable failure (tests red, build broken after a real attempt) → one tier up. Before calling a fix done, run the existing tests of the modules it touched, not only new ones: a fix that breaks them has failed;
 - reasoning failure (wrong approach, misread spec) → two tiers up;
 - already at `deep` → raise effort one step, up to high, before anything past `deep`.
 
