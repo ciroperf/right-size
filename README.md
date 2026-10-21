@@ -44,12 +44,15 @@ right-size sizes the work, starts on the smallest setup that still gets it done,
 | A cheaper session model is where the saving is | Whole session on Sonnet: **60% cheaper, ~3× faster** than the Opus default, same 6/6 bugs solved |
 | Subagents rarely pay off on small, related fixes | Forcing delegation: **about 2× the cost** of doing it inline |
 
-These are single runs on one repo; [benchmark v1](bench/README.md#v1-prepared-not-run-yet), with repetitions and harder tasks, is prepared.
+<!-- TODO(0.4.0): add the v1 headline rows (ladder vs sonnet, hard tasks) once measured -->
 
-**Three ways to use it**
+These are single runs on one repo. See [Benchmark](#benchmark) for v1, with harder tasks.
 
+**Four ways to use it**
+
+- 📊 **`/right-size-audit`** reads the transcripts Claude Code already keeps and shows where your spend went: by model, by token kind, by subagent, and which change would cut it most. Local files only, no model calls.
 - ⚙️ **`/right-size-defaults`** sets the model and effort your sessions start on, from the project's tests and risk profile. Most of the measured saving comes from here.
-- 🧭 **Router mode** (`route.py`) sizes a task before the session starts, launches it on that tier's model and effort, and escalates if the session gets stuck.
+- 🧭 **Router mode** (`route.py`) starts a session on the cheapest tier that fits, checks every attempt (did anything change, do the tests pass, does a reviewer one tier up accept it) and steps up only when a check fails.
 - 💬 **The `right-size` advisor** sizes work inside a session: inline or subagent, which tier, which effort, and when to step up.
 
 ```
@@ -129,7 +132,7 @@ Global: add `-g`. Pick agents with `-a`, e.g. `-a cursor`. Update later with `np
 Download from the [latest release](https://github.com/ciroperf/right-size/releases/latest):
 
 - `right-size.skill`: upload it in Claude.ai under **Settings → Capabilities → Skills**.
-- `right-size-vX.Y.Z.zip`: all three skills. Copy the `skills/` folders into your agent's skills directory (for example `.claude/skills/` or `.agents/skills/`), keeping them side by side.
+- `right-size-vX.Y.Z.zip`: all four skills. Copy the `skills/` folders into your agent's skills directory (for example `.claude/skills/` or `.agents/skills/`), keeping them side by side.
 
 </details>
 
@@ -148,6 +151,20 @@ It checks the project's safety net and risk profile, recommends the model and ef
 ```
 
 This writes one subagent per tier with model and effort preset: `.claude/agents/right-size-*.md` in Claude Code, `.codex/agents/right_size_*.toml` in Codex. It asks before overwriting anything. Without these agents right-size still works, but it can only pass a model per call, and effort then follows the session.
+
+### Optional: see where your spend goes
+
+```text
+> /right-size-audit
+```
+
+It prices the session transcripts in `~/.claude/projects/` at list price (last 30 days of the current project by default) and reports the split by model, by token kind (input, output, cache read, cache write) and by subagent, plus the patterns that cost the most: model switches inside a conversation, top-tier sessions that barely edited anything, subagents on the top model doing reading. It then recommends at most two changes. Also runs from a terminal:
+
+```bash
+python .claude/skills/right-size-audit/scripts/audit.py --days 7      # --all for every project, --json for the numbers
+```
+
+It is a good first step before any cost-saving tool, this one included: tools that shorten replies only touch the output share, which is often under a fifth of the bill.
 
 ## Usage
 
@@ -202,17 +219,29 @@ escalate if: tests red after a real attempt → one tier up; wrong approach → 
 
 ### Router mode: size the whole session
 
-Inside a session, right-size can only save by delegating: the main session keeps the model it started with. The router moves the decision in front of the session. One classifier call on the cheapest tier (about $0.002 in Claude Code) sizes the task with the same `tiers.yaml`, then the harness starts on that tier's model and effort.
+Inside a session, right-size can only save by delegating: the main session keeps the model it started with. The router moves the decision in front of the session.
+
+In headless mode (`--print`) it climbs a ladder. It starts on the `mechanical` tier when it can check the work, and after each attempt it runs three checks:
+
+1. **Did anything change?** An empty diff fails.
+2. **Do the tests pass?** Your `--verify-cmd`, if you give one.
+3. **Does a reviewer one tier up accept the diff?** The reviewer may write and run a throwaway test to probe it; the working tree is restored afterwards. Changes in risk areas (auth, security, payments, migrations, breaking public APIs) are always reviewed on the `deep` tier.
+
+A failed check moves the task one tier up. A model change starts a fresh session with a brief (the task, the current diff, why it failed), because resuming would make the bigger model re-read the whole conversation without cache; an effort-only change resumes the same session. At most three steps by default.
 
 ```bash
-python .claude/skills/right-size/scripts/route.py "fix the failing date parsing test"
+python .claude/skills/right-size/scripts/route.py --print --verify-cmd "npm test" "fix the failing date parsing test"
 ```
 
 ```
-right-size: route · tier=standard · model=sonnet · effort=medium
-why: bug fix with a clear reproduction, tests present, not a risk area
-escalate if: a real attempt fails → deep (opus, effort medium)
+right-size: route · tier=mechanical · model=haiku · effort=low
+why: ladder: start on the cheapest writing tier, checks escalate on failure
+escalate if: a real attempt fails → standard (sonnet, effort medium)
 ```
+
+<!-- TODO(0.4.0): replace with a real escalate/done pair from a bench run -->
+
+With `--classify`, one call on the cheapest tier (about $0.002) sizes the task with the same `tiers.yaml` and picks the starting tier instead. In the benchmark so far that solved the same tasks as the ladder at about three times the cost, so it is opt-in. Without `--print` nothing checks the work automatically, so the router opens the interactive session on `standard` (or on the classifier's tier with `--classify`).
 
 The script ships inside the skill folder and needs only Python 3.9+, no packages. Where it lives depends on how you installed right-size; inside a session, asking "give me the right-size router command" makes the skill print it with the full path.
 
@@ -234,22 +263,22 @@ function rs { python .claude\skills\right-size\scripts\route.py @args }   # Powe
 
 | Flag | What it does |
 |---|---|
-| `--print` | Run headless. If the session ends with `RIGHT-SIZE-ESCALATE: verifiable` or `reasoning`, the router resumes it one or two tiers up, within the ceiling, and prints the cost of each step |
+| `--print` | Run headless with checks and escalation, and print the cost of each step |
+| `--verify-cmd <cmd>` | With `--print`: the command that must pass after each attempt, e.g. `"npm test"` |
+| `--review auto\|always\|never` | With `--print`: when to run the review one tier up (`auto` by default) |
+| `--no-checks` | With `--print`: escalate only when the session asks for it (`RIGHT-SIZE-ESCALATE:`), the 0.3.0 behavior |
+| `--max-escalations <n>` | Steps up allowed after the first attempt (default 3) |
+| `--classify` | Size the task with a classifier call instead of starting on the ladder |
+| `--tier <tier>` | Start on this tier |
 | `--file <path>` | Read the task from a file, or from stdin with `-` |
 | `--dry-run` | Show the decision and the command, don't run anything |
-| `--tier <tier>` | Skip the classifier |
-| `--split` | With `--print`: when the task is several independent requests, run each as its own session on its own tier. Measured so far: costs more than one session, see [`bench/`](bench/) |
+| `--split` | With `--print`: when the task is several independent requests, run each as its own session on its own tier (implies `--classify`). Measured so far: costs more than one session, see [`bench/`](bench/) |
+| `--log <dir>` | With `--print`: save each attempt's stream-json transcript in this folder |
 | `--harness codex` | Launch Codex instead (`-m` plus `model_reasoning_effort`). Not yet tested end to end |
 | `--json` | With `--print`: a JSON summary of the decision and every run |
 | `-- <args>` | Pass the rest to the harness CLI, e.g. `-- --permission-mode acceptEdits` |
 
-```
-right-size: route · tier=mechanical · model=haiku · effort=low
-right-size: escalate · mechanical → standard (sonnet, effort medium) · tests still red
-right-size: done · mechanical (haiku) $0.01 → standard (sonnet) $0.07 · router $0.0002 · total $0.08
-```
-
-If the classifier can't run (CLI missing, not signed in, timeout), the router falls back to `standard` and says so. Interactive sessions get the same note, and the agent tells you which `/model` and `/effort` to switch to if it gets stuck. A switch resumes the same conversation, so nothing is lost, but the new model reads it once without cache. Whether routing beats the harness default on cost at equal results is what the [benchmark](#benchmark) is measuring next.
+If the classifier can't run (CLI missing, not signed in, timeout), the router falls back to `standard` and says so. Interactive sessions get a note telling the agent which `/model` and `/effort` to suggest if it gets stuck.
 
 ## How it works
 
@@ -357,7 +386,23 @@ What it shows, regressions included:
 - **Subagents didn't pay.** The Haiku and Sonnet subagents were cheap, but the Opus session's briefing and review, plus security parts sent to a cold Opus subagent, doubled the cost. The advisor's choice to stay inline was right.
 - **What changed because of it:** the `deep` tier now starts at medium effort, with high as its first escalation step, and `/right-size-defaults` exists.
 
-Next, [benchmark v1](bench/README.md#v1-prepared-not-run-yet): Opus at high effort and always-Sonnet as references against the router, four harder tasks where a cheaper model should fail, and three runs per configuration. Its question is whether routing beats simply starting on Sonnet.
+**v1, 2026-10-21 → <!-- TODO(0.4.0) date -->:** does a router with checks beat simply running everything on Sonnet? 11 tasks (v0 fixes, two batches, four harder tasks) plus <!-- TODO(0.4.0): N --> hard multi-module tasks that Haiku fails, scored by each PR's own tests. Records in [`bench/results/`](bench/results/).
+
+<!-- TODO(0.4.0): table from bench/results/2026-10-21-v1-checks + the rerun + v2-hard. Columns: config, solved, total cost, cost per solved task. Rows: sonnet, ladder, router (--classify), opus-high reference. -->
+
+| Config | v1 solved | v1 cost | hard solved | hard cost |
+|---|---|---|---|---|
+| `sonnet` (whole session on Sonnet, medium) | TBD | TBD | TBD | TBD |
+| `ladder` (`route.py --print`, checks) | TBD | TBD | TBD | TBD |
+| `router` (`route.py --print --classify`) | TBD | TBD | TBD | TBD |
+| `opus-high` (reference) | — | — | TBD | TBD |
+
+What changed because of v1, measured on its first pass:
+
+- **Sessions never asked to escalate.** In the pilot, every failed session stopped with a wrong answer at every tier. The router now checks each attempt itself; with checks, escalation fired where it should.
+- **Resuming on a bigger model was the expensive part of an escalation**: most of one ladder run's cost was Opus re-reading the earlier conversation uncached. A model change now starts a fresh session with a brief.
+- **Tests and a read-only review both missed a defect** that a cheap model introduced. The reviewer may now write and run a throwaway probe.
+- **The classifier did not pay for itself**: same solved count as the ladder at about three times the cost. It is now opt-in (`--classify`).
 
 One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pass and failed in all three configurations. It was corrected and all three reran; the note is in [`bench/tasks/hono.yaml`](bench/tasks/hono.yaml).
 
@@ -402,7 +447,10 @@ The skill reasons in tiers, so only the YAML maps need updating. Each map record
 - [x] Batch experiments: delegation, split and pinned-tier routing ([results](#benchmark))
 - [x] Cursor and Copilot maps (advice only)
 - [ ] Generated config and smoke tests for Antigravity, Cursor and Copilot
-- [ ] Benchmark v1: router vs always-Sonnet and Opus high, harder tasks, three runs each (prepared)
+- [x] Router with checks: empty-diff, test command and probing review one tier up; fresh-brief escalation
+- [x] `right-size-audit`: where a project's Claude Code spend went, from local transcripts
+- [x] Benchmark v1: router vs always-Sonnet, harder tasks ([results](#benchmark))
+- [ ] Benchmark v1 with three runs per configuration
 - [ ] Codex end-to-end runs of the router and benchmark
 
 ## Contributing

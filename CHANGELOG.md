@@ -4,6 +4,31 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+The first v1 runs showed that sessions never ask to escalate on their own: a failing session stops with a wrong answer at every tier. This release makes the router check the work itself.
+
+### Added
+
+- **`/right-size-audit`** (user-invoked): prices the project's Claude Code transcripts at list price and reports spend by model, token kind and subagent, model switches inside conversations, top-tier sessions that barely edited, and unpriced models, then recommends at most two changes. Local files only, no model calls. Also `scripts/audit.py` with `--days`, `--project`, `--all`, `--json`.
+- **Checks in router mode** (`--print`): after each attempt the router fails it on an empty diff, on a failing `--verify-cmd`, or when a review one tier up rejects the diff (always `deep` for risk areas). `--review auto|always|never`, `--no-checks` for the old behavior.
+- **Probing reviews:** the reviewer may write and run a throwaway test; the working tree is restored afterwards.
+- `--max-escalations` (default 3), `--log <dir>` to keep each attempt's transcript.
+- List prices per model in `harnesses/claude-code.yaml`, with source and date.
+
+### Changed
+
+- **The router starts on a ladder by default**: `mechanical` when checks and tests can catch a miss, `standard` otherwise. The classifier is opt-in with `--classify` (it solved the same tasks as the ladder at about three times the cost); `--split` implies it.
+- **A model change starts a fresh session** with a brief (task, current diff, failure reason) instead of resuming: the bigger model re-reading the whole conversation uncached was most of an escalation's cost. Effort-only changes still resume.
+- **Risk floor:** risk areas are sized like any change and reviewed at `deep`; they start at `deep` only without tests or for a design change. Breaking changes to public APIs count as a risk area, adding a capability does not.
+- Bug fixes with a clear reproduction in a repo with tests start at `mechanical`.
+- Sessions are told to run the existing tests of every module they changed and to delete scratch files before stopping.
+
+### Benchmark
+
+- **v1 with checks** (11 tasks, one run): <!-- TODO(0.4.0): final numbers after the trie rerun -->.
+- **v2-hard** (<!-- TODO(0.4.0): N --> multi-module tasks Haiku fails): <!-- TODO(0.4.0) -->.
+- Runner: more read-only shell tools allowed, checks for environment errors at checkout and scoring.
+- Task prompts corrected where they left out behavior the PR tests check (`trie-suffix-wildcard`, `method-not-allowed`, `cache-query`, `regexp-router-unsupported`, `jsx-array`); superseded results are kept apart and don't count.
+
 ## 0.3.0 - 2026-10-18
 
 The benchmark showed where the savings are: the model a session starts on, not delegation. This release acts on that.
