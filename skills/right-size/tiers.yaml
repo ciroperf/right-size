@@ -121,7 +121,12 @@ escalation:
   checks:
     - the attempt changed files (unless the task was read-only)
     - tests or the project's checks pass
-    - "a review one tier up (deep for risk areas) finds no requirement missed and nothing broken; always for risk areas and mechanical work"
+    - "a review one tier up (deep for risk areas) finds no requirement missed and nothing broken; always for risk areas and mechanical work. The reviewer may run a throwaway probe: the defects left after tests pass are the ones tests don't cover"
+  # A step to a bigger model gets a fresh brief (task, current diff, failure reason):
+  # resuming the old conversation made the bigger model re-read it uncached, which
+  # was most of an escalation's cost on bench v1. Effort-only steps resume, since
+  # effort changes keep the cache.
+  handoff: fresh brief on a model change, resume on an effort change
   syntax_or_tooling_failure: retry once at the same tier with the error in the brief
   verifiable_failure: +1 tier   # tests red, build broken after a real attempt
   reasoning_failure: +2 tiers   # wrong approach, misread spec, plausible but wrong output

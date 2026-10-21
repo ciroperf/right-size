@@ -27,7 +27,7 @@ jobs:
           tag="$GITHUB_REF_NAME"
           mkdir -p dist
           # All skills together: setup and defaults read ../right-size/.
-          zip -r "dist/right-size-${tag}.zip" skills/right-size skills/right-size-setup skills/right-size-defaults README.md LICENSE CHANGELOG.md
+          zip -r "dist/right-size-${tag}.zip" skills/right-size skills/right-size-setup skills/right-size-defaults skills/right-size-audit README.md LICENSE CHANGELOG.md
           # Single-skill package for claude.ai (Settings > Capabilities > Skills).
           (cd skills && zip -r ../dist/right-size.skill right-size)
 

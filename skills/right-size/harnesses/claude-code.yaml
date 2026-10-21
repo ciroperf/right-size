@@ -40,6 +40,33 @@ how_to_apply:
   - For inline work on a fresh session (little context so far), suggest /model and /effort for the tier; the user runs them. Later in a session suggest /effort only, since on Opus, Sonnet and Haiku 5.5 and Fable 5.1 (API key or subscription) it keeps the prompt cache, while a model switch re-reads the whole conversation uncached.
   - Router mode (scripts/route.py) uses these same tier entries for the whole session, and the scout entry for its classifier call.
 
+# List prices in USD per million tokens, used by right-size-audit to price transcripts.
+# Source: Anthropic's model table (claude-api skill, cached 2026-10-06). Cache writes
+# cost 1.25x input with the 5-minute TTL and 2x with the 1-hour TTL; reads as listed.
+# Haiku 5.5's input price doubles above 100K prompt tokens; the audit ignores that.
+prices:
+  claude-fable-5-1:
+    input: 10
+    output: 50
+    cache_read: 0.25
+  claude-opus-5-5:
+    input: 4
+    output: 20
+    cache_read: 0.20
+  claude-sonnet-5-5:
+    input: 2
+    output: 10
+    cache_read: 0.20
+  claude-haiku-5-5:
+    input: 0.10
+    output: 0.50
+    cache_read: 0.01
+  # Older models still found in transcripts (cache reads at the usual 0.1x input).
+  claude-haiku-4-5:
+    input: 1
+    output: 5
+    cache_read: 0.10
+
 notes:
   - The haiku alias resolves to Claude Haiku 5.5 (1M context, accepts effort) as of 2026-10-17. On older Claude Code versions it may still be Haiku 4.5, which has a 200K window and no effort setting.
   - Fable needs usage credits on subscription plans; if beyond_deep fails with a credits error, stay on opus at max effort.

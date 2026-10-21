@@ -57,11 +57,13 @@ When sizing several tickets or subtasks at once (for example before fanning out 
 
 ## Router mode
 
-To size a task before any session starts, `scripts/route.py` in this skill's folder makes one cheap classifier call with `tiers.yaml` and launches Claude Code or Codex on the tier's model and effort. Headless (`--print`) it also checks each attempt (no file changed, `--verify-cmd` failing, or a review rejecting the diff) and resumes the session one tier up when a check fails. When the user wants that, give them the command with the script's absolute path, e.g. `python <this folder>/scripts/route.py "fix the failing date test"`.
+To pick the model for a whole session before it starts, `scripts/route.py` in this skill's folder launches Claude Code or Codex on a tier's model and effort. Headless (`--print`) with tests, it starts on the cheapest writing tier and checks each attempt: no file changed, `--verify-cmd` failing, or a higher-tier review (which may run throwaway probes) rejecting the diff. A failed check moves one tier up; a new model starts a fresh session with a brief instead of re-reading the old one. Interactive, or without tests, it starts on `standard`. `--classify` lets a cheap classifier pick the starting tier instead. When the user wants that, give them the command with the script's absolute path, e.g. `python <this folder>/scripts/route.py --print --verify-cmd "npm test" "fix the failing date test"`.
 
 ## Escalation
 
-Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas or `mechanical` work a review one tier up (a short-lived reviewer subagent with the task and the diff) finds no missed requirement and nothing broken.
+Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas or `mechanical` work a review one tier up (a short-lived reviewer subagent with the task and the diff, allowed to write and run a throwaway test for a requirement it doubts) finds no missed requirement and nothing broken. Passing tests are not enough on their own: the defects that remain are the ones the tests don't cover.
+
+When escalating to a bigger model, hand it a fresh brief (the task, the current diff, why the last attempt failed) rather than the whole previous conversation: a new model re-reads everything uncached.
 
 After a failed attempt or check, step up according to `escalation` in `tiers.yaml`:
 - syntax or tooling error → retry once at the same tier with the error in the brief;

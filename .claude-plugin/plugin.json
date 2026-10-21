@@ -19,6 +19,7 @@
   "skills": [
     "./skills/right-size",
     "./skills/right-size-setup",
-    "./skills/right-size-defaults"
+    "./skills/right-size-defaults",
+    "./skills/right-size-audit"
   ]
 }

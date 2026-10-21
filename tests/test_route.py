@@ -166,24 +166,68 @@ class Checks(unittest.TestCase):
         self.assertEqual(route.reviewer_profile(mech, "auth", "deep", CLAUDE, TIERS_YAML)["tier"], "deep")
         self.assertEqual(route.reviewer_profile(mech, "auth", "standard", CLAUDE, TIERS_YAML)["tier"], "standard")
 
-    def test_failed_check_resumes_one_tier_up(self):
+    def checks(self, **kw):
+        return {"root": self.root, "verify_cmd": None, "review": "never", "risk_area": None, "top": "deep",
+                "harness": "claude-code", **kw}
+
+    def test_failed_check_escalates_with_a_fresh_brief(self):
         p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
-        results = iter([("done", "s1", {"total_cost_usd": 0.01}), ("done", "s1", {"total_cost_usd": 0.2})])
-        checks = {"root": self.root, "verify_cmd": None, "review": "never", "risk_area": None, "top": "deep",
-                  "harness": "claude-code"}
+        results = iter([("done", "s1", {"total_cost_usd": 0.01}), ("done", "s2", {"total_cost_usd": 0.2})])
+        calls = []
 
         def fake_run(harness, cmd, task, log):
-            if "--resume" in cmd:  # the escalated attempt edits a file
+            calls.append(cmd)
+            (Path(self.root) / "a.txt").write_text("half\n" if len(calls) == 1 else "fixed\n", encoding="utf-8")
+            return next(results)
+
+        fail_once = iter([1, 0])  # the verify command fails after the first attempt only
+        with mock.patch.object(route, "headless_run", side_effect=fake_run) as hr, \
+             mock.patch.object(route.subprocess, "run", wraps=route.subprocess.run) as sp:
+            sp.side_effect = lambda *a, **k: (route.subprocess.CompletedProcess(a[0], next(fail_once), "", "")
+                                              if k.get("shell") else mock.DEFAULT)
+            runs, _ = route.run_headless("claude-code", p, "fix it", [], "why", "deep", CLAUDE, TIERS_YAML, 2, None,
+                                         checks=self.checks(verify_cmd="tests"))
+        self.assertEqual([r["profile"]["tier"] for r in runs], ["mechanical", "standard"])
+        self.assertNotIn("--resume", calls[1])  # a bigger model starts fresh instead of re-reading the old session
+        brief = hr.call_args_list[1].args[2]
+        self.assertIn("fix it", brief)
+        self.assertIn("+half", brief)  # the current diff
+        self.assertIn("`tests` failed", brief)
+        self.assertFalse(runs[1]["resumed"])
+        self.assertEqual(runs[1]["cost_usd"], 0.2)  # a fresh session's cost is not cumulative
+
+    def test_effort_only_escalation_resumes(self):
+        p = route.profile("deep", None, CLAUDE, TIERS_YAML)
+        results = iter([("done", "s1", {"total_cost_usd": 0.5}), ("done", "s1", {"total_cost_usd": 0.8})])
+
+        def fake_run(harness, cmd, task, log):
+            if "--resume" in cmd:
                 (Path(self.root) / "a.txt").write_text("fixed\n", encoding="utf-8")
             return next(results)
 
         with mock.patch.object(route, "headless_run", side_effect=fake_run) as hr:
             runs, _ = route.run_headless("claude-code", p, "fix it", [], "why", "deep", CLAUDE, TIERS_YAML, 2, None,
-                                         checks=checks)
-        self.assertEqual([r["profile"]["tier"] for r in runs], ["mechanical", "standard"])
-        self.assertEqual(runs[0]["checks"][0]["kind"], "diff")
-        self.assertIn("changed no files", hr.call_args_list[1].args[2])
-        self.assertEqual(runs[1]["checks"], [])
+                                         checks=self.checks())
+        self.assertEqual([r["profile"]["effort"] for r in runs], ["medium", "high"])
+        self.assertIn("--resume", hr.call_args_list[1].args[1])
+        self.assertAlmostEqual(runs[1]["cost_usd"], 0.3)  # resumed totals are cumulative
+
+    def test_restore_undoes_review_probes(self):
+        (Path(self.root) / "a.txt").write_text("attempt\n", encoding="utf-8")
+        (Path(self.root) / "keep.txt").write_text("attempt file\n", encoding="utf-8")
+        before = route.snapshot(self.root)
+        (Path(self.root) / "a.txt").write_text("probe edit\n", encoding="utf-8")
+        (Path(self.root) / "keep.txt").unlink()
+        (Path(self.root) / "probe.test.ts").write_text("probe\n", encoding="utf-8")
+        route.restore(self.root, before, route.snapshot(self.root))
+        self.assertEqual(route.snapshot(self.root), before)
+        self.assertFalse((Path(self.root) / "probe.test.ts").exists())
+
+    def test_ladder_start(self):
+        facts = {"test_files": 12}
+        self.assertEqual(route.ladder_start(True, facts), "mechanical")
+        self.assertEqual(route.ladder_start(False, facts), "standard")  # interactive or --no-checks
+        self.assertEqual(route.ladder_start(True, {"test_files": 0}), "standard")
 
     def test_note_announces_checks(self):
         p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)

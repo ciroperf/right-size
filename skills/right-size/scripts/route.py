@@ -3,9 +3,13 @@
 
 Inside a running session, right-size can only save by delegating: the main
 session's model is fixed once it starts. The router moves the decision in
-front of the session. A cheap classifier call (the harness's scout model)
-sizes the task with tiers.yaml, then the harness is launched on that tier's
-model and effort.
+front of the session and launches the harness on a tier's model and effort.
+
+By default it climbs a ladder: headless with tests, it starts on the cheapest
+writing tier (mechanical) and checks every attempt, escalating one tier when a
+check fails; otherwise it starts on standard. With --classify, a cheap
+classifier call (the harness's scout model) sizes the task with tiers.yaml
+instead and picks the starting tier.
 
 Usage:
   python route.py [options] "task"            # interactive session
@@ -16,11 +20,13 @@ Usage:
 
 Options:
   --harness claude-code|codex   default: claude-code
-  --tier TIER                   skip the classifier and use this tier
-  --split                       headless only: when the task is several independent requests,
-                                run each as its own session on its own tier
+  --tier TIER                   start on this tier
+  --classify                    let the classifier pick the starting tier (and spot risk areas,
+                                which then get a deep-tier review)
+  --split                       headless only, implies --classify: when the task is several
+                                independent requests, run each as its own session on its own tier
   --file PATH                   read the task from PATH, or from stdin with "-"
-  --max-escalations N           headless only, default 2
+  --max-escalations N           headless only, default 3 (mechanical up to deep at high effort)
   --verify-cmd CMD              headless only: shell command run after each attempt; a non-zero
                                 exit escalates (e.g. the test suite, or the tests for changed files)
   --review auto|always|never    headless only: have a higher tier review the diff after each
@@ -33,8 +39,11 @@ Options:
 Headless escalation doesn't rely on the model alone: measured on the benchmark,
 models at every tier stop with a wrong answer and believe it is right. After
 each attempt the router checks the work (no file changed, the verify command
-fails, or a review rejects the diff) and resumes the session one tier up with
-the reason.
+fails, or a review rejects the diff; the reviewer may run throwaway probes)
+and escalates one tier with the reason. A step that only raises effort resumes
+the session; a step to a bigger model starts a fresh session with a brief (task,
+current diff, reason), because resuming would re-read the whole conversation
+uncached on the bigger model.
 
 Standard library only, so it runs wherever the skill is installed.
 """
@@ -67,7 +76,9 @@ def _scalar(v):
         return v == "true"
     if v[0] in "\"'" and v[-1] == v[0]:
         return v[1:-1]
-    return int(v) if re.fullmatch(r"-?\d+", v) else v
+    if re.fullmatch(r"-?\d+", v):
+        return int(v)
+    return float(v) if re.fullmatch(r"-?\d+\.\d+", v) else v
 
 
 def read_yaml(path):
@@ -312,28 +323,60 @@ REVIEW_SCHEMA = {
 
 REVIEW_SYSTEM = """You review a change another model made for a coding task. You get
 the task and the diff; you may read files in the repo to check the change in context.
+Reading is not always enough: the existing tests passed, so a defect that remains is
+one they don't cover. When you doubt that a requirement holds at runtime, write a
+small throwaway test or script for it and run it{run_hint}. The working tree is
+restored after your review, so don't clean up, and don't fix anything: report.
 Answer fail only for a concrete defect you can point to: a requirement of the task
 that the diff doesn't meet, or existing behavior the diff breaks. Name the file and
 the requirement or behavior in `reason`, in one or two sentences the next attempt
-can act on. Style, naming and missing tests are not defects. Otherwise answer pass."""
+can act on. Style, naming, missing tests and leftover scratch files are not defects.
+Otherwise answer pass."""
 
 MAX_DIFF_CHARS = 100_000
 
 
-def review(task, diff, rp, harness, root):
-    """One read-only review call. Returns (ok, reason, info); ok is None when the review couldn't run."""
+def restore(root, tree, now):
+    """Put the working tree back to snapshot `tree` after a review that ran probes.
+
+    Only paths that differ between the two snapshots are touched: files the
+    review changed or deleted are checked out again, files it added are removed.
+    """
+    if not tree or not now or tree == now:
+        return
+    changed = run(["git", "diff", "--name-only", "--no-renames", "--diff-filter=MD", tree, now],
+                  cwd=root).stdout.splitlines()
+    added = run(["git", "diff", "--name-only", "--no-renames", "--diff-filter=A", tree, now],
+                cwd=root).stdout.splitlines()
+    if changed:
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+            run(["git", "read-tree", tree], cwd=root, env=env)
+            run(["git", "checkout-index", "-f", "--", *changed], cwd=root, env=env)
+    for f in added:
+        (Path(root) / f).unlink(missing_ok=True)
+
+
+def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
+    """One review call that may run throwaway probes; the working tree is restored afterwards.
+
+    Returns (ok, reason, info); ok is None when the review couldn't run.
+    `extra` is the harness arguments the sessions get, so the review has the same permissions.
+    """
     if len(diff) > MAX_DIFF_CHARS:
         diff = diff[:MAX_DIFF_CHARS] + "\n[diff truncated]"
+    system = REVIEW_SYSTEM.format(run_hint=f" (the project's tests run with `{verify_cmd}`)" if verify_cmd else "")
     prompt = f"## Task\n{task}\n\n## Diff\n```diff\n{diff}\n```\n"
+    before = snapshot(root)
     try:
         if harness == "claude-code":
-            cmd = ["claude", "-p", "--model", rp["model"], "--tools", "Read,Grep,Glob",
-                   "--system-prompt", REVIEW_SYSTEM, "--output-format", "json",
+            cmd = ["claude", "-p", "--model", rp["model"], "--tools", "Read,Grep,Glob,Write,Bash",
+                   "--system-prompt", system, "--output-format", "json",
                    "--json-schema", json.dumps(REVIEW_SCHEMA), "--no-session-persistence",
-                   "--strict-mcp-config", "--disable-slash-commands", "--max-budget-usd", "0.5"]
+                   "--strict-mcp-config", "--disable-slash-commands", "--max-budget-usd", "1"]
             if rp["effort"]:
                 cmd += ["--effort", rp["effort"]]
-            r = run(cmd, input=prompt, cwd=root, timeout=600)
+            r = run(cmd + list(extra), input=prompt, cwd=root, timeout=900)
             d = json.loads(r.stdout)
             out = d.get("structured_output") or json.loads(d.get("result") or "{}")
             info = {"cost_usd": d.get("total_cost_usd"), "model_usage": d.get("modelUsage")}
@@ -341,14 +384,16 @@ def review(task, diff, rp, harness, root):
             with tempfile.TemporaryDirectory() as tmp:
                 schema, last = Path(tmp) / "schema.json", Path(tmp) / "last.json"
                 schema.write_text(json.dumps(REVIEW_SCHEMA), encoding="utf-8")
-                cmd = ["codex", "exec", "--ephemeral", "-s", "read-only", "-m", rp["model"],
+                cmd = ["codex", "exec", "--ephemeral", "-s", "workspace-write", "-m", rp["model"],
                        *(["-c", f"model_reasoning_effort={rp['effort']}"] if rp["effort"] else []),
                        "--output-schema", str(schema), "-o", str(last), "-"]
-                run(cmd, input=REVIEW_SYSTEM + "\n\n" + prompt, cwd=root, timeout=600)
+                run(cmd, input=system + "\n\n" + prompt, cwd=root, timeout=900)
                 out = json.loads(last.read_text(encoding="utf-8"))
             info = {"cost_usd": None}
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError, TypeError, AttributeError) as e:
         return None, f"review unavailable ({type(e).__name__})", {"cost_usd": None}
+    finally:
+        restore(root, before, snapshot(root))
     if not isinstance(out, dict) or out.get("verdict") not in ("pass", "fail"):
         return None, "review unavailable (unexpected answer)", info
     return out["verdict"] == "pass", str(out.get("reason") or ""), info
@@ -380,7 +425,8 @@ def check_attempt(ck, p, hmap, tiers):
     if wants_review(ck["review"], p, ck["risk_area"]) and ck["start"] and end:
         diff = run(["git", "diff", ck["start"], end], cwd=ck["root"]).stdout
         rp = reviewer_profile(p, ck["risk_area"], ck["top"], hmap, tiers)
-        ok, reason, info = review(ck["task"], diff, rp, ck["harness"], ck["root"])
+        ok, reason, info = review(ck["task"], diff, rp, ck["harness"], ck["root"], ck["verify_cmd"],
+                                  ck.get("extra", ()))
         records.append({"kind": "review", "ok": ok, "reason": reason, "profile": rp, **info})
         if ok is False:
             return f"a {rp['tier']}-tier review rejected the change: {reason}", records
@@ -437,7 +483,8 @@ def note(p, why, nxt, interactive, checks=None):
             what.append(f"it runs `{checks['verify_cmd']}`, so run it yourself before you stop")
         if wants_review(checks["review"], p, checks["risk_area"]):
             what.append("a higher tier reviews the diff against the task")
-        lines.append("When you stop, the router checks the work: " + "; ".join(what) + ".")
+        lines.append("When you stop, the router checks the work: " + "; ".join(what) + ". "
+                     "Delete scratch or debug files you created before you stop.")
     if nxt is None:
         lines.append("This is the highest tier the router may pick on its own; if it isn't enough, say so plainly.")
     elif interactive:
@@ -539,24 +586,55 @@ def cost_line(classifier, runs):
             + (f" · reviews ${reviews:.2f}" if reviews else "") + f" · total ${total:.2f}")
 
 
+MAX_BRIEF_DIFF_CHARS = 30_000
+
+
+def escalation_brief(task, prev, reason, diff):
+    """The prompt for a fresh session on a bigger model, in place of resuming the old one.
+
+    Resuming makes the bigger model re-read the whole previous conversation
+    without cache, which measured as most of an escalation's cost. The brief
+    carries what matters: the task, what the working tree holds now, and why
+    the last attempt was not accepted.
+    """
+    if diff is None:
+        state = "## Current changes\nThe working tree holds the previous attempt's changes: run `git diff` to see them."
+    elif not diff.strip():
+        state = "## Current changes\nThe working tree has no changes yet."
+    else:
+        if len(diff) > MAX_BRIEF_DIFF_CHARS:
+            diff = diff[:MAX_BRIEF_DIFF_CHARS] + "\n[diff truncated: run `git diff` for the rest]"
+        state = ("## Current changes\nThe working tree already holds these changes from the previous attempt:\n"
+                 f"```diff\n{diff}\n```")
+    return (f"## Task\n{task}\n\n## Previous attempt\nAn attempt on the {prev['tier']} tier ({prev['model']}) "
+            f"was not accepted: {reason}\n\nStart from the current changes: keep what is right, fix what the "
+            f"check found, and finish the task. Read the code you need, and don't trust the previous attempt's "
+            f"conclusions.\n\n{state}\n")
+
+
 def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalations, log_dir, label="",
                  checks=None):
     """One routed headless session, with escalation. Returns (runs, final text).
 
     `checks` (from make_checks) enables the external checks; None leaves
-    escalation to the session's own marker.
+    escalation to the session's own marker. An escalation that keeps the model
+    (effort only) resumes the session, since effort changes keep the prompt
+    cache; one that changes the model starts a fresh session with a brief.
     """
+    task = prompt
+    root = checks["root"] if checks else None
+    start = snapshot(root) if root else None
     if checks:
-        checks = {**checks, "task": prompt, "start": snapshot(checks["root"])}
+        checks = {**checks, "task": task, "start": start, "extra": extra}
     nxt = next_profile(p, 1, top, hmap, tiers)
     cmd = launch_cmd(harness, p, prompt, extra, note(p, why, nxt, False, checks), True)
-    runs, text = [], ""
+    runs, text, resumed = [], "", False
     for attempt in range(max_escalations + 1):
         log = log_dir / f"{label}run-{attempt}-{p['tier']}.jsonl" if log_dir else None
         text, sid, result = headless_run(harness, cmd, prompt, log)
-        cost, usage = own_usage(result, runs[-1]["result"] if runs else None)
+        cost, usage = own_usage(result, runs[-1]["result"] if runs and resumed else None)
         run_rec = {"profile": p, "session_id": sid, "cost_usd": cost, "model_usage": usage, "result": result,
-                   "checks": []}
+                   "checks": [], "resumed": resumed}
         runs.append(run_rec)
         m = MARKER.search(text or "")
         if m:
@@ -567,7 +645,7 @@ def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalatio
             if reason is None:
                 break
         short = reason.splitlines()[0][:200]
-        if attempt == max_escalations or not sid:
+        if attempt == max_escalations:
             sys.stderr.write(f"right-size: escalation needed ({short}) but the escalation limit was reached\n")
             break
         up = next_profile(p, steps, top, hmap, tiers)
@@ -577,16 +655,39 @@ def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalatio
             break
         sys.stderr.write(f"right-size: escalate · {label}{p['tier']} → {up['tier']} ({up['model']}, effort "
                          f"{up['effort'] or 'default'}) · {short}\n")
-        p = up
+        prev, p = p, up
         sys_note = note(p, f"escalated after: {short}", next_profile(p, 1, top, hmap, tiers), False, checks)
-        if kind == "asked":
-            prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
-                      f"{reason}. Continue the task from where it stopped.")
+        why_not = (f"it asked to escalate: {reason}" if kind == "asked"
+                   else f"a check failed: {reason[:3000]}")
+        resumed = p["model"] == prev["model"] and bool(sid)
+        if resumed:
+            if kind == "asked":
+                prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
+                          f"{reason}. Continue the task from where it stopped.")
+            else:
+                prompt = (f"You are now on the {p['tier']} profile. A check after the previous attempt failed: "
+                          f"{reason[:3000]}\n\nFix this and finish the task.")
+            cmd = launch_cmd(harness, p, prompt, extra, sys_note, True, resume=sid)
         else:
-            prompt = (f"You are now on the {p['tier']} profile. A check after the previous attempt failed: "
-                      f"{reason[:3000]}\n\nFix this and finish the task.")
-        cmd = launch_cmd(harness, p, prompt, extra, sys_note, True, resume=sid)
+            diff = run(["git", "diff", start, snapshot(root)], cwd=root).stdout if start else None
+            prompt = escalation_brief(task, prev, why_not, diff)
+            cmd = launch_cmd(harness, p, prompt, extra, sys_note, True)
     return runs, text
+
+
+# Without --classify the router doesn't guess a starting tier: it starts cheap and lets
+# the checks escalate. Measured on bench v1 (2026-10-21): starting on mechanical with
+# checks solved as many tasks as the classifier's pick at about a third of the cost.
+LADDER_WHY = {
+    "mechanical": "ladder: start on the cheapest writing tier, checks escalate on failure",
+    "standard": "ladder: no automatic checks run here (interactive, --no-checks or no tests), "
+                "so start on standard",
+}
+
+
+def ladder_start(checked, facts):
+    """mechanical when every attempt is checked against tests, standard otherwise."""
+    return "mechanical" if checked and facts["test_files"] else "standard"
 
 
 def make_checks(args, facts, risk_area, top, harness):
@@ -607,7 +708,8 @@ def main():
     ap.add_argument("--print", dest="headless", action="store_true")
     ap.add_argument("--split", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--max-escalations", type=int, default=2)
+    ap.add_argument("--classify", action="store_true")
+    ap.add_argument("--max-escalations", type=int, default=3)
     ap.add_argument("--verify-cmd")
     ap.add_argument("--review", choices=["auto", "always", "never"], default="auto")
     ap.add_argument("--no-checks", action="store_true")
@@ -626,6 +728,10 @@ def main():
     if args.tier:
         decision = {"tier": args.tier, "effort": None, "risk_area": None, "why": "tier set by the user",
                     "shared": "", "parts": []}
+    elif not (args.classify or args.split):
+        tier = ladder_start(args.headless and not args.no_checks, facts)
+        decision = {"tier": tier, "effort": None, "risk_area": None, "shared": "", "parts": [],
+                    "why": LADDER_WHY[tier]}
     else:
         try:
             decision, classifier = classify(task, {k: v for k, v in facts.items() if k != "root"}, args.harness,

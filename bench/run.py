@@ -39,9 +39,10 @@ CONFIGS = {
     "opus-high": {"model": "opus", "effort": "high", "right_size": False},
     "sonnet": {"model": "sonnet", "effort": None, "right_size": False},
     "right-size": {"model": "opus", "effort": None, "right_size": True},
-    # The router picks model and effort for the whole session before it starts
-    # (skills/right-size/scripts/route.py), then escalates on request.
-    "router": {"model": None, "effort": None, "right_size": False, "router": True},
+    # The router's classifier picks model and effort for the whole session before it starts
+    # (skills/right-size/scripts/route.py --classify), then checks escalate. Since 2026-10-21
+    # the router's default is the ladder below; this config keeps measuring the classifier.
+    "router": {"model": None, "effort": None, "right_size": False, "router": True, "classify": True},
     # Experiment: the router with its tier pinned, to see what a whole session on that tier costs.
     "router-standard": {"model": None, "effort": None, "right_size": False, "router": True, "tier": "standard"},
     # Cheapest first, escalate on failure: the router with its classifier skipped, starting on
@@ -184,7 +185,7 @@ def claude_cmd(cfg):
     return cmd
 
 
-def run_router(task, log_dir, tier=None, split=False, escalations=None):
+def run_router(task, log_dir, tier=None, split=False, escalations=None, classify=False):
     """Run a task through route.py and fold its runs into one result-like dict.
 
     Cost includes the classifier call. Sessions must persist so that an
@@ -192,6 +193,7 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None):
     """
     cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
            *(["--tier", tier] if tier else []), *(["--split"] if split else []),
+           *(["--classify"] if classify else []),
            *(["--max-escalations", str(escalations)] if escalations is not None else []),
            *(["--verify-cmd", VERIFY_CMD] if VERIFY_CMD else []),
            task["prompt"] + PROMPT_SUFFIX, "--",
@@ -251,7 +253,8 @@ def run_one(task, name, out_dir, rep=None):
     stream_path = raw / f"{stem}.jsonl"
     started = time.time()
     if cfg.get("router"):
-        result, timed_out = run_router(task, raw / stem, cfg.get("tier"), cfg.get("split"), cfg.get("escalations"))
+        result, timed_out = run_router(task, raw / stem, cfg.get("tier"), cfg.get("split"), cfg.get("escalations"),
+                                       cfg.get("classify", False))
     else:
         try:
             r = subprocess.run(claude_cmd(cfg), cwd=WORK, input=task["prompt"] + PROMPT_SUFFIX,

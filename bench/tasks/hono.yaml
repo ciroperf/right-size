@@ -181,19 +181,31 @@ tasks:
     expected_tier: standard
     # v1 prompt left out the callback's second argument and the stale-header rule that
     # the PR's tests check; every config failed those two tests. Corrected 2026-10-21.
+    # Second correction the same day: the first one said to drop every 404 header,
+    # which contradicts the test that keeps downstream headers, and "sub-apps" did not
+    # say the middleware may be installed inside a mounted sub-app with a basePath.
+    # Every config failed those two tests again.
     prompt: |
       Add an opt-in middleware at `src/middleware/method-not-allowed/index.ts`,
       exported as `methodNotAllowed`. Called as `methodNotAllowed({ app,
       onMethodNotAllowed? })`, it turns a 404 into `405 Method Not Allowed` (body
-      `Method Not Allowed`) with an `Allow` header listing every method the path is
-      registered for, in registration order, when the path exists for other methods.
-      GET routes also allow HEAD. The 405 must not keep headers from the 404 it
-      replaces (such as a stale `Allow` or `Content-Length`). Requests for an allowed
-      method, and paths that don't exist at all, are untouched.
-      `onMethodNotAllowed(c, allowedMethods)` (the same method list, as an array)
-      replaces the default response. Assign the response to `c.res` rather than throwing, follow Hono's
-      routing for custom and case-sensitive methods, work with sub-apps mounted via
-      `app.route()`, and don't replace a 404 produced by an error handler.
+      `Method Not Allowed`, empty for HEAD) with an `Allow` header listing every
+      method the path is registered for, in registration order and without
+      duplicates, when the path exists for other methods. GET routes also allow HEAD;
+      `ALL` routes are not counted, and explicit `HEAD` routes are not advertised
+      because Hono never dispatches them. Requests for an allowed method, paths that
+      don't exist at all, an intentional 404 from a handler matched for the request
+      method, a 404 produced by the error handler, and a non-404 not-found response
+      are untouched. The 405 replaces the not-found response's representation
+      headers (a stale `Allow` or `Content-Length` must not survive), but headers
+      that inner middleware adds after `next()` are kept, and outer middleware must
+      see the final 405 status. Assign the response to `c.res` rather than throwing,
+      so the error handler is not invoked. `onMethodNotAllowed(c, allowedMethods)`
+      (the same method list, as an array) replaces the default response. Follow
+      Hono's routing for custom and case-sensitive methods. It must work both when
+      the routes come from a sub-app mounted with `app.route()` and when the
+      middleware is installed in a sub-app (possibly with a `basePath`) that is then
+      mounted into another app with `app.route()`.
 
   - id: cache-query
     pr: 5119
@@ -201,6 +213,9 @@ tasks:
     expected_tier: deep
     # v1 prompt left out the onCacheNotAvailable call and the already-read body case
     # that the PR's tests check; every config failed those tests. Corrected 2026-10-21.
+    # Second correction the same day: the first one said any body read keeps caching
+    # (the tests bypass after formData()), and the stored key format an existing test
+    # now checks was not given. Every config failed those two tests again.
     prompt: |
       The cache middleware only caches GET. Add support for the HTTP QUERY method
       (a safe method with a request body). A QUERY cache key must depend on the
@@ -209,8 +224,17 @@ tasks:
       configured Vary values, so different bodies or content types never share an
       entry, and GET and QUERY never share one either (a GET URL must not be able to
       alias a QUERY key). Reading the body for the key must not consume it for the
-      handler, and a QUERY whose body an earlier middleware already read through
-      `c.req.text()` (or another HonoRequest body method) is still cached. Add a
+      handler. A QUERY whose body an earlier middleware already read through
+      `c.req.text()` (or another HonoRequest body method that keeps the raw bytes) is
+      still cached, but one already read as FormData (`c.req.formData()`) bypasses
+      caching, because multipart content can't be reserialized with a stable
+      boundary. Every entry, GET included, is stored under the request origin's
+      `/.hono/cache` URL with query parameters: `__hono_cache_key` (the key from
+      `keyGenerator`, or the request URL, without any `#fragment`), then
+      `__hono_cache_method` (`GET` or `QUERY`), then for QUERY the body digest, then
+      the Vary values; e.g. a custom key `dynamic-cache-key` on
+      `http://localhost/...` is stored as
+      `http://localhost/.hono/cache?__hono_cache_key=dynamic-cache-key&__hono_cache_method=GET`. Add a
       `maxQueryBodySize` option (64 KiB by default): a body larger than the limit, or
       one that can't be read, bypasses caching, and a body at exactly the limit is
       cached. Without Web Crypto, QUERY requests bypass caching while GET keeps

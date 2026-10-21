@@ -1,0 +1,5 @@
+interface:
+  display_name: "Right Size Audit"
+  short_description: "Show where this project's Claude Code spend went and which change cuts it most."
+policy:
+  allow_implicit_invocation: false
