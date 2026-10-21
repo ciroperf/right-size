@@ -1,0 +1,42 @@
+{
+  "started": "2026-10-20T22:34:25.467592+00:00",
+  "configs": {
+    "sonnet": {
+      "model": "sonnet",
+      "effort": null,
+      "right_size": false
+    },
+    "ladder": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true,
+      "tier": "mechanical",
+      "escalations": 3
+    },
+    "router": {
+      "model": null,
+      "effort": null,
+      "right_size": false,
+      "router": true
+    }
+  },
+  "allowed_tools": [
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "Agent",
+    "Skill",
+    "TodoWrite",
+    "Bash(npx vitest *)",
+    "PowerShell(npx vitest *)",
+    "Bash(git diff *)",
+    "Bash(git status *)",
+    "Bash(git log *)"
+  ],
+  "nudge": "Before starting, size the task with the right-size skill and follow its decision.",
+  "delegate_nudge": "Size each independent part of the task with the right-size skill, then delegate every part to the right-size-* subagent for its tier, in parallel where the parts are independent. Do not fix any part yourself; review and verify the subagents' results.",
+  "claude_version": "2.1.302 (Claude Code)"
+}

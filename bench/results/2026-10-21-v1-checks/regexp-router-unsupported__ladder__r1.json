@@ -1,0 +1,128 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 586.7,
+  "is_error": false,
+  "num_turns": 37,
+  "duration_ms": 553905,
+  "cost_usd": 1.931206,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 24,
+      "outputTokens": 30533,
+      "cacheReadInputTokens": 729851,
+      "cacheCreationInputTokens": 53359,
+      "webSearchRequests": 0,
+      "costUSD": 0.033239210000000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 22041
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 1626,
+      "cacheReadInputTokens": 114671,
+      "cacheCreationInputTokens": 57361,
+      "webSearchRequests": 0,
+      "costUSD": 0.2571791,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 569
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 18,
+      "outputTokens": 33879,
+      "cacheReadInputTokens": 929398,
+      "cacheCreationInputTokens": 97157,
+      "webSearchRequests": 0,
+      "costUSD": 1.6407875999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 23334
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 5,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 237,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "ts 47ms, environment 0ms)\n\n % Coverage report from v8\n-------------------|---------|----------|---------|---------|-------------------\nFile               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \n-------------------|---------|----------|---------|---------|-------------------\nAll files          |   71.46 |    59.81 |   73.52 |   70.42 |                   \n ...reg-exp-router |   93.68 |    85.71 |   97.91 |   93.18 |                   \n  node.ts          |   83.58 |    77.92 |     100 |   83.33 | ...-42,71,108,124 \n  path-checker.ts  |   97.36 |       92 |     100 |   97.14 | 55                \n  router.ts        |   95.71 |    90.36 |   96.66 |    95.2 | ...11,174,277,286 \n  trie.ts          |   97.61 |    83.33 |     100 |   97.43 | 71                \n src/utils         |   25.17 |    13.27 |      15 |   25.17 |                   \n  url.ts           |   25.17 |    13.27 |      15 |   25.17 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 71.46% ( 323/452 )\nBranches     : 59.81% ( 189/316 )\nFunctions    : 73.52% ( 50/68 )\nLines        : 70.42% ( 300/426 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,93 @@
+{
+  "task": "method-not-allowed",
+  "pr": 5132,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 350.8,
+  "is_error": false,
+  "num_turns": 36,
+  "duration_ms": 342363,
+  "cost_usd": 1.37501069,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 586,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8469,
+      "webSearchRequests": 0,
+      "costUSD": 0.0020016900000000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 311
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 58,
+      "outputTokens": 23684,
+      "cacheReadInputTokens": 2003964,
+      "cacheCreationInputTokens": 62288,
+      "webSearchRequests": 0,
+      "costUSD": 1.3730088,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 11096
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 8,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "public API contracts other people depend on",
+      "why": "Must read route registration across app.route() and basePath sub-apps, and keep many behaviors intact (HEAD/ALL/custom methods, error handler, outer middleware, header preservation). Repo has 138 test files, so no deep start is forced by missing tests; the depth comes from the cross-module routing changes.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "high"
+      }
+    ],
+    "checks": [],
+    "parts": null
+  },
+  "diff_lines": 9,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/method-not-allowed/index.test.ts"
+  ],
+  "test_tail": "      50 |      75 |   68.42 | 17-21,35-39,52,69 \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |   74.82 |    57.33 |    90.9 |   74.21 |                   \n  node.ts          |   76.51 |    57.53 |    87.5 |   74.78 | ...75-208,217-227 \n  router.ts        |   54.54 |       50 |     100 |   66.66 | 16-19             \n src/utils         |   21.34 |     9.09 |   15.68 |   21.61 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   36.73 |    19.46 |      40 |   37.06 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 51.52% ( 658/1277 )\nBranches     : 40.12% ( 309/770 )\nFunctions    : 45.68% ( 106/232 )\nLines        : 51.43% ( 626/1217 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

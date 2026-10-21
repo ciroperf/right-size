@@ -28,6 +28,9 @@ What these runs used:
 4. **The deep risk floor bought nothing.** The router sent 6 of 10 tasks to Opus
    for the risk floor; on the security bug fixes Sonnet and Haiku solved the same
    tasks. The floor is now `standard` (deep for design changes or no tests).
+   (Later, 2026-10-21: risk areas are sized like any change and get a deep-tier
+   review; they start at deep only without tests or for a design change. See
+   `../2026-10-21-v1-checks/`.)
 5. **Escalation only fires on failures the agent can see.** It worked when a check
    stayed red (router on `trie-suffix-wildcard`, standard → deep; a contradictory
    test sent Haiku straight to deep). It never fired when the agent wrote its own

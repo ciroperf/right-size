@@ -1,0 +1,26 @@
+{
+  "ladder": {
+    "runs": 11,
+    "solved": 6,
+    "cost_usd": 0.1717,
+    "tokens": 6204751,
+    "wall_s": 617.2,
+    "escalations": 0
+  },
+  "router": {
+    "runs": 11,
+    "solved": 7,
+    "cost_usd": 6.0325,
+    "tokens": 8943774,
+    "wall_s": 1222.0,
+    "escalations": 0
+  },
+  "sonnet": {
+    "runs": 11,
+    "solved": 6,
+    "cost_usd": 2.3037,
+    "tokens": 5176076,
+    "wall_s": 787.7,
+    "escalations": 0
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "task": "jwt-bad-signature",
+  "pr": 5379,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 44.6,
+  "is_error": false,
+  "num_turns": 5,
+  "duration_ms": 21689,
+  "cost_usd": 0.15693029,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 630,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8038,
+      "webSearchRequests": 0,
+      "costUSD": 0.00193749,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 395
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 1011,
+      "cacheReadInputTokens": 148328,
+      "cacheCreationInputTokens": 15914,
+      "webSearchRequests": 0,
+      "costUSD": 0.08861480000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 35
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 449,
+      "cacheReadInputTokens": 12149,
+      "cacheCreationInputTokens": 6869,
+      "webSearchRequests": 0,
+      "costUSD": 0.0663778,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 104
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 0,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "medium",
+      "risk_area": "authentication and authorization",
+      "why": "One localized fix in the JWT verifier; the repo has 141 test files to verify against. The JWT code is a risk area, but per the risk floor it is sized like any other change, and the review covers the risk.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "In src/utils/jwt/jwt.ts, verify() now wraps decodeBase64Url of the signature part in a try/catch and rethrows JwtTokenInvalid, so a token like `header.payload.@@@@` gets the same error as any other malformed token. JwtTokenInvalid is already imported in that file, and well-formed signatures go through the same verification path as before.",
+        "cost_usd": 0.0663778
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 13,
+  "parts_solved": null,
+  "test_files": [
+    "src/utils/jwt/jwt.test.ts"
+  ],
+  "test_tail": "s 3.68s, environment 0ms)\n\n % Coverage report from v8\n----------------|---------|----------|---------|---------|----------------------\nFile            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s    \n----------------|---------|----------|---------|---------|----------------------\nAll files       |   84.73 |    84.32 |   77.77 |   84.16 |                      \n helper/adapter |    38.7 |    41.66 |      20 |    38.7 |                      \n  index.ts      |    38.7 |    41.66 |      20 |    38.7 | 20-40,68-83          \n utils          |     100 |       50 |     100 |     100 |                      \n  encode.ts     |     100 |       50 |     100 |     100 | 7-11                 \n utils/jwt      |    90.2 |    88.16 |     100 |   90.05 |                      \n  jws.ts        |    88.7 |    87.03 |     100 |    88.7 | ...69,80,110,113,231 \n  jwt.ts        |   89.65 |    88.69 |     100 |   89.38 | ...8,241,246,278,290 \n----------------|---------|----------|---------|---------|----------------------\n\n=============================== Coverage summary ===============================\nStatements   : 84.73% ( 211/249 )\nBranches     : 84.32% ( 156/185 )\nFunctions    : 77.77% ( 28/36 )\nLines        : 84.16% ( 202/240 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,72 @@
+{
+  "task": "batch-aug",
+  "pr": [
+    5250,
+    5222,
+    5255
+  ],
+  "config": "sonnet",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 37.8,
+  "is_error": false,
+  "num_turns": 10,
+  "duration_ms": 36591,
+  "cost_usd": 0.11974079999999998,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 2165,
+      "cacheReadInputTokens": 285748,
+      "cacheCreationInputTokens": 17372,
+      "webSearchRequests": 0,
+      "costUSD": 0.11974079999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 204,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": null,
+  "diff_lines": 28,
+  "parts_solved": {
+    "csrf-options": true,
+    "etag-ows": true,
+    "accepts-wildcard": true
+  },
+  "test_files": [
+    "src/middleware/csrf/index.test.ts",
+    "src/middleware/etag/index.test.ts",
+    "src/helper/accepts/accepts.test.ts"
+  ],
+  "test_tail": "-|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.9% ( 484/1213 )\nBranches     : 28.16% ( 207/735 )\nFunctions    : 41.22% ( 94/228 )\nLines        : 39.82% ( 460/1155 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n--|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.39% ( 496/1259 )\nBranches     : 29.53% ( 228/772 )\nFunctions    : 34.95% ( 79/226 )\nLines        : 39.71% ( 479/1206 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n----|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 36.23% ( 487/1344 )\nBranches     : 26.68% ( 222/832 )\nFunctions    : 30.3% ( 70/231 )\nLines        : 36.3% ( 468/1289 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

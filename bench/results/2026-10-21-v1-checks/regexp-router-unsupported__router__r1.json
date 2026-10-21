@@ -1,0 +1,118 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 723.7,
+  "is_error": false,
+  "num_turns": 46,
+  "duration_ms": 621183,
+  "cost_usd": 2.5213858900000004,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 874,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8217,
+      "webSearchRequests": 0,
+      "costUSD": 0.00209529,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 613
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 74,
+      "outputTokens": 50919,
+      "cacheReadInputTokens": 2479834,
+      "cacheCreationInputTokens": 125581,
+      "webSearchRequests": 0,
+      "costUSD": 2.5192907999999994,
+      "contextWindow": 3000000,
+      "maxOutputTokens": 384000,
+      "thinkingTokens": 29295
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "public API contracts other people depend on",
+      "why": "Changes the RegExpRouter's add-time validation and param capture while keeping routing results, route order, method inheritance and the PreparedRegExpRouter matcher format unchanged; the router core has many interlocking behaviors and the repo has 139 test files to check them against.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "high"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "The diff leaves a temporary scratch file, `src/router/reg-exp-router/fuzz-tmp.test.ts`, in the source tree. It runs 100,000 random iterations with a 120 s timeout and mocks `PathChecker.prototype.add` on every iteration, so it would become part of the project's regular test suite and slow it down. Delete the file, or replace it with a small deterministic test; the add-time checking and `varIndex` fix in node.ts/path-checker.ts/router.ts otherwise look consistent with the task.",
+        "cost_usd": 0.2012088
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "RegExpRouter.add() now checks each new path as it is added to a method, using a per-method PathChecker that follows the build's insertion order (length, then middleware before routes, then registration order). That covers ALL vs specific-method conflicts in either registration order. `/:x{.}` is rejected in parsePattern. Setting the node's varIndex with `??=` fixes the missing `id` capture for `/w/*/x` followed by `/w/:id/y`. The matcher format, route ordering and method inheritance are unchanged, and SmartRouter already catches errors thrown from add(). The diff also adds a scratch test file, `src/router/reg-exp-router/fuzz-tmp.test.ts`, which isn't a defect.",
+        "cost_usd": 0.2782108
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 174,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "ts 48ms, environment 0ms)\n\n % Coverage report from v8\n-------------------|---------|----------|---------|---------|-------------------\nFile               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \n-------------------|---------|----------|---------|---------|-------------------\nAll files          |   73.51 |    62.89 |   74.28 |   72.78 |                   \n ...reg-exp-router |   94.34 |    87.06 |      98 |   93.98 |                   \n  node.ts          |   84.41 |    78.16 |     100 |   84.41 | ...95,119,122,143 \n  path-checker.ts  |     100 |    96.22 |     100 |     100 | 59,91             \n  router.ts        |   95.31 |    90.54 |   96.29 |   94.78 | ...11,142,248,257 \n  trie.ts          |   97.61 |    83.33 |     100 |   97.43 | 71                \n src/utils         |   25.17 |    13.27 |      15 |   25.17 |                   \n  url.ts           |   25.17 |    13.27 |      15 |   25.17 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 73.51% ( 358/487 )\nBranches     : 62.89% ( 217/345 )\nFunctions    : 74.28% ( 52/70 )\nLines        : 72.78% ( 337/463 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

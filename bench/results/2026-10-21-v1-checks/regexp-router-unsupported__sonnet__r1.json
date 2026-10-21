@@ -1,0 +1,62 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "sonnet",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 91.6,
+  "is_error": false,
+  "num_turns": 15,
+  "duration_ms": 90486,
+  "cost_usd": 0.22421890000000003,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 8486,
+      "cacheReadInputTokens": 266109,
+      "cacheCreationInputTokens": 28181,
+      "webSearchRequests": 0,
+      "costUSD": 0.22421890000000003,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2914,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 37,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "er/router.test.ts:208:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[9/16]\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Single character regexp pattern > Should coexist with dynamic paths regardless of the order\nError: /:x{a}\n \u276f RegExpRouter.#checkPath src/router/reg-exp-router/router.ts:139:32\n    137|       this.#pathCheckers![method].insert(path, 0, false)\n    138|     } catch (e) {\n    139|       throw e === PATH_ERROR ? new UnsupportedPathError(path) : e\n       |                                ^\n    140|     }\n    141|   }\n \u276f src/router/reg-exp-router/router.ts:214:16\n \u276f src/router/reg-exp-router/router.ts:212:27\n \u276f RegExpRouter.add src/router/reg-exp-router/router.ts:211:11\n \u276f src/router/reg-exp-router/router.test.ts:222:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[10/16]\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Static path including a colon in the middle > Should be treated as a static path\nError: /v1/name2\n \u276f RegExpRouter.#checkPath src/router/reg-exp-router/router.ts:139:32\n    137|       this.#pathCheckers![method].insert(path, 0, false)\n    138|     } catch (e) {\n    139|       throw e === PATH_ERROR ? new UnsupportedPathError(path) : e\n       |                                ^\n    140|     }\n    141|   }\n \u276f src/router/reg-exp-router/router.ts:214:16\n \u276f src/router/reg-exp-router/router.ts:212:27\n \u276f RegExpRouter.add src/router/reg-exp-router/router.ts:211:11\n \u276f src/router/reg-exp-router/router.test.ts:258:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[11/16]\u23af\n\n"
+}

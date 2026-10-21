@@ -1,0 +1,147 @@
+{
+  "task": "batch-aug",
+  "pr": [
+    5250,
+    5222,
+    5255
+  ],
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 71.5,
+  "is_error": false,
+  "num_turns": 8,
+  "duration_ms": 38635,
+  "cost_usd": 0.20856979,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 2317,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8318,
+      "webSearchRequests": 0,
+      "costUSD": 0.00283699,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1343
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 1662,
+      "cacheReadInputTokens": 155153,
+      "cacheCreationInputTokens": 18541,
+      "webSearchRequests": 0,
+      "costUSD": 0.1063153,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 184
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 994,
+      "cacheReadInputTokens": 13169,
+      "cacheCreationInputTokens": 9611,
+      "webSearchRequests": 0,
+      "costUSD": 0.0994178,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 549
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 0,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "medium",
+      "risk_area": "security-sensitive code (csrf); public API contract (accepts helper)",
+      "why": "Three independent small fixes in separate middleware/helpers; 140 test files give a safety net. Sized per part, since the parts share no code. The top-level tier is the highest part tier.",
+      "shared": "Run the relevant tests with: npx vitest --run <test file paths>\nDo not commit.",
+      "parts": [
+        {
+          "title": "csrf skips OPTIONS",
+          "text": "The csrf middleware rejects OPTIONS requests (for example CORS preflight)\nwhen the Origin doesn't match. RFC 9110 defines OPTIONS as a safe method,\nlike GET and HEAD, so it should not be subject to CSRF validation.",
+          "tier": "mechanical",
+          "effort": "low",
+          "risk_area": "security-sensitive code (csrf)",
+          "why": "One-sentence change (treat OPTIONS like GET/HEAD in the origin check), verifiable by the existing csrf tests. Small local fix in a risk area, sized like any other change."
+        },
+        {
+          "title": "etag If-None-Match whitespace",
+          "text": "The etag middleware returns 200 with the full body instead of 304 when the\nIf-None-Match header has whitespace before a comma, e.g. `\"a\" , \"b\"`, even\nthough the current ETag is in the list. RFC 9110 allows optional whitespace\non both sides of the list delimiter.",
+          "tier": "mechanical",
+          "effort": "low",
+          "risk_area": null,
+          "why": "Pattern is stated in one sentence (trim each list entry before comparing), and the etag tests can verify it. No risk area involved."
+        },
+        {
+          "title": "accepts() subtype wildcards",
+          "text": "The `accepts()` helper's default matcher ignores subtype wildcards sent by\nclients. With supports ['application/json', 'text/html'], `Accept: application/*`\nfalls back to the default instead of returning application/json. A subtype\nwildcard (`type/*`) should match a supported type of that type. At the same\nquality value an exact match takes precedence over a wildcard match. The global\nwildcards `*/*` and `*` keep their current behavior: they fall through to the\nconfigured default rather than picking a supported value.",
+          "tier": "standard",
+          "effort": "medium",
+          "risk_area": "public API contract (accepts helper)",
+          "why": "Needs precedence logic across quality values and must keep the global-wildcard behavior intact. Judgment inside one function, with tests to check against."
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "All three fixes are in place, and I found no regressions. The csrf middleware now treats OPTIONS as a safe method. The etag middleware splits If-None-Match on `\\s*,\\s*`, so whitespace before the comma is allowed. In accepts.ts, defaultMatch now resolves `type/*` to a supported value of that type, and at the same q an exact match sorts ahead of a wildcard. `*/*` and `*` still fall through to the default.",
+        "cost_usd": 0.0994178
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 23,
+  "parts_solved": {
+    "csrf-options": true,
+    "etag-ows": true,
+    "accepts-wildcard": true
+  },
+  "test_files": [
+    "src/middleware/csrf/index.test.ts",
+    "src/middleware/etag/index.test.ts",
+    "src/helper/accepts/accepts.test.ts"
+  ],
+  "test_tail": "-|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.9% ( 484/1213 )\nBranches     : 28.16% ( 207/735 )\nFunctions    : 41.22% ( 94/228 )\nLines        : 39.82% ( 460/1155 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n--|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 39.39% ( 496/1259 )\nBranches     : 29.53% ( 228/772 )\nFunctions    : 34.95% ( 79/226 )\nLines        : 39.71% ( 479/1206 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n----|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 36.04% ( 483/1340 )\nBranches     : 26.8% ( 223/832 )\nFunctions    : 30.3% ( 70/231 )\nLines        : 36.15% ( 465/1286 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

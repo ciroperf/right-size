@@ -1,0 +1,101 @@
+{
+  "task": "method-not-allowed",
+  "pr": 5132,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 123.7,
+  "is_error": false,
+  "num_turns": 18,
+  "duration_ms": 88877,
+  "cost_usd": 0.1084509,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 13635,
+      "cacheReadInputTokens": 725475,
+      "cacheCreationInputTokens": 61661,
+      "webSearchRequests": 0,
+      "costUSD": 0.02640745,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 7635
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 2504,
+      "cacheReadInputTokens": 12039,
+      "cacheCreationInputTokens": 13948,
+      "webSearchRequests": 0,
+      "costUSD": 0.0820439,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2004
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I found no concrete defect, but I did not run the tests. I checked the logic against `src/hono-base.ts`.\n\n- **Route matching:** `app.routes` entries are the same objects the router stores as `[handler, route]`, so the `r === route` identity check works. This includes routes copied in by `app.route()`.\n- **Method handling:** Routes are stored with upper-cased methods, and the middleware matches each route against its own stored method. GET adds HEAD, and the `Allow` list stays in registration order.\n- **404 replacement:** It skips the replacement when `c.error` is set, so a 404 from an error handler is left alone. Setting `c.res = undefined` before assigning the new response stops the 404's headers carrying over.\n- **`onMethodNotAllowed`:** The custom handler receives the same methods as an array and its response is assigned to `c.res` rather than thrown.",
+        "cost_usd": 0.0820439
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 0,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/method-not-allowed/index.test.ts"
+  ],
+  "test_tail": "llowed/index.test.ts:131:27\n    129|\n    130|     const putRes = await app.request('/resource', { method: 'PUT' })\n    131|     expect(putRes.status).toBe(404)\n       |                           ^\n    132|     expect(putRes.headers.has('Allow')).toBe(false)\n    133|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/3]\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > works when installed in an app mounted using app.route()\nAssertionError: expected 404 to be 405 // Object.is equality\n\n- Expected\n+ Received\n\n- 405\n+ 404\n\n \u276f src/middleware/method-not-allowed/index.test.ts:185:24\n    183|     const res = await app.request('/api/v1/resource', { method: 'DELET\u2026\n    184|\n    185|     expect(res.status).toBe(405)\n       |                        ^\n    186|     expect(res.headers.get('Allow')).toBe('GET, HEAD, POST')\n    187|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/3]\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > preserves downstream headers and lets outer middleware observe the final status\nAssertionError: expected null to be 'true' // Object.is equality\n\n- Expected:\n\"true\"\n\n+ Received:\nnull\n\n \u276f src/middleware/method-not-allowed/index.test.ts:231:45\n    229|\n    230|     expect(res.status).toBe(405)\n    231|     expect(res.headers.get('X-Downstream')).toBe('true')\n       |                                             ^\n    232|     expect(observedStatus).toBe(405)\n    233|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/3]\u23af\n\n"
+}

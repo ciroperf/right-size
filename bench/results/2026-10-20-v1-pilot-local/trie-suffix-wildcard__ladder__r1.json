@@ -1,0 +1,77 @@
+{
+  "task": "trie-suffix-wildcard",
+  "pr": 5236,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 29.9,
+  "is_error": false,
+  "num_turns": 9,
+  "duration_ms": 28437,
+  "cost_usd": 0.009423,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 3938,
+      "cacheReadInputTokens": 309226,
+      "cacheCreationInputTokens": 21803,
+      "webSearchRequests": 0,
+      "costUSD": 0.009423260000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2051
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 0,
+  "parts_solved": null,
+  "test_files": [
+    "src/hono.test.ts",
+    "src/router/trie-router/node.test.ts"
+  ],
+  "test_tail": "'matches %s', (\u2026\n     45|     expect(node.search('get', path)[0]).toEqual([['assets', {}]])\n       |                                         ^\n     46|   })\n     47|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/6]\u23af\n\n FAIL  |main| src/router/trie-router/node.test.ts > Get with a suffix wildcard > treats regular expression characters in the prefix literally\nAssertionError: expected [] to deeply equal [ [ 'file', {} ] ]\n\n- Expected\n+ Received\n\n- [\n-   [\n-     \"file\",\n-     {},\n-   ],\n- ]\n+ []\n\n \u276f src/router/trie-router/node.test.ts:55:48\n     53|     const node = new Node()\n     54|     node.insert('get', '/file.+*', 'file')\n     55|     expect(node.search('get', '/file.+js')[0]).toEqual([['file', {}]])\n       |                                                ^\n     56|     expect(node.search('get', '/fileZZjs')[0]).toEqual([])\n     57|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/6]\u23af\n\n FAIL  |main| src/router/trie-router/node.test.ts > Get with a suffix wildcard > registers the pattern when its child already exists\nAssertionError: expected [] to deeply equal [ [ 'assets', {} ] ]\n\n- Expected\n+ Received\n\n- [\n-   [\n-     \"assets\",\n-     {},\n-   ],\n- ]\n+ []\n\n \u276f src/router/trie-router/node.test.ts:63:53\n     61|     node.insert('get', '/assets*/x', 'literal')\n     62|     node.insert('get', '/assets*', 'assets')\n     63|     expect(node.search('get', '/assets/app.js')[0]).toEqual([['assets'\u2026\n       |                                                     ^\n     64|   })\n     65| })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/6]\u23af\n\n"
+}

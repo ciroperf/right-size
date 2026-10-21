@@ -1,0 +1,129 @@
+{
+  "task": "cache-query",
+  "pr": 5119,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 405.8,
+  "is_error": false,
+  "num_turns": 42,
+  "duration_ms": 334376,
+  "cost_usd": 1.84703179,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 865,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8375,
+      "webSearchRequests": 0,
+      "costUSD": 0.00212239,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 586
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 34,
+      "outputTokens": 27480,
+      "cacheReadInputTokens": 1082518,
+      "cacheCreationInputTokens": 54125,
+      "webSearchRequests": 0,
+      "costUSD": 0.5996198,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 12888
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 13541,
+      "cacheReadInputTokens": 636066,
+      "cacheCreationInputTokens": 105894,
+      "webSearchRequests": 0,
+      "costUSD": 1.2452892,
+      "contextWindow": 3000000,
+      "maxOutputTokens": 384000,
+      "thinkingTokens": 6824
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 3,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "high",
+      "risk_area": "public API contracts (onCacheNotAvailable callback now receives a reason string)",
+      "why": "One module (cache middleware) plus its tests, 138 test files in repo so the change is verifiable; many interacting requirements (key construction, body reading without consuming, size limit, Web Crypto fallback) make it reasoning-heavy, so effort goes up rather than the tier.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "high"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "In src/middleware/cache/index.ts the QUERY key is still a string, `url + \" QUERY body=<hash> content-type=...\"`, and it goes to `cache.match`/`cache.put`. The real Cache API turns a string key into a URL and percent-encodes the spaces, so a GET to `/search%20QUERY%20body=<hash>%20content-type=...` gets the same key and serves the cached QUERY entry. It also means custom keys are still resolved as URLs. The test only passes because the Map-backed stub never parses keys. Build a key that a GET URL can't produce, even after URL normalization (for example a different scheme or host, or a key Request built so that no GET request URL maps to it), and don't hand custom keys to URL resolution.",
+        "cost_usd": 0.1853704
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I found no defect. In src/middleware/cache/index.ts, the QUERY cache key includes the method, the base key, a SHA-256 of the body, the four Content-* headers and the Vary values. It is built under a reserved `.invalid` host, which GET requests are never cached for. The body is read from a clone, or from `bodyCache` when an earlier middleware already read it (`json`/`parseBody` go through `text`/`arrayBuffer`). The size limit is inclusive with a 64 KiB default, and unreadable bodies bypass caching. Without Web Crypto, only QUERY bypasses and the callback fires once at creation with the reason string.",
+        "cost_usd": 0.20962
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 193,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/cache/index.test.ts"
+  ],
+  "test_tail": "ld use dynamically generated cache key\nAssertionError: expected null not to be null\n \u276f src/middleware/cache/index.test.ts:107:26\n    105|       'http://localhost/.hono/cache?__hono_cache_key=dynamic-cache-key\u2026\n    106|     )\n    107|     expect(response).not.toBeNull()\n       |                          ^\n    108|   })\n    109|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/3]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should not let a GET URL alias an internally generated QUERY cache key\nAssertionError: expected \"vi.fn()\" to be called 2 times, but got 1 times\n \u276f src/middleware/cache/index.test.ts:927:27\n    925|     expect(await getRes.text()).toBe('get response')\n    926|     expect(await queryRes.text()).toBe('query response')\n    927|     expect(mockCache.put).toHaveBeenCalledTimes(2)\n       |                           ^\n    928|   })\n    929|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/3]\u23af\n\n FAIL  |main| src/middleware/cache/index.test.ts > Cache Skipping Logic > Should bypass QUERY caching after the body was read directly as FormData\nAssertionError: expected '1' to be '2' // Object.is equality\n\nExpected: \"2\"\nReceived: \"1\"\n\n \u276f src/middleware/cache/index.test.ts:1102:40\n    1100|     const res = await request()\n    1101|\n    1102|     expect(res.headers.get('X-Count')).toBe('2')\n       |                                        ^\n    1103|     expect(caches.open).not.toHaveBeenCalled()\n    1104|     expect(mockCache.put).not.toHaveBeenCalled()\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/3]\u23af\n\n"
+}

@@ -1,0 +1,62 @@
+{
+  "task": "method-not-allowed",
+  "pr": 5132,
+  "config": "sonnet",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 95.5,
+  "is_error": false,
+  "num_turns": 12,
+  "duration_ms": 93637,
+  "cost_usd": 0.37367740000000005,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 16,
+      "outputTokens": 11341,
+      "cacheReadInputTokens": 332714,
+      "cacheCreationInputTokens": 56741,
+      "webSearchRequests": 0,
+      "costUSD": 0.37367740000000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2675,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 9,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/method-not-allowed/index.test.ts"
+  ],
+  "test_tail": "  18:52:54\n   Duration  979ms (transform 180ms, setup 0ms, import 407ms, tests 66ms, environment 0ms)\n\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 2 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > does not advertise explicit HEAD routes that Hono cannot dispatch\nAssertionError: expected 405 to be 404 // Object.is equality\n\n- Expected\n+ Received\n\n- 404\n+ 405\n\n \u276f src/middleware/method-not-allowed/index.test.ts:127:28\n    125|\n    126|     const headRes = await app.request('/resource', { method: 'HEAD' })\n    127|     expect(headRes.status).toBe(404)\n       |                            ^\n    128|     expect(headRes.headers.has('Allow')).toBe(false)\n    129|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/2]\u23af\n\n FAIL  |main| src/middleware/method-not-allowed/index.test.ts > Method Not Allowed Middleware > works when installed in an app mounted using app.route()\nAssertionError: expected 404 to be 405 // Object.is equality\n\n- Expected\n+ Received\n\n- 405\n+ 404\n\n \u276f src/middleware/method-not-allowed/index.test.ts:185:24\n    183|     const res = await app.request('/api/v1/resource', { method: 'DELET\u2026\n    184|\n    185|     expect(res.status).toBe(405)\n       |                        ^\n    186|     expect(res.headers.get('Allow')).toBe('GET, HEAD, POST')\n    187|   })\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/2]\u23af\n\n"
+}

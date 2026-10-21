@@ -1,0 +1,88 @@
+{
+  "task": "trie-suffix-wildcard",
+  "pr": 5236,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 133.6,
+  "is_error": false,
+  "num_turns": 36,
+  "duration_ms": 127377,
+  "cost_usd": 0.43300314,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 491,
+      "cacheReadInputTokens": 1324,
+      "cacheCreationInputTokens": 7831,
+      "webSearchRequests": 0,
+      "costUSD": 0.00182514,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 249
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 52,
+      "outputTokens": 12147,
+      "cacheReadInputTokens": 1360604,
+      "cacheCreationInputTokens": 43386,
+      "webSearchRequests": 0,
+      "costUSD": 0.4311784,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4697
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 4,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "high",
+      "risk_area": null,
+      "why": "Clear bug report with a reproduction in a TrieRouter fix, tests present (140 test files), no risk_floor area; routing-match reasoning is subtle, so effort goes one step above the standard default (medium) rather than raising the tier.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "high"
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 21,
+  "parts_solved": null,
+  "test_files": [
+    "src/hono.test.ts",
+    "src/router/trie-router/node.test.ts"
+  ],
+  "test_tail": "   66.66 |     100 |   87.87 | 23,43,54,65       \n ...er/trie-router |   94.77 |    94.11 |     100 |   95.65 |                   \n  node.ts          |   97.88 |    95.18 |     100 |   97.67 | 39-41             \n  router.ts        |   54.54 |       50 |     100 |   66.66 | 16-19             \n src/utils         |   41.11 |    32.36 |   44.44 |   41.01 |                   \n  body.ts          |   52.83 |    42.22 |   55.55 |   51.92 | ...99-209,226-245 \n  buffer.ts        |      18 |        0 |   28.57 |   18.36 | ...2,81-95,99-103 \n  color.ts         |      70 |       50 |   66.66 |      70 | 45-50             \n  cookie.ts        |   11.01 |        0 |       0 |    11.2 | ...66-267,276-279 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   88.43 |    76.99 |      95 |   88.11 | ...70,276,281,285 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 60.63% ( 932/1537 )\nBranches     : 50.67% ( 485/957 )\nFunctions    : 64.39% ( 170/264 )\nLines        : 60.42% ( 890/1473 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

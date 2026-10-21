@@ -1,0 +1,105 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 617.8,
+  "is_error": false,
+  "num_turns": 92,
+  "duration_ms": 584946,
+  "cost_usd": 3.52983759,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 747,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8220,
+      "webSearchRequests": 0,
+      "costUSD": 0.0020323900000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 468
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 128,
+      "outputTokens": 48502,
+      "cacheReadInputTokens": 6848425,
+      "cacheCreationInputTokens": 148446,
+      "webSearchRequests": 0,
+      "costUSD": 3.5278050000000007,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 24790
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 11,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "high",
+      "risk_area": "public API contracts (FC type) and concurrent context rendering",
+      "why": "The change threads through hono/jsx string rendering, streaming, the jsx-renderer middleware and the FC types, and must keep escaped-string callbacks and context providers working. The repo has 139 test files, so the safety net exists. Reasoning-heavy, so effort goes one step above the tier default.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "high"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "The diff adds `src/jsx/probe.test.tsx`, a debugging leftover that says it should be deleted. It isn't part of the task, and its `it.todo` puts a pending entry into the test suite, so delete the file. The rest of the change looks consistent with the task: arrays from sync and async components, callbacks kept on array items, per-provider context when one promise is rendered twice, the jsx-renderer types, and `FC`/`JSX.ElementType`.",
+        "cost_usd": 0.1526202
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 70,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "41.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.05% ( 1796/2894 )\nBranches     : 56.92% ( 1040/1827 )\nFunctions    : 57.7% ( 307/532 )\nLines        : 62.45% ( 1728/2767 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,101 @@
+{
+  "task": "cache-query",
+  "pr": 5119,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 183.3,
+  "is_error": false,
+  "num_turns": 29,
+  "duration_ms": 149320,
+  "cost_usd": 1.04921019,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 807,
+      "cacheReadInputTokens": 1469,
+      "cacheCreationInputTokens": 8627,
+      "webSearchRequests": 0,
+      "costUSD": 0.00214379,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 554
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 44,
+      "outputTokens": 17908,
+      "cacheReadInputTokens": 1068933,
+      "cacheCreationInputTokens": 59368,
+      "webSearchRequests": 0,
+      "costUSD": 1.0470666000000002,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 3910
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "public API contracts other people depend on",
+      "why": "Single feature threading through cache key generation, body reading, option handling and the onCacheNotAvailable contract, with many existing GET and Vary behaviors to keep intact; 138 test files present so no +1 tier; medium is deep's default effort.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I found no concrete defect in src/middleware/cache/index.ts. Every entry is stored under `<origin>/.hono/cache` with `__hono_cache_key` (fragment removed, never resolved as a URL) followed by `__hono_cache_method`; QUERY keys then add the SHA-256 body digest, the four content headers, and the Vary values. The body is read from a clone or from HonoRequest's body cache, so the handler still gets it. A body read as FormData bypasses caching, and so does one over `maxQueryBodySize` or one that can't be read; a body exactly at the limit is cached. Without Web Crypto, QUERY bypasses caching while GET still works, and `onCacheNotAvailable` gets the specified reason string once, when the middleware is created. I read the code but did not run the tests.",
+        "cost_usd": 0.18601140000000002
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 164,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/cache/index.test.ts"
+  ],
+  "test_tail": "   58.33 |      75 |   71.05 | 17-21,35-39,69    \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   15.44 |     6.19 |    7.84 |   15.85 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   22.44 |    13.27 |      20 |   23.07 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 43.49% ( 588/1352 )\nBranches     : 37.83% ( 308/814 )\nFunctions    : 41.73% ( 101/242 )\nLines        : 43.99% ( 568/1291 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}
