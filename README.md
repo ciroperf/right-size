@@ -221,11 +221,11 @@ escalate if: tests red after a real attempt → one tier up; wrong approach → 
 
 Inside a session, right-size can only save by delegating: the main session keeps the model it started with. The router moves the decision in front of the session.
 
-In headless mode (`--print`) it climbs a ladder. It starts on the `mechanical` tier when it can check the work, and after each attempt it runs three checks:
+In headless mode (`--print`) it climbs a ladder. It starts on the `mechanical` tier when it can run the project's tests, and after each attempt it runs three checks:
 
 1. **Did anything change?** An empty diff fails.
-2. **Do the tests pass?** Your `--verify-cmd`, if you give one.
-3. **Does a reviewer one tier up accept the diff?** The reviewer may write and run a throwaway test to probe it; the working tree is restored afterwards. Changes in risk areas (auth, security, payments, migrations, breaking public APIs) are always reviewed on the `deep` tier.
+2. **Do the tests pass?** Your `--verify-cmd`, or the test command it finds in `package.json`, `Cargo.toml`, `go.mod`, a pytest config or a `Makefile` (it prints which). Without one it starts on `standard`, since a review alone can miss what a test catches. For speed, point it at the tests related to the change (e.g. `npx vitest --run --changed`); that won't catch a regression in an unrelated module.
+3. **Does a reviewer one tier up accept the diff?** Work on the cheapest tier is always reviewed, and so is every change in a risk area (auth, security, payments, migrations, breaking public APIs), on the `deep` tier. The reviewer may write a throwaway test and run it with the project's test runner (the only command it is allowed); the working tree is restored afterwards. After an escalation to `standard` or above, outside risk areas, the tests are the only check.
 
 A failed check moves the task one tier up. A model change starts a fresh session with a brief (the task, the current diff, why it failed), because resuming would make the bigger model re-read the whole conversation without cache; an effort-only change resumes the same session. At most three steps by default.
 
@@ -264,7 +264,7 @@ function rs { python .claude\skills\right-size\scripts\route.py @args }   # Powe
 | Flag | What it does |
 |---|---|
 | `--print` | Run headless with checks and escalation, and print the cost of each step |
-| `--verify-cmd <cmd>` | With `--print`: the command that must pass after each attempt, e.g. `"npm test"` |
+| `--verify-cmd <cmd>` | With `--print`: the command that must pass after each attempt, e.g. `"npm test"`. Detected when omitted; `""` turns it off |
 | `--review auto\|always\|never` | With `--print`: when to run the review one tier up (`auto` by default) |
 | `--no-checks` | With `--print`: escalate only when the session asks for it (`RIGHT-SIZE-ESCALATE:`), the 0.3.0 behavior |
 | `--max-escalations <n>` | Steps up allowed after the first attempt (default 3) |
@@ -401,7 +401,7 @@ What changed because of v1, measured on its first pass:
 
 - **Sessions never asked to escalate.** In the pilot, every failed session stopped with a wrong answer at every tier. The router now checks each attempt itself; with checks, escalation fired where it should.
 - **Resuming on a bigger model was the expensive part of an escalation**: most of one ladder run's cost was Opus re-reading the earlier conversation uncached. A model change now starts a fresh session with a brief.
-- **Tests and a read-only review both missed a defect** that a cheap model introduced. The reviewer may now write and run a throwaway probe.
+- **Tests and a read-only review both missed a defect** that a cheap model introduced. The reviewer may now write a throwaway test and run it. (In the first runs with this change every probe was denied, because headless sessions block shell commands that aren't explicitly allowed; the reviewer now gets the project's test runner. <!-- TODO(0.4.0): measured effect -->)
 - **The classifier did not pay for itself**: same solved count as the ladder at about three times the cost. It is now opt-in (`--classify`).
 
 One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pass and failed in all three configurations. It was corrected and all three reran; the note is in [`bench/tasks/hono.yaml`](bench/tasks/hono.yaml).

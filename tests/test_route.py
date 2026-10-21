@@ -226,9 +226,47 @@ class Checks(unittest.TestCase):
 
     def test_ladder_start(self):
         facts = {"test_files": 12}
-        self.assertEqual(route.ladder_start(True, facts), "mechanical")
-        self.assertEqual(route.ladder_start(False, facts), "standard")  # interactive or --no-checks
-        self.assertEqual(route.ladder_start(True, {"test_files": 0}), "standard")
+        self.assertEqual(route.ladder_start(True, facts, "npm test"), "mechanical")
+        self.assertEqual(route.ladder_start(False, facts, "npm test"), "standard")  # interactive or --no-checks
+        self.assertEqual(route.ladder_start(True, {"test_files": 0}, "npm test"), "standard")
+        self.assertEqual(route.ladder_start(True, facts, None), "standard")  # nothing runs the tests
+
+    def test_detect_verify_cmd(self):
+        root = Path(self.root)
+        self.assertEqual(route.detect_verify_cmd(root), (None, None))
+        (root / "package.json").write_text('{"scripts": {"test": "echo \\"Error: no test specified\\" && exit 1"}}',
+                                           encoding="utf-8")
+        self.assertEqual(route.detect_verify_cmd(root), (None, None))
+        (root / "package.json").write_text('{"scripts": {"test": "vitest"}}', encoding="utf-8")
+        (root / "pnpm-lock.yaml").write_text("", encoding="utf-8")
+        self.assertEqual(route.detect_verify_cmd(root), ("pnpm run test", "package.json"))
+
+    def test_probe_runner(self):
+        for cmd, want in [("npx vitest --run --changed", "npx vitest"), ("npm run test", "npm run test"),
+                          ("python -m pytest -q", "python -m pytest"), ("go test ./...", "go test"),
+                          ("CI=1 npm test", None), ("", None), (None, None)]:
+            self.assertEqual(route.probe_runner(cmd), want, cmd)
+
+    def test_review_may_run_the_test_runner(self):
+        seen = {}
+
+        def fake(cmd, **kw):
+            if cmd[0] != "claude":
+                return subprocess.CompletedProcess(cmd, 1, "", "")  # snapshot: not a git repo here
+            seen["cmd"] = cmd
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(
+                {"structured_output": {"verdict": "pass", "reason": "ok"}, "total_cost_usd": 0.01}), "")
+
+        rp = {"tier": "standard", "model": "sonnet", "effort": "medium"}
+        extra = ["--permission-mode", "dontAsk", "--allowedTools", "Read", "Edit"]
+        with mock.patch.object(route, "run", side_effect=fake), mock.patch.object(route, "restore"):
+            route.review("task", "diff", rp, "claude-code", self.root, "npx vitest --run", extra)
+        cmd = seen["cmd"]
+        i = cmd.index("--allowedTools")
+        self.assertEqual(cmd.count("--allowedTools"), 1)  # merged into the session's list
+        self.assertIn("Bash(npx vitest *)", cmd[i + 1:])
+        self.assertIn("Write", cmd[i + 1:])
+        self.assertIn("Edit", cmd[i + 1:])
 
     def test_note_announces_checks(self):
         p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)

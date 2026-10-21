@@ -142,6 +142,33 @@ def repo_facts():
     }
 
 
+def detect_verify_cmd(root):
+    """The project's test command from its build files, or None. Returns (cmd, source)."""
+    root = Path(root)
+    pkg = root / "package.json"
+    if pkg.exists():
+        try:
+            script = (json.loads(pkg.read_text(encoding="utf-8")).get("scripts") or {}).get("test", "")
+        except (json.JSONDecodeError, AttributeError):
+            script = ""
+        # npm init's placeholder fails on purpose: it is not a test suite.
+        if script and "no test specified" not in script:
+            pm = next((m for f, m in (("pnpm-lock.yaml", "pnpm"), ("yarn.lock", "yarn"), ("bun.lock", "bun"),
+                                      ("bun.lockb", "bun")) if (root / f).exists()), "npm")
+            return f"{pm} run test", "package.json"
+    if (root / "Cargo.toml").exists():
+        return "cargo test", "Cargo.toml"
+    if (root / "go.mod").exists():
+        return "go test ./...", "go.mod"
+    py = root / "pyproject.toml"
+    if (root / "pytest.ini").exists() or (py.exists() and "[tool.pytest" in py.read_text(encoding="utf-8")):
+        return "python -m pytest -q", "pytest config"
+    mk = root / "Makefile"
+    if mk.exists() and re.search(r"^test:", mk.read_text(encoding="utf-8", errors="replace"), re.M):
+        return "make test", "Makefile"
+    return None, None
+
+
 # --- classifier -------------------------------------------------------------
 
 _DECISION = {
@@ -329,7 +356,7 @@ REVIEW_SYSTEM = """You review a change another model made for a coding task. You
 the task and the diff; you may read files in the repo to check the change in context.
 Reading is not always enough: the existing tests passed, so a defect that remains is
 one they don't cover. When you doubt that a requirement holds at runtime, write a
-small throwaway test or script for it and run it{run_hint}. The working tree is
+small throwaway test for it and run it{run_hint}. The working tree is
 restored after your review, so don't clean up, and don't fix anything: report.
 Answer fail only for a concrete defect you can point to: a requirement of the task
 that the diff doesn't meet, or existing behavior the diff breaks. Name the file and
@@ -338,6 +365,35 @@ can act on. Style, naming, missing tests and leftover scratch files are not defe
 Otherwise answer pass."""
 
 MAX_DIFF_CHARS = 100_000
+
+
+def probe_runner(verify_cmd):
+    """The test-runner part of the verify command, e.g. `npx vitest` from `npx vitest --run --changed`.
+
+    The reviewer may run only this, on a probe test it writes: enough to check behavior,
+    without handing a headless session arbitrary commands.
+    """
+    words = []
+    for w in (verify_cmd or "").split():
+        if words and words[-1] == "-m":
+            words.append(w)
+            continue
+        if (w.startswith("-") and w != "-m") or w.startswith(".") or "/" in w or "=" in w:
+            break
+        words.append(w)
+    if words and words[-1] == "-m":
+        words.pop()
+    return " ".join(words) or None
+
+
+def with_allowed(extra, rules):
+    """The harness args with `rules` added to their --allowedTools list, or a new list."""
+    extra = list(extra)
+    for flag in ("--allowedTools", "--allowed-tools"):
+        if flag in extra:
+            i = extra.index(flag) + 1
+            return extra[:i] + rules + extra[i:]
+    return extra + ["--allowedTools", *rules]
 
 
 def restore(root, tree, now):
@@ -369,21 +425,28 @@ def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
     """
     if len(diff) > MAX_DIFF_CHARS:
         diff = diff[:MAX_DIFF_CHARS] + "\n[diff truncated]"
-    system = REVIEW_SYSTEM.format(run_hint=f" (the project's tests run with `{verify_cmd}`)" if verify_cmd else "")
+    runner = probe_runner(verify_cmd)
+    system = REVIEW_SYSTEM.format(run_hint=f" with `{runner} <your test file>`, the only command you can run"
+                                  if runner else "")
     prompt = f"## Task\n{task}\n\n## Diff\n```diff\n{diff}\n```\n"
     before = snapshot(root)
     try:
         if harness == "claude-code":
-            cmd = ["claude", "-p", "--model", rp["model"], "--tools", "Read,Grep,Glob,Write,Bash",
+            # Headless sessions deny shell commands that aren't allowed explicitly: without
+            # these rules every probe was denied on bench v1 (2026-10-21).
+            shells = ["Bash", "PowerShell"] if os.name == "nt" else ["Bash"]
+            rules = ["Write", *(f"{sh}({runner}{suffix})" for sh in shells for suffix in ("", " *"))] if runner else []
+            cmd = ["claude", "-p", "--model", rp["model"], "--tools", ",".join(["Read", "Grep", "Glob", "Write", *shells]),
                    "--system-prompt", system, "--output-format", "json",
                    "--json-schema", json.dumps(REVIEW_SCHEMA), "--no-session-persistence",
                    "--strict-mcp-config", "--disable-slash-commands", "--max-budget-usd", "1"]
             if rp["effort"]:
                 cmd += ["--effort", rp["effort"]]
-            r = run(cmd + list(extra), input=prompt, cwd=root, timeout=900)
+            r = run(cmd + (with_allowed(extra, rules) if rules else list(extra)), input=prompt, cwd=root, timeout=900)
             d = json.loads(r.stdout)
             out = d.get("structured_output") or json.loads(d.get("result") or "{}")
-            info = {"cost_usd": d.get("total_cost_usd"), "model_usage": d.get("modelUsage")}
+            info = {"cost_usd": d.get("total_cost_usd"), "model_usage": d.get("modelUsage"),
+                    "denied": [x.get("tool_input") for x in d.get("permission_denials") or []]}
         else:
             with tempfile.TemporaryDirectory() as tmp:
                 schema, last = Path(tmp) / "schema.json", Path(tmp) / "last.json"
@@ -690,14 +753,17 @@ def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalatio
 # checks solved as many tasks as the classifier's pick at about a third of the cost.
 LADDER_WHY = {
     "mechanical": "ladder: start on the cheapest writing tier, checks escalate on failure",
-    "standard": "ladder: no automatic checks run here (interactive, --no-checks or no tests), "
-                "so start on standard",
+    "standard": "ladder: no test command checks the attempts here (interactive, --no-checks, "
+                "no tests or no --verify-cmd), so start on standard",
 }
 
 
-def ladder_start(checked, facts):
-    """mechanical when every attempt is checked against tests, standard otherwise."""
-    return "mechanical" if checked and facts["test_files"] else "standard"
+def ladder_start(checked, facts, verify_cmd):
+    """mechanical when every attempt is checked by running tests, standard otherwise.
+
+    A review alone is not enough: on bench v1 a defect passed a review that read the diff.
+    """
+    return "mechanical" if checked and facts["test_files"] and verify_cmd else "standard"
 
 
 def make_checks(args, facts, risk_area, top, harness):
@@ -734,12 +800,18 @@ def main():
     hmap = read_yaml(SKILL / "harnesses" / f"{args.harness}.yaml")
     facts = repo_facts()
 
+    checked = args.headless and not args.no_checks
+    if checked and args.verify_cmd is None and facts["test_files"]:
+        args.verify_cmd, source = detect_verify_cmd(facts["root"])
+        if args.verify_cmd:
+            sys.stderr.write(f"right-size: checks run `{args.verify_cmd}` (from {source}); "
+                             f"--verify-cmd changes it\n")
     classifier = None
     if args.tier:
         decision = {"tier": args.tier, "effort": None, "risk_area": None, "why": "tier set by the user",
                     "shared": "", "parts": []}
     elif not (args.classify or args.split):
-        tier = ladder_start(args.headless and not args.no_checks, facts)
+        tier = ladder_start(checked, facts, args.verify_cmd)
         decision = {"tier": tier, "effort": None, "risk_area": None, "shared": "", "parts": [],
                     "why": LADDER_WHY[tier]}
     else:
