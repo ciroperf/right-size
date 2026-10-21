@@ -101,6 +101,97 @@ class Escalation(unittest.TestCase):
         self.assertIn("highest tier", route.note(p, "why", None, interactive=False))
 
 
+class Checks(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = self.tmp.name
+        for cmd in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+            route.run(["git", *cmd], cwd=self.root)
+        (Path(self.root) / "a.txt").write_text("one\n", encoding="utf-8")
+        route.run(["git", "add", "-A"], cwd=self.root)
+        route.run(["git", "commit", "-q", "-m", "init"], cwd=self.root)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def ck(self, **kw):
+        base = {"root": self.root, "verify_cmd": None, "review": "never", "risk_area": None, "top": "deep",
+                "harness": "claude-code", "task": "t", "start": route.snapshot(self.root)}
+        return {**base, **kw}
+
+    def test_snapshot_sees_edits_and_untracked_files_without_touching_the_index(self):
+        start = route.snapshot(self.root)
+        self.assertTrue(start)
+        (Path(self.root) / "new.txt").write_text("x", encoding="utf-8")
+        self.assertNotEqual(route.snapshot(self.root), start)
+        self.assertEqual(route.run(["git", "diff", "--cached", "--name-only"], cwd=self.root).stdout, "")
+
+    def test_no_change_fails(self):
+        p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
+        reason, recs = route.check_attempt(self.ck(), p, CLAUDE, TIERS_YAML)
+        self.assertEqual(reason, "the attempt changed no files")
+        scout = route.profile("scout", None, CLAUDE, TIERS_YAML)
+        self.assertIsNone(route.check_attempt(self.ck(), scout, CLAUDE, TIERS_YAML)[0])  # read-only
+
+    def test_verify_cmd(self):
+        ck = self.ck()
+        (Path(self.root) / "a.txt").write_text("two\n", encoding="utf-8")
+        p = route.profile("standard", None, CLAUDE, TIERS_YAML)
+        fail = f'"{sys.executable}" -c "print(\'boom\'); raise SystemExit(1)"'
+        reason, recs = route.check_attempt({**ck, "verify_cmd": fail}, p, CLAUDE, TIERS_YAML)
+        self.assertIn("boom", reason)
+        ok = f'"{sys.executable}" -c "pass"'
+        self.assertIsNone(route.check_attempt({**ck, "verify_cmd": ok}, p, CLAUDE, TIERS_YAML)[0])
+
+    def test_review_rejection_and_outage(self):
+        ck = self.ck(review="always")
+        (Path(self.root) / "a.txt").write_text("two\n", encoding="utf-8")
+        p = route.profile("standard", None, CLAUDE, TIERS_YAML)
+        with mock.patch.object(route, "review", return_value=(False, "misses the 405", {"cost_usd": 0.03})) as rv:
+            reason, recs = route.check_attempt(ck, p, CLAUDE, TIERS_YAML)
+        self.assertIn("misses the 405", reason)
+        self.assertIn("+two", rv.call_args.args[1])  # the reviewer sees the diff
+        self.assertEqual(recs[-1]["cost_usd"], 0.03)
+        with mock.patch.object(route, "review", return_value=(None, "review unavailable", {"cost_usd": None})):
+            self.assertIsNone(route.check_attempt(ck, p, CLAUDE, TIERS_YAML)[0])  # an outage doesn't block
+
+    def test_review_policy(self):
+        mech = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
+        std = route.profile("standard", None, CLAUDE, TIERS_YAML)
+        self.assertTrue(route.wants_review("auto", mech, None))
+        self.assertFalse(route.wants_review("auto", std, None))
+        self.assertTrue(route.wants_review("auto", std, "auth"))
+        self.assertFalse(route.wants_review("never", mech, "auth"))
+        self.assertEqual(route.reviewer_profile(mech, None, "deep", CLAUDE, TIERS_YAML)["tier"], "standard")
+        self.assertEqual(route.reviewer_profile(mech, "auth", "deep", CLAUDE, TIERS_YAML)["tier"], "deep")
+        self.assertEqual(route.reviewer_profile(mech, "auth", "standard", CLAUDE, TIERS_YAML)["tier"], "standard")
+
+    def test_failed_check_resumes_one_tier_up(self):
+        p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
+        results = iter([("done", "s1", {"total_cost_usd": 0.01}), ("done", "s1", {"total_cost_usd": 0.2})])
+        checks = {"root": self.root, "verify_cmd": None, "review": "never", "risk_area": None, "top": "deep",
+                  "harness": "claude-code"}
+
+        def fake_run(harness, cmd, task, log):
+            if "--resume" in cmd:  # the escalated attempt edits a file
+                (Path(self.root) / "a.txt").write_text("fixed\n", encoding="utf-8")
+            return next(results)
+
+        with mock.patch.object(route, "headless_run", side_effect=fake_run) as hr:
+            runs, _ = route.run_headless("claude-code", p, "fix it", [], "why", "deep", CLAUDE, TIERS_YAML, 2, None,
+                                         checks=checks)
+        self.assertEqual([r["profile"]["tier"] for r in runs], ["mechanical", "standard"])
+        self.assertEqual(runs[0]["checks"][0]["kind"], "diff")
+        self.assertIn("changed no files", hr.call_args_list[1].args[2])
+        self.assertEqual(runs[1]["checks"], [])
+
+    def test_note_announces_checks(self):
+        p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
+        n = route.note(p, "why", None, False, {"verify_cmd": "npm test", "review": "auto", "risk_area": None})
+        self.assertIn("`npm test`", n)
+        self.assertIn("reviews the diff", n)
+
+
 class Commands(unittest.TestCase):
     p = {"tier": "standard", "model": "sonnet", "effort": "medium"}
 
@@ -185,6 +276,8 @@ class Misc(unittest.TestCase):
         line = route.cost_line({"cost_usd": 0.0003}, runs)
         self.assertIn("mechanical (haiku) $0.05 → standard (sonnet) $0.12", line)
         self.assertIn("total $0.17", line)
+        runs[0]["checks"] = [{"kind": "review", "cost_usd": 0.03}]
+        self.assertIn("reviews $0.03 · total $0.20", route.cost_line({"cost_usd": 0.0003}, runs))
 
     def test_resumed_run_reports_only_its_own_usage(self):
         first = {"total_cost_usd": 0.2, "modelUsage": {"haiku": {"inputTokens": 10, "costUSD": 0.2}}}

@@ -69,6 +69,10 @@ ALLOWED_TOOLS = [
     "Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
 ]
 
+# What route.py runs after each attempt: the existing tests related to the files the agent
+# changed. The PR's own tests are never visible here; they are copied in only to score.
+VERIFY_CMD = "npx vitest --run --changed --passWithNoTests --coverage.enabled=false"
+
 PROMPT_SUFFIX = (
     "\n\nRun the relevant tests with: npx vitest --run <test file paths>\n"
     "Do not commit."
@@ -189,6 +193,7 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None):
     cmd = [sys.executable, str(ROUTER), "--print", "--json", "--log", str(log_dir),
            *(["--tier", tier] if tier else []), *(["--split"] if split else []),
            *(["--max-escalations", str(escalations)] if escalations is not None else []),
+           *(["--verify-cmd", VERIFY_CMD] if VERIFY_CMD else []),
            task["prompt"] + PROMPT_SUFFIX, "--",
            "--setting-sources", "project", "--strict-mcp-config", "--permission-mode", "dontAsk",
            "--allowedTools", *ALLOWED_TOOLS]
@@ -204,7 +209,9 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None):
     runs = [x["result"] or {} for x in summary["runs"]]
     usage = {}
     # Per-run usage from route.py: a resumed session reports cumulative totals.
-    for mu in [(summary["classifier"] or {}).get("model_usage")] + [x.get("model_usage") for x in summary["runs"]]:
+    checks = [c for x in summary["runs"] for c in x.get("checks") or []]
+    for mu in ([(summary["classifier"] or {}).get("model_usage")] + [x.get("model_usage") for x in summary["runs"]]
+               + [c.get("model_usage") for c in checks]):
         for model, u in (mu or {}).items():
             acc = usage.setdefault(model, {})
             for k, v in u.items():
@@ -217,11 +224,14 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None):
         "is_error": last.get("is_error"),
         "num_turns": sum(x.get("num_turns") or 0 for x in runs),
         "duration_ms": sum(x.get("duration_ms") or 0 for x in runs),
-        "total_cost_usd": ((summary["classifier"] or {}).get("cost_usd") or 0) + sum(x.get("cost_usd") or 0 for x in summary["runs"]),
+        "total_cost_usd": (((summary["classifier"] or {}).get("cost_usd") or 0)
+                           + sum(x.get("cost_usd") or 0 for x in summary["runs"])
+                           + sum(c.get("cost_usd") or 0 for c in checks)),
         "modelUsage": usage,
         "subagent_stats": last.get("subagent_stats"),
         "permission_denials": [d for x in runs for d in (x.get("permission_denials") or [])],
         "route": {"decision": summary["decision"], "profiles": [x["profile"] for x in summary["runs"]],
+                  "checks": [{k: c.get(k) for k in ("kind", "ok", "reason", "cost_usd")} for c in checks],
                   "parts": [{"title": x["title"], "profiles": [r["profile"] for r in x["runs"]],
                              "cost_usd": sum(r["cost_usd"] or 0 for r in x["runs"])}
                             for x in summary.get("parts") or []] or None},

@@ -19,8 +19,8 @@ Keep the check cheap: a file listing, a look at the README and the test setup. D
    - Risk: is most of the code in a `risk_floor` area from `tiers.yaml` (an auth service, a payments system, a crypto library, a migrations tool)? A few risky modules in an ordinary app don't count; per-task escalation handles those.
 
 4. **Choose the default profile.**
-   - Safety net present and risk not dominant → the `standard` tier's model at `medium` effort.
-   - Risk dominant, or no safety net → the `deep` tier's model at `medium` effort.
+   - Safety net present → the `standard` tier's model at `medium` effort, even when risk is dominant: risky changes get a `deep`-tier review per task instead of a bigger model for everything.
+   - No safety net → the `deep` tier's model at `medium` effort.
    - Never recommend `high`, `xhigh` or `max` as a default. They are escalation steps: use them when a task has failed after a real attempt.
 
 5. **Report** in this shape, then the escalation advice, and nothing longer:

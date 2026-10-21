@@ -21,15 +21,27 @@ Options:
                                 run each as its own session on its own tier
   --file PATH                   read the task from PATH, or from stdin with "-"
   --max-escalations N           headless only, default 2
+  --verify-cmd CMD              headless only: shell command run after each attempt; a non-zero
+                                exit escalates (e.g. the test suite, or the tests for changed files)
+  --review auto|always|never    headless only: have a higher tier review the diff after each
+                                attempt; auto (default) reviews risk areas and mechanical sessions
+  --no-checks                   headless only: escalate only when the session asks to
   --log DIR                     headless only: write each run's raw event stream there
   --json                        headless only: print a JSON summary instead of the reply
   -- ARGS...                    passed through to the harness CLI
+
+Headless escalation doesn't rely on the model alone: measured on the benchmark,
+models at every tier stop with a wrong answer and believe it is right. After
+each attempt the router checks the work (no file changed, the verify command
+fails, or a review rejects the diff) and resumes the session one tier up with
+the reason.
 
 Standard library only, so it runs wherever the skill is installed.
 """
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -156,14 +168,21 @@ There is no inline tier and no delegation here: the routed session does the
 work itself. Ignore `inline`, `delegate` and the delegation rules, and treat
 each tier as the profile of the model that runs the session.
 
-- Code changes in a risk_floor area -> deep, whatever the size. Name the area in risk_area.
+- Size by the structure of the change, not by its domain: how many places must
+  change together and how many existing behaviors must keep working. A small,
+  local fix in a security module is still a small, local fix.
+- Code changes in a risk_floor area: name the area in risk_area and size the tier
+  as for any other task. The router has the diff reviewed on the deep tier.
+  Only when the repo has no tests (test_files is 0) does a risk area start at deep.
 - Read-only questions, even about risk areas -> scout.
 - A pattern you can state in one sentence, easy to verify -> mechanical.
 - Ordinary features and fixes -> standard.
+- Changes that thread through several modules, or must keep many existing
+  behaviors intact -> deep.
 - No tests in the repo -> one tier higher (not for scout).
 - Small but reasoning-heavy -> raise effort one step above the tier's default_effort instead of raising the tier.
-- Risk alone is not a reason to raise effort: the deep tier already covers it.
-- When unsure between two tiers, pick the lower one: the session escalates on failure.
+- Risk alone is not a reason to raise effort or tier: the review covers it.
+- When unsure between two tiers, pick the lower one: the work is checked and escalates on failure.
 
 `why` is one line with the two or three facts that drove the choice.
 
@@ -249,6 +268,125 @@ def validate(out):
     return out
 
 
+# --- checks ---------------------------------------------------------------
+# Run after each headless attempt that didn't ask to escalate. A failed check
+# escalates like a verifiable failure: one tier up, with the reason.
+
+def snapshot(root):
+    """A tree id for the working tree, untracked files included, or None outside git.
+
+    Uses a throwaway index, so the user's index and working tree are untouched.
+    It writes git objects for changed files; `git gc` cleans them up.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+        if run(["git", "read-tree", "HEAD"], cwd=root, env=env).returncode:
+            return None
+        run(["git", "add", "-A"], cwd=root, env=env)
+        tree = run(["git", "write-tree"], cwd=root, env=env)
+    return tree.stdout.strip() if tree.returncode == 0 else None
+
+
+def wants_review(mode, p, risk_area):
+    if mode == "always":
+        return True
+    if mode == "never":
+        return False
+    # Risk areas get a second pair of eyes instead of a bigger model from the start,
+    # and the cheapest tier's work is reviewed because it is the one most often wrong.
+    return bool(risk_area) or TIERS.index(p["tier"]) < TIERS.index("standard")
+
+
+def reviewer_profile(p, risk_area, top, hmap, tiers):
+    """deep for risk areas, otherwise one tier above the session, at least standard."""
+    want = "deep" if risk_area else TIERS[max(TIERS.index(p["tier"]) + 1, TIERS.index("standard"))]
+    return profile(cap(want, top)[0], None, hmap, tiers)
+
+
+REVIEW_SCHEMA = {
+    "type": "object",
+    "properties": {"verdict": {"enum": ["pass", "fail"]}, "reason": {"type": "string"}},
+    "required": ["verdict", "reason"],
+    "additionalProperties": False,
+}
+
+REVIEW_SYSTEM = """You review a change another model made for a coding task. You get
+the task and the diff; you may read files in the repo to check the change in context.
+Answer fail only for a concrete defect you can point to: a requirement of the task
+that the diff doesn't meet, or existing behavior the diff breaks. Name the file and
+the requirement or behavior in `reason`, in one or two sentences the next attempt
+can act on. Style, naming and missing tests are not defects. Otherwise answer pass."""
+
+MAX_DIFF_CHARS = 100_000
+
+
+def review(task, diff, rp, harness, root):
+    """One read-only review call. Returns (ok, reason, info); ok is None when the review couldn't run."""
+    if len(diff) > MAX_DIFF_CHARS:
+        diff = diff[:MAX_DIFF_CHARS] + "\n[diff truncated]"
+    prompt = f"## Task\n{task}\n\n## Diff\n```diff\n{diff}\n```\n"
+    try:
+        if harness == "claude-code":
+            cmd = ["claude", "-p", "--model", rp["model"], "--tools", "Read,Grep,Glob",
+                   "--system-prompt", REVIEW_SYSTEM, "--output-format", "json",
+                   "--json-schema", json.dumps(REVIEW_SCHEMA), "--no-session-persistence",
+                   "--strict-mcp-config", "--disable-slash-commands", "--max-budget-usd", "0.5"]
+            if rp["effort"]:
+                cmd += ["--effort", rp["effort"]]
+            r = run(cmd, input=prompt, cwd=root, timeout=600)
+            d = json.loads(r.stdout)
+            out = d.get("structured_output") or json.loads(d.get("result") or "{}")
+            info = {"cost_usd": d.get("total_cost_usd"), "model_usage": d.get("modelUsage")}
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                schema, last = Path(tmp) / "schema.json", Path(tmp) / "last.json"
+                schema.write_text(json.dumps(REVIEW_SCHEMA), encoding="utf-8")
+                cmd = ["codex", "exec", "--ephemeral", "-s", "read-only", "-m", rp["model"],
+                       *(["-c", f"model_reasoning_effort={rp['effort']}"] if rp["effort"] else []),
+                       "--output-schema", str(schema), "-o", str(last), "-"]
+                run(cmd, input=REVIEW_SYSTEM + "\n\n" + prompt, cwd=root, timeout=600)
+                out = json.loads(last.read_text(encoding="utf-8"))
+            info = {"cost_usd": None}
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError, TypeError, AttributeError) as e:
+        return None, f"review unavailable ({type(e).__name__})", {"cost_usd": None}
+    if not isinstance(out, dict) or out.get("verdict") not in ("pass", "fail"):
+        return None, "review unavailable (unexpected answer)", info
+    return out["verdict"] == "pass", str(out.get("reason") or ""), info
+
+
+def tail(text, n=40):
+    return "\n".join((text or "").strip().splitlines()[-n:])
+
+
+def check_attempt(ck, p, hmap, tiers):
+    """External checks on an attempt. Returns (failure reason or None, records)."""
+    records = []
+    if p["tier"] == "scout" or not ck:
+        return None, records
+    end = snapshot(ck["root"])
+    if ck["start"] and end == ck["start"]:
+        records.append({"kind": "diff", "ok": False})
+        return "the attempt changed no files", records
+    if ck["verify_cmd"]:
+        try:
+            r = subprocess.run(ck["verify_cmd"], shell=True, cwd=ck["root"], capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=1200)
+            ok, out = r.returncode == 0, (r.stdout or "") + (r.stderr or "")
+        except subprocess.TimeoutExpired:
+            ok, out = False, "timed out after 1200s"
+        records.append({"kind": "verify", "ok": ok})
+        if not ok:
+            return f"`{ck['verify_cmd']}` failed:\n{tail(out)}", records
+    if wants_review(ck["review"], p, ck["risk_area"]) and ck["start"] and end:
+        diff = run(["git", "diff", ck["start"], end], cwd=ck["root"]).stdout
+        rp = reviewer_profile(p, ck["risk_area"], ck["top"], hmap, tiers)
+        ok, reason, info = review(ck["task"], diff, rp, ck["harness"], ck["root"])
+        records.append({"kind": "review", "ok": ok, "reason": reason, "profile": rp, **info})
+        if ok is False:
+            return f"a {rp['tier']}-tier review rejected the change: {reason}", records
+    return None, records
+
+
 def part_prompt(part, shared, n, total):
     """The prompt for one part of a split task: its own text plus the shared instructions."""
     head = (f"This is part {n} of {total} of a larger request. The other parts are handled in "
@@ -289,10 +427,17 @@ def cap(tier, max_tier):
     return tier, False
 
 
-def note(p, why, nxt, interactive):
+def note(p, why, nxt, interactive, checks=None):
     lines = [f"right-size router: this session runs on the {p['tier']} profile "
              f"({p['model']}, effort {p['effort'] or 'default'}), chosen because: {why}.",
              "Work inline. Spawn subagents only if the task clearly splits into independent parts."]
+    if checks and not interactive and p["tier"] != "scout":
+        what = ["it fails if no file changed"]
+        if checks["verify_cmd"]:
+            what.append(f"it runs `{checks['verify_cmd']}`, so run it yourself before you stop")
+        if wants_review(checks["review"], p, checks["risk_area"]):
+            what.append("a higher tier reviews the diff against the task")
+        lines.append("When you stop, the router checks the work: " + "; ".join(what) + ".")
     if nxt is None:
         lines.append("This is the highest tier the router may pick on its own; if it isn't enough, say so plainly.")
     elif interactive:
@@ -388,40 +533,67 @@ def own_usage(result, prev):
 def cost_line(classifier, runs):
     parts = [f"{r['profile']['tier']} ({r['profile']['model']}) ${r.get('cost_usd') or 0:.2f}" for r in runs]
     router = (classifier or {}).get("cost_usd") or 0
-    total = router + sum(r.get("cost_usd") or 0 for r in runs)
-    return f"right-size: done · {' → '.join(parts)} · router ${router:.4f} · total ${total:.2f}"
+    reviews = sum(c.get("cost_usd") or 0 for r in runs for c in r.get("checks") or [])
+    total = router + reviews + sum(r.get("cost_usd") or 0 for r in runs)
+    return (f"right-size: done · {' → '.join(parts)} · router ${router:.4f}"
+            + (f" · reviews ${reviews:.2f}" if reviews else "") + f" · total ${total:.2f}")
 
 
-def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalations, log_dir, label=""):
-    """One routed headless session, with escalation. Returns (runs, final text)."""
+def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalations, log_dir, label="",
+                 checks=None):
+    """One routed headless session, with escalation. Returns (runs, final text).
+
+    `checks` (from make_checks) enables the external checks; None leaves
+    escalation to the session's own marker.
+    """
+    if checks:
+        checks = {**checks, "task": prompt, "start": snapshot(checks["root"])}
     nxt = next_profile(p, 1, top, hmap, tiers)
-    cmd = launch_cmd(harness, p, prompt, extra, note(p, why, nxt, interactive=False), True)
+    cmd = launch_cmd(harness, p, prompt, extra, note(p, why, nxt, False, checks), True)
     runs, text = [], ""
     for attempt in range(max_escalations + 1):
         log = log_dir / f"{label}run-{attempt}-{p['tier']}.jsonl" if log_dir else None
         text, sid, result = headless_run(harness, cmd, prompt, log)
         cost, usage = own_usage(result, runs[-1]["result"] if runs else None)
-        runs.append({"profile": p, "session_id": sid, "cost_usd": cost, "model_usage": usage, "result": result})
+        run_rec = {"profile": p, "session_id": sid, "cost_usd": cost, "model_usage": usage, "result": result,
+                   "checks": []}
+        runs.append(run_rec)
         m = MARKER.search(text or "")
-        if not m:
-            break
-        reason = m.group(2).strip()
+        if m:
+            reason, steps, kind = m.group(2).strip(), 2 if m.group(1).lower() == "reasoning" else 1, "asked"
+        else:
+            reason, run_rec["checks"] = check_attempt(checks, p, hmap, tiers)
+            steps, kind = 1, "check"
+            if reason is None:
+                break
+        short = reason.splitlines()[0][:200]
         if attempt == max_escalations or not sid:
-            sys.stderr.write(f"right-size: escalation requested ({reason}) but the escalation limit was reached\n")
+            sys.stderr.write(f"right-size: escalation needed ({short}) but the escalation limit was reached\n")
             break
-        up = next_profile(p, 2 if m.group(1).lower() == "reasoning" else 1, top, hmap, tiers)
+        up = next_profile(p, steps, top, hmap, tiers)
         if up is None:
-            sys.stderr.write(f"right-size: escalation requested ({reason}) but {p['tier']} is the ceiling; "
+            sys.stderr.write(f"right-size: escalation needed ({short}) but {p['tier']} is the ceiling; "
                              f"rerun with --tier or raise max_tier to go further\n")
             break
         sys.stderr.write(f"right-size: escalate · {label}{p['tier']} → {up['tier']} ({up['model']}, effort "
-                         f"{up['effort'] or 'default'}) · {reason}\n")
+                         f"{up['effort'] or 'default'}) · {short}\n")
         p = up
-        sys_note = note(p, f"escalated after: {reason}", next_profile(p, 1, top, hmap, tiers), interactive=False)
-        prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
-                  f"{reason}. Continue the task from where it stopped.")
+        sys_note = note(p, f"escalated after: {short}", next_profile(p, 1, top, hmap, tiers), False, checks)
+        if kind == "asked":
+            prompt = (f"You are now on the {p['tier']} profile. The previous attempt asked to escalate: "
+                      f"{reason}. Continue the task from where it stopped.")
+        else:
+            prompt = (f"You are now on the {p['tier']} profile. A check after the previous attempt failed: "
+                      f"{reason[:3000]}\n\nFix this and finish the task.")
         cmd = launch_cmd(harness, p, prompt, extra, sys_note, True, resume=sid)
     return runs, text
+
+
+def make_checks(args, facts, risk_area, top, harness):
+    if args.no_checks:
+        return None
+    return {"root": facts["root"], "verify_cmd": args.verify_cmd, "review": args.review,
+            "risk_area": risk_area, "top": top, "harness": harness}
 
 
 def main():
@@ -436,6 +608,9 @@ def main():
     ap.add_argument("--split", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--max-escalations", type=int, default=2)
+    ap.add_argument("--verify-cmd")
+    ap.add_argument("--review", choices=["auto", "always", "never"], default="auto")
+    ap.add_argument("--no-checks", action="store_true")
     ap.add_argument("--log", type=Path)
     ap.add_argument("--json", action="store_true")
     argv = sys.argv[1:]
@@ -506,14 +681,16 @@ def main():
         for n, (part, pp, part_why) in enumerate(plan, 1):
             runs, text = run_headless(args.harness, pp, part_prompt(part, decision["shared"], n, len(plan)),
                                       extra, part_why, top, hmap, tiers, args.max_escalations, args.log,
-                                      label=f"part{n}-")
+                                      label=f"part{n}-",
+                                      checks=make_checks(args, facts, part.get("risk_area"), top, args.harness))
             parts_out.append({"title": part["title"], "runs": runs})
             texts.append(f"## Part {n}: {part['title']}\n\n{text}")
         runs = [r for x in parts_out for r in x["runs"]]
         text = "\n\n".join(texts)
         failed = any(not x["runs"][-1]["result"] or x["runs"][-1]["result"].get("is_error") for x in parts_out)
     else:
-        runs, text = run_headless(args.harness, p, task, extra, why, top, hmap, tiers, args.max_escalations, args.log)
+        runs, text = run_headless(args.harness, p, task, extra, why, top, hmap, tiers, args.max_escalations, args.log,
+                                  checks=make_checks(args, facts, decision.get("risk_area"), top, args.harness))
         parts_out = None
         failed = not runs[-1]["result"] or runs[-1]["result"].get("is_error")
 

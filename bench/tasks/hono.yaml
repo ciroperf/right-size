@@ -136,19 +136,29 @@ tasks:
     pr: 5171
     solution: 8a0b18fd
     expected_tier: deep
+    # v1 prompt left out two fixes the PR's tests also check (single meta-character
+    # pattern, middle-wildcard param capture); every config failed exactly those two
+    # tests. Corrected 2026-10-21.
     prompt: |
       Unlike the other routers, `RegExpRouter` only throws `UnsupportedPathError`
       when the matcher is built by the first `match()` call, not when the
       unsupported route is added. Make it report unsupported paths during route
       registration (`add()`), like the other routers, for example when an ALL route
-      and a specific-method route conflict in either registration order. Routing
-      results, route ordering, method inheritance and the matcher format used by
-      `PreparedRegExpRouter` must not change.
+      and a specific-method route conflict in either registration order. A param
+      whose pattern is a single regexp meta character, such as `/:x{.}`, is also
+      unsupported. Routing results, route ordering, method inheritance and the
+      matcher format used by `PreparedRegExpRouter` must not change.
+
+      While there, fix a related bug: after `add('GET', '/w/*/x', ...)` and
+      `add('GET', '/w/:id/y', ...)`, matching `/w/123/y` finds the second route but
+      doesn't capture `id`.
 
   - id: jsx-array
     pr: 5179
     solution: 3feb3551
     expected_tier: standard
+    # v1 prompt left out callback preservation and context isolation, which the PR's
+    # tests check; every config failed them. Corrected 2026-10-21.
     prompt: |
       In `hono/jsx`, a function component that returns an array (for example
       `const Items = () => [<li>a</li>, <li>b</li>]`) doesn't render correctly,
@@ -159,19 +169,29 @@ tasks:
       jsx-renderer middleware, and a component typed as `FC` must be allowed to
       return an array.
 
+      Escaped-string callbacks carried by array items must survive, in string
+      rendering and in streaming, so that for example a `<title>` returned in an
+      async component's array is still hoisted into `<head>`. Also, when the same
+      promise of an element is rendered under two different context providers at
+      once, each render must see its own provider's value.
+
   - id: method-not-allowed
     pr: 5132
     solution: 1f707c56
     expected_tier: standard
+    # v1 prompt left out the callback's second argument and the stale-header rule that
+    # the PR's tests check; every config failed those two tests. Corrected 2026-10-21.
     prompt: |
       Add an opt-in middleware at `src/middleware/method-not-allowed/index.ts`,
       exported as `methodNotAllowed`. Called as `methodNotAllowed({ app,
       onMethodNotAllowed? })`, it turns a 404 into `405 Method Not Allowed` (body
       `Method Not Allowed`) with an `Allow` header listing every method the path is
       registered for, in registration order, when the path exists for other methods.
-      GET routes also allow HEAD. Requests for an allowed method, and paths that
-      don't exist at all, are untouched. `onMethodNotAllowed(c)` replaces the default
-      response. Assign the response to `c.res` rather than throwing, follow Hono's
+      GET routes also allow HEAD. The 405 must not keep headers from the 404 it
+      replaces (such as a stale `Allow` or `Content-Length`). Requests for an allowed
+      method, and paths that don't exist at all, are untouched.
+      `onMethodNotAllowed(c, allowedMethods)` (the same method list, as an array)
+      replaces the default response. Assign the response to `c.res` rather than throwing, follow Hono's
       routing for custom and case-sensitive methods, work with sub-apps mounted via
       `app.route()`, and don't replace a 404 produced by an error handler.
 
@@ -179,6 +199,8 @@ tasks:
     pr: 5119
     solution: 3bc96ba9
     expected_tier: deep
+    # v1 prompt left out the onCacheNotAvailable call and the already-read body case
+    # that the PR's tests check; every config failed those tests. Corrected 2026-10-21.
     prompt: |
       The cache middleware only caches GET. Add support for the HTTP QUERY method
       (a safe method with a request body). A QUERY cache key must depend on the
@@ -187,10 +209,16 @@ tasks:
       configured Vary values, so different bodies or content types never share an
       entry, and GET and QUERY never share one either (a GET URL must not be able to
       alias a QUERY key). Reading the body for the key must not consume it for the
-      handler. Add a `maxQueryBodySize` option (64 KiB by default): a body larger
-      than the limit, or one that can't be read, bypasses caching, and a body at
-      exactly the limit is cached. Without Web Crypto, QUERY requests bypass caching
-      while GET keeps working. A custom cache key must not be resolved as a URL.
+      handler, and a QUERY whose body an earlier middleware already read through
+      `c.req.text()` (or another HonoRequest body method) is still cached. Add a
+      `maxQueryBodySize` option (64 KiB by default): a body larger than the limit, or
+      one that can't be read, bypasses caching, and a body at exactly the limit is
+      cached. Without Web Crypto, QUERY requests bypass caching while GET keeps
+      working, and the middleware calls the existing `onCacheNotAvailable` option once,
+      when it is created. The callback now receives the reason as a string argument
+      (when `caches` is missing, the message that is logged today), here `Cache Middleware cannot cache QUERY
+      requests because Web Crypto is not available.` A custom cache key must not be
+      resolved as a URL.
 
 # Batches: several independent bug reports in one prompt, on a commit where all
 # of them are still present. Each part keeps its own PR's tests as the scorer.

@@ -73,10 +73,16 @@ tiers:
     # High is the first escalation step at this tier.
     default_effort: medium
 
-# Any task that changes code in these areas starts at deep, regardless of size.
+# Changes in these areas are sized like any other change, then verified harder:
+# tests must pass and a deep-tier review checks the diff against the task.
+# Measured 2026-10-21 (bench v1): small fixes in security code (csrf, jwt, input
+# validation) were solved by the cheapest tiers; starting them on deep cost 4-40x
+# more for the same result. Without tests there is nothing to verify against, so
+# a change in a risk area then starts at deep.
 # Read-only questions about them stay at scout: reading can't break anything.
 risk_floor:
-  tier: deep
+  review: deep
+  tier_without_tests: deep
   areas:
     - authentication and authorization
     - security-sensitive code (crypto, secrets, input sanitization)
@@ -109,7 +115,13 @@ adjustments:
   read_mostly: scout
 
 escalation:
-  # Applied after a failed attempt, capped by max_tier.
+  # Applied after a failed attempt, capped by max_tier. A failure is found by a
+  # check, not by the model's own judgment: measured on bench v1, sessions at every
+  # tier stopped with a wrong answer and never asked to escalate.
+  checks:
+    - the attempt changed files (unless the task was read-only)
+    - tests or the project's checks pass
+    - "a review one tier up (deep for risk areas) finds no requirement missed and nothing broken; always for risk areas and mechanical work"
   syntax_or_tooling_failure: retry once at the same tier with the error in the brief
   verifiable_failure: +1 tier   # tests red, build broken after a real attempt
   reasoning_failure: +2 tiers   # wrong approach, misread spec, plausible but wrong output

@@ -20,12 +20,13 @@ The decision itself must stay cheap. Use what is already in context plus at most
 
 3. **Decide whether to delegate.** Start from inline. A subagent starts cold: it gets its own system prompt and has to re-read whatever context it needs. So delegate only when that start-up cost buys something: keeping a large amount of reading out of the main context, running independent parts in parallel, or handing off a chunk that is large compared to its brief. If the relevant files are already in context, or the next reasoning step needs the result right away, stay inline.
 
-4. **Pick the tier.**
-   - Changes in a risk area → `deep`, whatever the size.
+4. **Pick the tier.** Size by the structure of the change, not by its domain: how many places must change together and how many existing behaviors must keep working.
    - Mostly reading, and a lot of it → `scout`, even in a risk area: reading can't break anything. A lookup that a grep or two can answer stays `inline`.
    - Pattern you can state in a sentence, easy to verify → `mechanical`.
    - Ordinary feature or fix → `standard`.
+   - Change that threads through several modules or must keep many behaviors intact → `deep`.
    - No safety net → one tier higher (not for `scout`), because failures will surface late.
+   - Risk area: size it like anything else, but plan the verification now: tests must pass and the diff gets a review from the `deep` tier before you call it done. Without tests, start at `deep`.
 
 5. **Pick the effort.** Start from the tier's `default_effort`. If the task is small but needs careful thought (a subtle bug, a tricky algorithm), raise effort one step before raising the tier: it needs thinking, not a bigger model.
 
@@ -56,11 +57,13 @@ When sizing several tickets or subtasks at once (for example before fanning out 
 
 ## Router mode
 
-To size a task before any session starts, `scripts/route.py` in this skill's folder makes one cheap classifier call with `tiers.yaml` and launches Claude Code or Codex on the tier's model and effort. Headless (`--print`) it also escalates on its own when the session asks for it. When the user wants that, give them the command with the script's absolute path, e.g. `python <this folder>/scripts/route.py "fix the failing date test"`.
+To size a task before any session starts, `scripts/route.py` in this skill's folder makes one cheap classifier call with `tiers.yaml` and launches Claude Code or Codex on the tier's model and effort. Headless (`--print`) it also checks each attempt (no file changed, `--verify-cmd` failing, or a review rejecting the diff) and resumes the session one tier up when a check fails. When the user wants that, give them the command with the script's absolute path, e.g. `python <this folder>/scripts/route.py "fix the failing date test"`.
 
 ## Escalation
 
-After a failed attempt, step up according to `escalation` in `tiers.yaml`:
+Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas or `mechanical` work a review one tier up (a short-lived reviewer subagent with the task and the diff) finds no missed requirement and nothing broken.
+
+After a failed attempt or check, step up according to `escalation` in `tiers.yaml`:
 - syntax or tooling error → retry once at the same tier with the error in the brief;
 - verifiable failure (tests red, build broken after a real attempt) → one tier up;
 - reasoning failure (wrong approach, misread spec) → two tiers up;
