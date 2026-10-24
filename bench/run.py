@@ -3,7 +3,7 @@
 Usage:
   python bench/run.py validate [--tasks id,id]
   python bench/run.py run --out bench/results/<name> [--configs a,b] [--tasks id,id]
-  python bench/run.py summarize bench/results/<name>
+  python bench/run.py summarize bench/results/<name> [more result dirs to pool]
 
 Each run checks out the commit before a real merged PR, gives the agent the
 task prompt in headless Claude Code, then copies the PR's own test files in and
@@ -38,6 +38,9 @@ CONFIGS = {
     # v1 references: Opus at high effort (a common manual setting) and always Sonnet.
     "opus-high": {"model": "opus", "effort": "high", "right_size": False},
     "sonnet": {"model": "sonnet", "effort": None, "right_size": False},
+    # The difficulty floor: the cheapest writing tier alone, no checks, no escalation.
+    # Its solve rate over reps is the measured difficulty of each task.
+    "haiku": {"model": "haiku", "effort": "low", "right_size": False},
     "right-size": {"model": "opus", "effort": None, "right_size": True},
     # The router's classifier picks model and effort for the whole session before it starts
     # (skills/right-size/scripts/route.py --classify), then checks escalate. Since 2026-10-21
@@ -420,43 +423,134 @@ def escalated(r):
     return len(route.get("profiles") or []) > 1
 
 
+def gold_size(task):
+    """Lines and files the merged PR changed outside tests: the task's size, independent of any agent."""
+    files = lines = 0
+    for u in units(task):
+        out = sh(["git", "diff", "--numstat", f"{u['solution']}^", u["solution"], "--", "src",
+                  ":(exclude)*.test.ts", ":(exclude)*.test.tsx"], check=False).stdout
+        for row in out.splitlines():
+            add, rem, _ = row.split("\t", 2)
+            files += 1
+            lines += int(add) + int(rem) if add.isdigit() and rem.isdigit() else 0
+    return files, lines
+
+
+def spread(xs):
+    """mean, sample standard deviation, min, max."""
+    m = sum(xs) / len(xs)
+    sd = (sum((x - m) ** 2 for x in xs) / (len(xs) - 1)) ** 0.5 if len(xs) > 1 else 0.0
+    return m, sd, min(xs), max(xs)
+
+
+FLOOR = "haiku"
+
+
 def cmd_summarize(args):
-    d = Path(args.dir)
-    recs = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(d.glob("*__*.json"))]
-    configs = list(dict.fromkeys(r["config"] for r in recs))
-    lines = ["| Task | Expected tier | " + " | ".join(configs) + " |",
-             "|---|---|" + "---|" * len(configs)]
-    for task in dict.fromkeys(r["task"] for r in recs):
+    """Per-task cells, then totals that keep difficulty and variance visible.
+
+    - Difficulty comes from outside the configs being compared: the merged PR's size,
+      and the solve rate of the `haiku` floor config when it ran.
+    - Totals count only tasks every config ran, so no config is compared on an easier set.
+    - With reps, totals are per rep, reported as mean ± sd and min–max.
+    """
+    d = Path(args.dirs[0])
+    # A later dir replaces an earlier one's run of the same task, config and rep (a rerun).
+    pooled = {}
+    for x in args.dirs:
+        for p in sorted(Path(x).glob("*__*.json")):
+            r = json.loads(p.read_text(encoding="utf-8"))
+            r["rep"] = r.get("rep") or 1  # single-rep runs record no rep
+            pooled[(r["task"], r["config"], r["rep"])] = r
+    recs = list(pooled.values())
+    configs = list(dict.fromkeys(r["config"] for r in recs if r["config"] != FLOOR))
+    tasks_by_id = {t["id"]: t for t in load_tasks()}
+    tids = list(dict.fromkeys(r["task"] for r in recs))
+    by = {}
+    for r in recs:
+        by.setdefault((r["task"], r["config"]), []).append(r)
+
+    def floor_rate(tid):
+        rs = by.get((tid, FLOOR))
+        return (sum(x["solved"] for x in rs), len(rs)) if rs else None
+
+    def bucket(tid):
+        fr = floor_rate(tid)
+        if not fr:
+            return "unknown"
+        return "floor solves" if fr[0] * 2 > fr[1] else "floor fails"
+
+    size = {}
+    for tid in tids:
+        try:
+            size[tid] = gold_size(tasks_by_id[tid]) if WORK.exists() else None
+        except (KeyError, subprocess.CalledProcessError, ValueError):
+            size[tid] = None
+
+    lines = ["| Task | PR size (files · lines) | Haiku alone | " + " | ".join(configs) + " |",
+             "|---|---|---|" + "---|" * len(configs)]
+    for tid in tids:
         cells = []
         for c in configs:
-            rs = [x for x in recs if x["task"] == task and x["config"] == c]
+            rs = by.get((tid, c))
             if not rs:
                 cells.append("–")
                 continue
             ok = sum(x["solved"] for x in rs)
-            cost = sum(x["cost_usd"] or 0 for x in rs) / len(rs)
-            wall = sum(x["wall_s"] for x in rs) / len(rs)
-            models = "+".join(sorted({m.split("-")[1] for x in rs for m in (x["model_usage"] or {})}))
+            m, _, lo, hi = spread([x["cost_usd"] or 0 for x in rs])
+            models = "+".join(sorted({m_.split("-")[1] for x in rs for m_ in (x["model_usage"] or {})}))
             mark = "✅" if ok == len(rs) else ("❌" if ok == 0 else "⚠️")
-            cells.append(f"{mark} {ok}/{len(rs)} · ${cost:.2f} · {wall:.0f}s · {models}")
-        exp = next(x["expected_tier"] for x in recs if x["task"] == task)
-        lines.append(f"| {task} | {exp} | " + " | ".join(cells) + " |")
-    lines += ["", "Cells: solved runs / runs · mean cost per run · mean wall time · models used."]
-    totals = ["", "| Config | Solved | Total cost | Cost per solved task | Mean cost per run | Escalations | "
-              "Total tokens | Total time |", "|---|---|---|---|---|---|---|---|"]
+            rng = f" ({lo:.2f}–{hi:.2f})" if len(rs) > 1 else ""
+            cells.append(f"{mark} {ok}/{len(rs)} · ${m:.2f}{rng} · {models}")
+        sz = size.get(tid)
+        fr = floor_rate(tid)
+        lines.append(f"| {tid} | {f'{sz[0]} · {sz[1]}' if sz else '?'} | {f'{fr[0]}/{fr[1]}' if fr else '–'} | "
+                     + " | ".join(cells) + " |")
+    lines += ["", "Cells: solved runs / runs · mean cost per run (min–max over reps) · models used. "
+              "PR size: source files and lines the merged fix changed, tests excluded. "
+              "Haiku alone: solve rate of the `haiku` floor config (Haiku, low effort, no checks)."]
+
+    common = [t for t in tids if all((t, c) in by for c in configs)]
+    dropped = [t for t in tids if t not in common and any((t, c) in by for c in configs)]
+    totals = ["", f"Totals over the {len(common)} tasks every config ran"
+              + (f" (left out: {', '.join(dropped)})" if dropped else "") + ".", "",
+              "| Config | Solved per rep | Cost per rep | Cost per solved task | Escalations | Total time |",
+              "|---|---|---|---|---|---|"]
     agg = {}
     for c in configs:
-        rs = [r for r in recs if r["config"] == c]
-        solved = sum(r["solved"] for r in rs)
-        cost = sum(r["cost_usd"] or 0 for r in rs)
-        tok = sum(tokens(r["model_usage"])["total"] for r in rs)
-        wall = sum(r["wall_s"] for r in rs)
+        rs = [r for t in common for r in by[(t, c)]]
+        reps = sorted({r.get("rep") or 1 for r in rs})
+        per = [[r for r in rs if (r.get("rep") or 1) == k] for k in reps]
+        solved = [sum(r["solved"] for r in p) for p in per]
+        cost = [sum(r["cost_usd"] or 0 for r in p) for p in per]
+        sm, ssd, slo, shi = spread(solved)
+        cm, csd, clo, chi = spread(cost)
         esc = sum(escalated(r) for r in rs)
-        agg[c] = {"runs": len(rs), "solved": solved, "cost_usd": round(cost, 4), "tokens": tok,
-                  "wall_s": round(wall, 1), "escalations": esc}
-        cps = f"${cost / solved:.2f}" if solved else "–"
-        totals.append(f"| {c} | {solved}/{len(rs)} | ${cost:.2f} | {cps} | ${cost / len(rs):.2f} | "
-                      f"{esc if any(r.get('route') for r in rs) else '–'} | {tok/1e6:.2f}M | {wall/60:.0f} min |")
+        wall = sum(r["wall_s"] for r in rs)
+        agg[c] = {"tasks": len(common), "reps": len(reps), "solved_per_rep": solved,
+                  "cost_per_rep": [round(x, 4) for x in cost], "escalations": esc, "wall_s": round(wall, 1)}
+        var = len(reps) > 1
+        s_txt = f"{sm:.1f} ± {ssd:.1f} of {len(common)} ({slo}–{shi})" if var else f"{solved[0]}/{len(common)}"
+        c_txt = f"${cm:.2f} ± {csd:.2f} (${clo:.2f}–${chi:.2f})" if var else f"${cost[0]:.2f}"
+        cps = f"${sum(cost) / sum(solved):.2f}" if sum(solved) else "–"
+        totals.append(f"| {c} | {s_txt} | {c_txt} | {cps} | {esc if any(r.get('route') for r in rs) else '–'} "
+                      f"| {wall / 60:.0f} min |")
+    if len(reps) <= 1:
+        totals += ["", "One run per cell: a difference of one task between configs can be noise."]
+
+    buckets = list(dict.fromkeys(bucket(t) for t in common))
+    if buckets != ["unknown"]:
+        totals += ["", "By difficulty (the `haiku` floor's majority result per task):", "",
+                   "| Config | " + " | ".join(f"{b} ({sum(bucket(t) == b for t in common)} tasks)" for b in buckets)
+                   + " |", "|---|" + "---|" * len(buckets)]
+        for c in configs:
+            cells = []
+            for b in buckets:
+                rs = [r for t in common if bucket(t) == b for r in by[(t, c)]]
+                ok = sum(r["solved"] for r in rs)
+                cells.append(f"{ok}/{len(rs)} solved · ${sum(r['cost_usd'] or 0 for r in rs) / len(rs):.2f} per run")
+            totals.append(f"| {c} | " + " | ".join(cells) + " |")
+            agg[c]["by_difficulty"] = cells
     md = "\n".join(lines + totals) + "\n"
     (d / "summary.md").write_text(md, encoding="utf-8")
     (d / "summary.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
@@ -471,7 +565,7 @@ def main():
     r = sub.add_parser("run"); r.add_argument("--out", required=True); r.add_argument("--configs")
     r.add_argument("--tasks"); r.add_argument("--set"); r.add_argument("--force", action="store_true")
     r.add_argument("--reps", type=int, default=1)
-    s = sub.add_parser("summarize"); s.add_argument("dir")
+    s = sub.add_parser("summarize"); s.add_argument("dirs", nargs="+")  # first dir gets summary.md
     args = p.parse_args()
     {"validate": cmd_validate, "run": cmd_run, "summarize": cmd_summarize}[args.cmd](args)
 
