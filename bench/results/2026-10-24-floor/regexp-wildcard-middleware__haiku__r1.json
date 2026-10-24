@@ -1,0 +1,68 @@
+{
+  "task": "regexp-wildcard-middleware",
+  "pr": 5266,
+  "config": "haiku",
+  "rep": 1,
+  "expected_tier": "deep",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 243.0,
+  "is_error": false,
+  "num_turns": 24,
+  "duration_ms": 241840,
+  "cost_usd": 0.09122299,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 51232,
+      "cacheReadInputTokens": 1222015,
+      "cacheCreationInputTokens": 76309,
+      "webSearchRequests": 0,
+      "costUSD": 0.09122299,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 42320,
+      "canonicalModel": "claude-haiku-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": null,
+  "diff_lines": 168,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/common.case.test.ts",
+    "src/router/linear-router/router.test.ts",
+    "src/router/pattern-router/router.test.ts",
+    "src/router/reg-exp-router/prepared-router.test.ts",
+    "src/router/reg-exp-router/router.test.ts",
+    "src/router/smart-router/router.test.ts",
+    "src/router/trie-router/router.test.ts"
+  ],
+  "test_tail": ")|\\/posts\\/([^/]+)$\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/5]\u23af\n\n FAIL  |main| src/router/reg-exp-router/prepared-router.test.ts > buildInitParams() and serializeInitParams() > should build init params with wildcard\nAssertionError: expected [ { ALL: [ /^.*$()/, \u2026(3) ] }, {} ] to deeply equal [ { ALL: [ /^.*$()/, \u2026(2) ] }, {} ]\n\n- Expected\n+ Received\n\n@@ -5,9 +5,10 @@\n        [\n          0,\n          [],\n        ],\n        {},\n+       false,\n      ],\n    },\n    {},\n  ]\n\n \u276f src/router/reg-exp-router/prepared-router.test.ts:123:20\n    121|       paths: ['*'],\n    122|     })\n    123|     expect(params).toEqual([\n       |                    ^\n    124|       {\n    125|         [METHOD_NAME_ALL]: [/^.*$()/, [0, []], {}],\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/5]\u23af\n\n FAIL  |main| src/router/reg-exp-router/prepared-router.test.ts > buildInitParams() and serializeInitParams() > should build init params with complex path\nAssertionError: expected [ { ALL: [ \u2026(4) ] }, \u2026(1) ] to deeply equal [ { ALL: [ \u2026(3) ] }, \u2026(1) ]\n\n- Expected\n+ Received\n\n@@ -14,10 +14,11 @@\n          \"/hello\": [\n            [],\n            [],\n          ],\n        },\n+       false,\n      ],\n    },\n    {\n      \"/hello\": [\n        [\n\n \u276f src/router/reg-exp-router/prepared-router.test.ts:136:20\n    134|       paths: ['/hello', '/hello/:name', '/hello/:name/posts/:postId', \u2026\n    135|     })\n    136|     expect(params).toEqual([\n       |                    ^\n    137|       {\n    138|         [METHOD_NAME_ALL]: [\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[5/5]\u23af\n\n"
+}

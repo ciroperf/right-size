@@ -397,12 +397,18 @@ def cmd_run(args):
     configs = args.configs.split(",") if args.configs else list(CONFIGS)
     meta = {"started": datetime.now(timezone.utc).isoformat(), "configs": {c: CONFIGS[c] for c in configs},
             "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE, "delegate_nudge": DELEGATE_NUDGE,
-            "claude_version": sh(["claude", "--version"], check=False).stdout.strip()}
+            "claude_version": sh(["claude", "--version"], check=False).stdout.strip(),
+            # The router version under test: published numbers come from one commit, unmodified.
+            "router_commit": sh(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT).stdout.strip()
+                             + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip()
+                                else "")}
     if (out / "meta.json").exists():
         # A later batch of runs into the same folder adds to the record instead of replacing it.
         prev = json.loads((out / "meta.json").read_text(encoding="utf-8"))
         meta["started"] = prev.get("started", meta["started"])
         meta["configs"] = {**prev.get("configs", {}), **meta["configs"]}
+        if prev.get("router_commit") not in (None, meta["router_commit"]):
+            meta["router_commit"] = f"{prev['router_commit']} / {meta['router_commit']}"
         if prev.get("claude_version") not in (None, meta["claude_version"]):
             meta["claude_version"] = f"{prev['claude_version']} / {meta['claude_version']}"
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
@@ -483,7 +489,8 @@ def cmd_summarize(args):
             r["rep"] = r.get("rep") or 1  # single-rep runs record no rep
             pooled[(r["task"], r["config"], r["rep"])] = r
     recs = list(pooled.values())
-    configs = list(dict.fromkeys(r["config"] for r in recs if r["config"] != FLOOR))
+    configs = (list(dict.fromkeys(r["config"] for r in recs if r["config"] != FLOOR))
+               or [FLOOR])  # a floor-only run summarizes the floor itself
     tasks_by_id = {t["id"]: t for t in load_tasks()}
     tids = list(dict.fromkeys(r["task"] for r in recs))
     by = {}
@@ -498,7 +505,7 @@ def cmd_summarize(args):
         fr = floor_rate(tid)
         if not fr:
             return "unknown"
-        return "floor solves" if fr[0] * 2 > fr[1] else "floor fails"
+        return "easy: floor solves" if fr[0] * 2 > fr[1] else "hard: floor fails half or more"
 
     size = {}
     for tid in tids:
@@ -555,12 +562,12 @@ def cmd_summarize(args):
         cps = f"${sum(cost) / sum(solved):.2f}" if sum(solved) else "–"
         totals.append(f"| {c} | {s_txt} | {c_txt} | {cps} | {esc if any(r.get('route') for r in rs) else '–'} "
                       f"| {wall / 60:.0f} min |")
-    if len(reps) <= 1:
+    if max((r["rep"] for r in recs), default=1) <= 1:
         totals += ["", "One run per cell: a difference of one task between configs can be noise."]
 
     buckets = list(dict.fromkeys(bucket(t) for t in common))
     if buckets != ["unknown"]:
-        totals += ["", "By difficulty (the `haiku` floor's majority result per task):", "",
+        totals += ["", "By difficulty (from the `haiku` floor runs):", "",
                    "| Config | " + " | ".join(f"{b} ({sum(bucket(t) == b for t in common)} tasks)" for b in buckets)
                    + " |", "|---|" + "---|" * len(buckets)]
         for c in configs:

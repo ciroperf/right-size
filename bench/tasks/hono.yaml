@@ -359,3 +359,33 @@ sets:
     - cache-query
     - batch-aug
     - batch-jul
+
+  # The tasks the `haiku` floor failed at least once in two runs (2026-10-24-floor):
+  # where a cheap start has to escalate, and checks and reviews have to earn their keep.
+  hard:
+    - jsx-array                   # floor 0/2
+    - regexp-wildcard-middleware  # floor 0/2
+    - method-not-allowed          # floor 1/2
+    - trie-suffix-wildcard        # floor 1/2
+
+  # Every task, for the final run: v1 plus the v0 single fixes outside the batches'
+  # prompts and the two tasks added on 2026-10-24.
+  all:
+    - compress-206
+    - content-type-case
+    - csrf-options
+    - jwt-bad-signature
+    - etag-ows
+    - accepts-case
+    - secure-headers-csp
+    - accepts-wildcard
+    - etag-stream-digest
+    - trie-suffix-wildcard
+    - regexp-router-unsupported
+    - jsx-array
+    - method-not-allowed
+    - cache-query
+    - regexp-wildcard-middleware
+    - mount-middleware
+    - batch-aug
+    - batch-jul

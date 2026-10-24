@@ -1,0 +1,20 @@
+{
+  "haiku": {
+    "tasks": 18,
+    "reps": 2,
+    "solved_per_rep": [
+      15,
+      15
+    ],
+    "cost_per_rep": [
+      0.3607,
+      0.4261
+    ],
+    "escalations": 0,
+    "wall_s": 2777.7,
+    "by_difficulty": [
+      "28/28 solved \u00b7 $0.02 per run",
+      "2/8 solved \u00b7 $0.04 per run"
+    ]
+  }
+}
