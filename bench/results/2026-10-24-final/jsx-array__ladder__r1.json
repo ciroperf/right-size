@@ -1,0 +1,120 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 213.2,
+  "is_error": false,
+  "num_turns": 17,
+  "duration_ms": 121221,
+  "cost_usd": 0.1878664,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 23982,
+      "cacheReadInputTokens": 827206,
+      "cacheCreationInputTokens": 52122,
+      "webSearchRequests": 0,
+      "costUSD": 0.030690059999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 18119
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 28,
+      "outputTokens": 5258,
+      "cacheReadInputTokens": 301244,
+      "cacheCreationInputTokens": 18604,
+      "webSearchRequests": 0,
+      "costUSD": 0.1571764,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 998
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I ran a throwaway test and found no defect. The existing suites under src/jsx, jsx-renderer and helper/html still pass (1953 tests).\n\n- **Arrays:** sync components returning arrays render correctly, including nested arrays, and strings in the array are escaped.\n- **Async arrays and hoisting:** an async component returning `[<title/>, <p/>]` has its `<title>` hoisted into `<head>` in the jsx-renderer output, in plain `c.html`, and in streaming without `Suspense`.\n- **Providers:** two providers with different values around the same async component each render their own value (`<b>1</b><b>2</b>`).\n\nOne thing I didn't confirm: inside a `Suspense` boundary, the streamed title is not hoisted. The `<head>` has already been sent by then, so I believe the `Suspense` path never hoists, but I didn't run it on the unmodified code.",
+        "cost_usd": 0.1571764,
+        "probed": true,
+        "denied": [
+          {
+            "command": "mkdir -p src/jsx/tmp && cat > src/jsx/tmp/a.test.tsx <<'EOF'\n/** @jsxImportSource ../ */\nimport { Suspense, renderToReadableStream } from '../streaming'\nimport { createContext, useContext } from '../context'\nimport { jsx } from '../base'\nimport { Hono } from '../../hono'\nimport { jsxRenderer } from '../../middleware/jsx-renderer'\n\nconst read = async (s: ReadableStream) => { const r = s.getReader(); let o=''; const d=new TextDecoder(); for(;;){const {done,value}=await r.read(); if(done)break; o+=d.decode(value)} return o }\ndescribe('arr', () => {\n  it('sync', async () => {\n    const Items = () => [<li>a</li>, <li>&amp;{'<b>'}</li>, [<i>n</i>]]\n    expect((<ul><Items/></ul>).toString()).toBe('<ul><li>a</li><li>&amp;&lt;b&gt;</li><i>n</i></ul>')\n  })\n  it('async title', async () => {\n    const A = async () => [<title>T</title>, <p>x</p>]\n    const s = await (<html><head></head><body><A/></body></html>).toString()\n    console.log(s)\n    const st = await read(renderToReadableStream(<html><head></head><body><Suspense fallback=\"f\"><A/></Suspense></body></html>))\n    console.log(st)\n  })\n  it('ctx', async () => {\n    const C = createContext('d')\n    const p = Promise.resolve(<div/>)\n    const In = async () => { const v = useContext(C); return [<b>{v}</b>] }\n    const el = <><C.Provider value=\"1\"><In/></C.Provider><C.Provider value=\"2\"><In/></C.Provider></>\n    console.log(await el.toString())\n  })\n  it('renderer', async () => {\n    const app = new Hono()\n    app.use(jsxRenderer(({children}) => <html><body>{children}</body></html>))\n    const A = async () => [<title>T</title>, <p>x</p>]\n    app.get('/', (c) => c.render(<A/>))\n    console.log(await (await app.request('/')).text())\n  })\n})\nEOF\nnpx vitest --run src/jsx/tmp/a.test.tsx 2>&1 | tail -50"
+          },
+          {
+            "command": "sed -i 's#<html><body>{children}</body></html>#<html><head></head><body>{children}</body></html>#' src/jsx/tmp-a.test.tsx && sed -i \"s#<head></head>#<head></head>#\" src/jsx/tmp-a.test.tsx && npx vitest --run --coverage.enabled=false --silent=false src/jsx/tmp-a.test.tsx 2>&1 | grep -A2 -E \"RDR|STREAM\"; grep -n \"title\" src/jsx/intrinsic-elements/components.ts | head"
+          },
+          {
+            "command": "npx vitest --run --coverage.enabled=false --silent=false src/jsx/tmp-a.test.tsx 2>&1 | Select-String -Pattern \"RDR|STREAM\" -Context 0,3"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 52,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "41.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.09% ( 1799/2897 )\nBranches     : 56.92% ( 1044/1834 )\nFunctions    : 57.7% ( 307/532 )\nLines        : 62.49% ( 1731/2770 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,118 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 352.3,
+  "is_error": false,
+  "num_turns": 39,
+  "duration_ms": 267250,
+  "cost_usd": 1.6497005599999999,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 691,
+      "cacheReadInputTokens": 9646,
+      "cacheCreationInputTokens": 650,
+      "webSearchRequests": 0,
+      "costUSD": 0.00057216,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 423
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 68,
+      "outputTokens": 25233,
+      "cacheReadInputTokens": 2098660,
+      "cacheCreationInputTokens": 90558,
+      "webSearchRequests": 0,
+      "costUSD": 1.6491280000000001,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 11441
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 5,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "concurrency and distributed state",
+      "why": "Changes thread through several modules (string rendering, streaming, jsx-renderer middleware, FC typing) and must keep existing escaping/hoisting behaviors intact; repo has 139 test files, so no tier bump; per-render context isolation touches concurrency, which is a risk floor area.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "In `src/jsx/base.ts`, `JSXFunctionNode` now renders both sync arrays and arrays returned by async components. Escaped-string callbacks are kept on array items. Async results are rendered inside each render's own captured context, so the same element promise under two providers gets the right value each time. `FC` and `JSX.ElementType` now allow array returns; I read the types but didn't typecheck them. All of src/jsx and the jsx-renderer middleware tests pass (1953 tests, plus 9 skipped). My scratch tests also passed: context inside an async array, Suspense streaming of an array, a title in an async non-array component, and an async component returning a string. One scratch test failed (ErrorBoundary with an async throw outputs a template placeholder), but it fails the same way with a non-array component, so the diff didn't cause it.",
+        "cost_usd": 0.3090414,
+        "probed": true,
+        "denied": [
+          {
+            "command": "cd /e/Coding/right-size/bench/work/hono; git status --short; sed -n 90,160p src/jsx/base.ts; grep -n \"suspendedContext\\|runWithRenderContext\\|captureRenderContext\" -r src/jsx | grep -v test; sed -n 1,80p src/jsx/context.ts"
+          },
+          {
+            "command": "npx vitest --run src/jsx/zz-review.test.tsx 2>&1 | Select-String -Pattern \"Received|Tests|<html\" ",
+            "timeout": 200000
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 52,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "41.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.08% ( 1798/2896 )\nBranches     : 56.94% ( 1045/1835 )\nFunctions    : 57.7% ( 307/532 )\nLines        : 62.47% ( 1730/2769 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

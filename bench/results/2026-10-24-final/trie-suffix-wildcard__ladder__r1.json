@@ -1,0 +1,135 @@
+{
+  "task": "trie-suffix-wildcard",
+  "pr": 5236,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "deep",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 204.3,
+  "is_error": false,
+  "num_turns": 34,
+  "duration_ms": 105076,
+  "cost_usd": 0.584702,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 20,
+      "outputTokens": 4018,
+      "cacheReadInputTokens": 481584,
+      "cacheCreationInputTokens": 19365,
+      "webSearchRequests": 0,
+      "costUSD": 0.010699839999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1374
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 7482,
+      "cacheReadInputTokens": 583897,
+      "cacheCreationInputTokens": 27573,
+      "webSearchRequests": 0,
+      "costUSD": 0.24355369999999996,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1762
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 22,
+      "outputTokens": 5298,
+      "cacheReadInputTokens": 254800,
+      "cacheCreationInputTokens": 21680,
+      "webSearchRequests": 0,
+      "costUSD": 0.330448,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1706
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "diff",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "The TrieRouter now records suffix-wildcard children and checks their prefix as a literal string while searching. I ran throwaway tests and all requirements hold. The app-level case with a mounted sub-app (static and :param POST siblings) returns 200 for /assets/app.js and /assets. /file.+* matches /file.+js and returns 404 for /fileZZjs. /assets* still matches when /assets*/x was registered first. Trie results agree with RegExpRouter on the cases I tried, and the router and hono suites pass (774 tests).",
+        "cost_usd": 0.330448,
+        "probed": true,
+        "denied": [
+          {
+            "command": "sed -i \"s#run(\\[\\['GET', '/v1/assets\\*'\\], \\['GET', '/v1/:p'\\]\\]#run([['GET', '/v1/assets*']]#\" src/router/trie-router/zz.test.ts && npx vitest --run src/router/trie-router/zz.test.ts 2>&1 | grep -E \"v1|APP|Tests\"; npx vitest --run src/router src/hono.test.ts 2>&1 | grep -E \"Tests|FAIL\""
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 53,
+  "parts_solved": null,
+  "test_files": [
+    "src/hono.test.ts",
+    "src/router/trie-router/node.test.ts"
+  ],
+  "test_tail": "   66.66 |     100 |   87.87 | 23,43,54,65       \n ...er/trie-router |   93.37 |    91.01 |     100 |   93.87 |                   \n  node.ts          |   96.12 |    91.95 |     100 |   95.65 | 39-41,101-102,172 \n  router.ts        |   54.54 |       50 |     100 |   66.66 | 16-19             \n src/utils         |   41.11 |    32.36 |   44.44 |   41.01 |                   \n  body.ts          |   52.83 |    42.22 |   55.55 |   51.92 | ...99-209,226-245 \n  buffer.ts        |      18 |        0 |   28.57 |   18.36 | ...2,81-95,99-103 \n  color.ts         |      70 |       50 |   66.66 |      70 | 45-50             \n  cookie.ts        |   11.01 |        0 |       0 |    11.2 | ...66-267,276-279 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   88.43 |    76.99 |      95 |   88.11 | ...70,276,281,285 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 60.77% ( 942/1550 )\nBranches     : 50.57% ( 486/961 )\nFunctions    : 64.66% ( 172/266 )\nLines        : 60.45% ( 896/1482 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

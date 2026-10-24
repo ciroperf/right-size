@@ -557,8 +557,15 @@ def cmd_summarize(args):
               "| Config | Solved per rep | Cost per rep | Cost per solved task | Escalations | Total time |",
               "|---|---|---|---|---|---|"]
     agg = {}
+    # A rep counts in the per-rep totals only when every config ran every common task in it:
+    # an interrupted rep would otherwise look cheaper because it has fewer tasks.
+    all_reps = sorted({r["rep"] for t in common for c in configs for r in by[(t, c)]})
+    full = [k for k in all_reps if all(any(r["rep"] == k for r in by[(t, c)]) for t in common for c in configs)]
+    if len(full) < len(all_reps):
+        totals.insert(2, f"Per-rep totals use complete reps only ({', '.join(map(str, full)) or 'none'}); "
+                         f"cells above include every run.")
     for c in configs:
-        rs = [r for t in common for r in by[(t, c)]]
+        rs = [r for t in common for r in by[(t, c)] if r["rep"] in full]
         reps = sorted({r.get("rep") or 1 for r in rs})
         per = [[r for r in rs if (r.get("rep") or 1) == k] for k in reps]
         solved = [sum(r["solved"] for r in p) for p in per]

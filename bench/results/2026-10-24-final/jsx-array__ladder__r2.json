@@ -1,0 +1,117 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "ladder",
+  "rep": 2,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 116.4,
+  "is_error": false,
+  "num_turns": 13,
+  "duration_ms": 69346,
+  "cost_usd": 0.1223283,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 18,
+      "outputTokens": 13645,
+      "cacheReadInputTokens": 503329,
+      "cacheCreationInputTokens": 41523,
+      "webSearchRequests": 0,
+      "costUSD": 0.020162190000000003,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 8221
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 3000,
+      "cacheReadInputTokens": 124503,
+      "cacheCreationInputTokens": 14922,
+      "webSearchRequests": 0,
+      "costUSD": 0.1021663,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 249
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "My throwaway tests passed. They covered sync, nested and async arrays, escaping of strings in arrays, and streaming through Suspense. They also covered two providers sharing one promise, which each saw its own value, and async array items reading context. Callbacks are carried through `raw(..., callbacks)` and `childrenToStringToBuffer`. I did not test `<title>` hoisting into `<head>` directly, so the callback requirement is only checked by reading the code. I also did not run the existing test suite.",
+        "cost_usd": 0.1021663,
+        "probed": true,
+        "denied": [
+          {
+            "command": "cd /e/Coding/right-size/bench/work/hono; git status --short; grep -n \"suspendedContext\\|captureRenderContext\" -r src | head -30; sed -n 1,80p src/jsx/streaming.ts"
+          },
+          {
+            "command": "npx vitest --run src/jsx/tmp.test.tsx -t \"callback|context\" --coverage.enabled=false 2>&1 | Select-String -NotMatch \"^\\s*$\" | Select-Object -First 30"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 32,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "41.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.05% ( 1797/2896 )\nBranches     : 56.81% ( 1038/1827 )\nFunctions    : 57.7% ( 307/532 )\nLines        : 62.42% ( 1728/2768 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

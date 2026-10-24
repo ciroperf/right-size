@@ -1,0 +1,69 @@
+{
+  "task": "regexp-wildcard-middleware",
+  "pr": 5266,
+  "config": "sonnet",
+  "rep": 1,
+  "expected_tier": "deep",
+  "router_commit": null,
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 101.0,
+  "is_error": false,
+  "num_turns": 17,
+  "duration_ms": 99954,
+  "cost_usd": 0.2664616000000001,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 24,
+      "outputTokens": 10396,
+      "cacheReadInputTokens": 559336,
+      "cacheCreationInputTokens": 26630,
+      "webSearchRequests": 0,
+      "costUSD": 0.2664616000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3056,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 82,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/common.case.test.ts",
+    "src/router/linear-router/router.test.ts",
+    "src/router/pattern-router/router.test.ts",
+    "src/router/reg-exp-router/prepared-router.test.ts",
+    "src/router/reg-exp-router/router.test.ts",
+    "src/router/smart-router/router.test.ts",
+    "src/router/trie-router/router.test.ts"
+  ],
+  "test_tail": "1 |    91.95 |     100 |   97.64 | 66,71             \n ...reg-exp-router |   96.57 |    91.11 |     100 |   96.33 |                   \n  node.ts          |    89.7 |    85.39 |     100 |   89.39 | 31-42             \n  ...red-router.ts |     100 |    97.61 |     100 |     100 | 41                \n  router.ts        |   97.14 |    94.59 |     100 |   96.87 | 29,90,127,250     \n  trie.ts          |   97.87 |    85.71 |     100 |   97.72 | 78                \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |     100 |    98.66 |     100 |     100 |                   \n  node.ts          |     100 |    98.63 |     100 |     100 | 147               \n src/utils         |   47.61 |    28.31 |      45 |   46.85 |                   \n  url.ts           |   47.61 |    28.31 |      45 |   46.85 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 87.56% ( 676/772 )\nBranches     : 78.65% ( 420/534 )\nFunctions    : 88.04% ( 81/92 )\nLines        : 86.82% ( 626/721 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,177 @@
+{
+  "task": "method-not-allowed",
+  "pr": 5132,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 578.0,
+  "is_error": false,
+  "num_turns": 66,
+  "duration_ms": 427426,
+  "cost_usd": 2.0635142,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 22,
+      "outputTokens": 35942,
+      "cacheReadInputTokens": 684713,
+      "cacheCreationInputTokens": 63766,
+      "webSearchRequests": 0,
+      "costUSD": 0.03757353,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 28311
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 594,
+      "cacheReadInputTokens": 73804,
+      "cacheCreationInputTokens": 16728,
+      "webSearchRequests": 0,
+      "costUSD": 0.08024039999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 57
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 90,
+      "outputTokens": 31546,
+      "cacheReadInputTokens": 2174582,
+      "cacheCreationInputTokens": 109938,
+      "webSearchRequests": 0,
+      "costUSD": 1.9457004000000002,
+      "contextWindow": 4000000,
+      "maxOutputTokens": 512000,
+      "thinkingTokens": 12681
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "high"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "In src/middleware/method-not-allowed/index.ts, `listAllowedMethods` works out the mount prefix with `routePath(c)` after `next()`. By then `c.req.routeIndex` points at the last middleware that ran, not at this one. So if any path-scoped middleware runs after it, the wrong prefix gets stripped and the 405 is missed: `app.use(methodNotAllowed({app})); app.use('/api/*', mw); app.get('/api/users', h)` returns 404 for POST /api/users instead of 405 with `Allow: GET, HEAD`, and the same happens when it is installed in a mounted sub-app. Capture the route index or path before calling `next()`, or derive the prefix another way.",
+        "cost_usd": 0.17759180000000002,
+        "probed": true,
+        "denied": []
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "In src/middleware/method-not-allowed/index.ts, `mountPrefix` finds the mount prefix by taking the matched route pattern (e.g. `/t/:tenant/*`) and cutting the request path at that pattern's length. If the sub-app is mounted at a path with parameters or wildcards (`parent.route('/t/:tenant', sub)`, request `POST /t/acme/users`), the cut lands in the wrong place, so the method list comes back empty and the response stays 404 instead of 405 `Allow: GET, HEAD`. Strip the prefix by matching the pattern against the real request path, not by counting characters; also, when `onMethodNotAllowed` is used, headers added by inner middleware after `next()` are currently lost because `c.res` is cleared first.",
+        "cost_usd": 0.3042604,
+        "probed": true,
+        "denied": []
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "In `src/middleware/method-not-allowed/index.ts` I found no defect against the task. The diff's own tests pass. I also checked four more cases with a throwaway test and they behaved as the task asks: a custom method registered in lowercase, the error handler not being called, an outer middleware seeing the 405 when the routes come from a sub-app mounted with route(), and an Allow header with no duplicates.",
+        "cost_usd": 0.20322399999999996,
+        "probed": true,
+        "denied": [
+          {
+            "command": "npx vitest --run src/middleware/method-not-allowed/ --coverage.enabled=false 2>&1 | Select-String -Pattern \"\u2713|\u00d7|FAIL|Tests|passed|failed|405|Error\" | Select-Object -First 40",
+            "description": "Run tests summary"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 0,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/method-not-allowed/index.test.ts"
+  ],
+  "test_tail": "      50 |      75 |   68.42 | 17-21,35-39,52,69 \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |   74.82 |    57.33 |    90.9 |   74.21 |                   \n  node.ts          |   76.51 |    57.53 |    87.5 |   74.78 | ...75-208,217-227 \n  router.ts        |   54.54 |       50 |     100 |   66.66 | 16-19             \n src/utils         |   21.34 |     9.09 |   15.68 |   21.61 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   36.73 |    19.46 |      40 |   37.06 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 50.41% ( 663/1315 )\nBranches     : 38.16% ( 300/786 )\nFunctions    : 45.37% ( 108/238 )\nLines        : 50.35% ( 630/1251 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

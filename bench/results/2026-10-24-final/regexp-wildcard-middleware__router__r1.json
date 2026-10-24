@@ -1,0 +1,104 @@
+{
+  "task": "regexp-wildcard-middleware",
+  "pr": 5266,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "deep",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 161.4,
+  "is_error": false,
+  "num_turns": 21,
+  "duration_ms": 145647,
+  "cost_usd": 0.42318006,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 661,
+      "cacheReadInputTokens": 1556,
+      "cacheCreationInputTokens": 8969,
+      "webSearchRequests": 0,
+      "costUSD": 0.00214006,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 391
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 26,
+      "outputTokens": 18464,
+      "cacheReadInputTokens": 688040,
+      "cacheCreationInputTokens": 41886,
+      "webSearchRequests": 0,
+      "costUSD": 0.42104,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 6232
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 4,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "medium",
+      "risk_area": null,
+      "why": "One router module (RegExpRouter) with a precise repro and tests in the repo, but the fix must cover several pattern cases (nested braces, meta characters, ALL, suffix wildcard) and keep registration-order semantics, so it needs design judgment rather than a mechanical edit. Routing is not a risk-floor area.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 116,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/common.case.test.ts",
+    "src/router/linear-router/router.test.ts",
+    "src/router/pattern-router/router.test.ts",
+    "src/router/reg-exp-router/prepared-router.test.ts",
+    "src/router/reg-exp-router/router.test.ts",
+    "src/router/smart-router/router.test.ts",
+    "src/router/trie-router/router.test.ts"
+  ],
+  "test_tail": "7.91 |    91.95 |     100 |   97.64 | 66,71             \n ...reg-exp-router |   97.02 |    91.09 |     100 |   96.82 |                   \n  node.ts          |    89.7 |    85.39 |     100 |   89.39 | 31-42             \n  ...red-router.ts |     100 |    97.61 |     100 |     100 | 41                \n  router.ts        |   98.12 |    93.75 |     100 |   97.95 | 120,158,284       \n  trie.ts          |   97.87 |    85.71 |     100 |   97.72 | 78                \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |     100 |    98.66 |     100 |     100 |                   \n  node.ts          |     100 |    98.63 |     100 |     100 | 147               \n src/utils         |   47.61 |    28.31 |      45 |   46.85 |                   \n  url.ts           |   47.61 |    28.31 |      45 |   46.85 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 88% ( 697/792 )\nBranches     : 79.13% ( 440/556 )\nFunctions    : 87.91% ( 80/91 )\nLines        : 87.29% ( 646/740 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}
