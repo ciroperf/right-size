@@ -1,0 +1,113 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "ladder",
+  "rep": null,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 213.5,
+  "is_error": false,
+  "num_turns": 26,
+  "duration_ms": 144744,
+  "cost_usd": 0.11803270000000002,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 24617,
+      "cacheReadInputTokens": 1048115,
+      "cacheCreationInputTokens": 56992,
+      "webSearchRequests": 0,
+      "costUSD": 0.03419105,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 14666
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 2420,
+      "cacheReadInputTokens": 81577,
+      "cacheCreationInputTokens": 12866,
+      "webSearchRequests": 0,
+      "costUSD": 0.08384170000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 80
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "The change meets the task's requirements in every case I ran. Existing jsx and jsx-renderer tests pass (1942 passed, 9 skipped). I also ran two sets of throwaway tests, and all of them passed. The diff's `tmp-array.test.tsx` covers `<title>` hoisting from sync and async arrays and the same promise under two providers. My own test covered string rendering and streaming with nested arrays and async items, escaping of strings in arrays, and `<title>` hoisting through `jsxRenderer` with streaming.",
+        "cost_usd": 0.08384170000000002,
+        "probed": true,
+        "denied": [
+          {
+            "command": "cat > src/jsx/zz.test.tsx <<'EOF'\n/** @jsxImportSource ./ */\nimport { it, expect } from 'vitest'\nimport { Hono } from '../hono'\nimport { jsxRenderer } from '../middleware/jsx-renderer'\nimport { renderToReadableStream, Suspense } from './streaming'\nconst st = async (s: any) => { const r = renderToReadableStream(s).getReader(); let o=''; const d=new TextDecoder(); for(;;){const {done,value}=await r.read(); if(done)break; o+=d.decode(value)} return o }\nconst A = async () => <b>A</b>\nconst AA = async () => [<i>1</i>, 'x<y', [<A />, async () => 1]] as any\nit('sync/nested/async', async () => {\n  const F = () => [<li>a</li>, 'a<b', [<li>c</li>, <A />], Promise.resolve(<u>p</u>)] as any\n  expect(String(await (<div><F /></div>).toString())).toBe('<div><li>a</li>a&lt;b<li>c</li><b>A</b><u>p</u></div>')\n  const G = async () => [<i>1</i>, 'x<y', [<A />]] as any\n  expect(String(await (<div><G /></div>).toString())).toBe('<div><i>1</i>x&lt;y<b>A</b></div>')\n})\nit('stream', async () => {\n  const G = async () => [<i>1</i>, 'x<y', [<A />]] as any\n  const o = await st(<Suspense fallback=\"f\"><G /></Suspense>)\n  expect(o).toContain('<i>1</i>x&lt;y<b>A</b>')\n  const o2 = await st(<div><G /></div>)\n  expect(o2).toContain('<div><i>1</i>x&lt;y<b>A</b></div>')\n})\nit('renderer', async () => {\n  const app = new Hono()\n  app.use(jsxRenderer(({children}) => <html><head></head><body>{children}</body></html>, {stream:true}))\n  const G = async () => [<title>T</title>, <A />] as any\n  app.get('/', (c) => c.render(<G />))\n  const t = await (await app.request('/')).text()\n  expect(t).toContain('<head><title>T</title></head>')\n})\nEOF\nnpx vitest --run --coverage.enabled=false src/jsx/zz.test.tsx 2>&1 | grep -vE \"^\\s*$\" | head -40"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 49,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "1.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   36.79 |    23.96 |   29.41 |   36.88 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   86.41 |       75 |      90 |   85.89 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.06% ( 1798/2897 )\nBranches     : 56.82% ( 1037/1825 )\nFunctions    : 57.78% ( 308/533 )\nLines        : 62.42% ( 1728/2768 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

@@ -1,0 +1,14 @@
+{
+  "ladder": {
+    "tasks": 2,
+    "reps": 1,
+    "solved_per_rep": [
+      2
+    ],
+    "cost_per_rep": [
+      0.2022
+    ],
+    "escalations": 0,
+    "wall_s": 255.2
+  }
+}

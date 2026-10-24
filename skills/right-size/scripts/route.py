@@ -426,8 +426,10 @@ def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
     if len(diff) > MAX_DIFF_CHARS:
         diff = diff[:MAX_DIFF_CHARS] + "\n[diff truncated]"
     runner = probe_runner(verify_cmd)
-    system = REVIEW_SYSTEM.format(run_hint=f" with `{runner} <your test file>`, the only command you can run"
-                                  if runner else "")
+    # On bench (2026-10-24) a reviewer wrote its probe with a shell heredoc, which the
+    # allowlist denies; naming the Write tool avoids the wasted turn.
+    system = REVIEW_SYSTEM.format(run_hint=f": create the file with the Write tool, then run `{runner} <your test file>`,"
+                                  f" the only command you can run" if runner else "")
     prompt = f"## Task\n{task}\n\n## Diff\n```diff\n{diff}\n```\n"
     before = snapshot(root)
     try:
