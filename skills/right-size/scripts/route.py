@@ -343,8 +343,12 @@ def wants_review(mode, p, risk_area, escalated=False):
 
 
 def reviewer_profile(p, risk_area, top, hmap, tiers):
-    """deep for risk areas, otherwise one tier above the session, at least standard."""
-    want = "deep" if risk_area else TIERS[max(TIERS.index(p["tier"]) + 1, TIERS.index("standard"))]
+    """deep for risk areas, otherwise one tier above the session, at least standard.
+
+    deep work (after an escalation) is reviewed by a fresh deep session: there is no tier above.
+    """
+    up = min(max(TIERS.index(p["tier"]) + 1, TIERS.index("standard")), len(TIERS) - 1)
+    want = "deep" if risk_area else TIERS[up]
     return profile(cap(want, top)[0], None, hmap, tiers)
 
 

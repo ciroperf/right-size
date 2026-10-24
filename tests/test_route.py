@@ -202,6 +202,8 @@ class Checks(unittest.TestCase):
         self.assertFalse(route.wants_review("auto", std, None))
         self.assertTrue(route.wants_review("auto", std, None, escalated=True))
         self.assertFalse(route.wants_review("never", std, None, escalated=True))
+        deep = route.profile("deep", None, CLAUDE, TIERS_YAML)
+        self.assertEqual(route.reviewer_profile(deep, None, "deep", CLAUDE, TIERS_YAML)["tier"], "deep")
 
         p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
         results = iter([("done", "s1", {"total_cost_usd": 0.01}), ("done", "s2", {"total_cost_usd": 0.2})])
