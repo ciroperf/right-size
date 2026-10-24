@@ -291,7 +291,8 @@ def router_commit():
     """The commit route.py runs from, marked dirty if skills/ has local changes."""
     global ROUTER_COMMIT
     if ROUTER_COMMIT is None:
-        ROUTER_COMMIT = (sh(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT).stdout.strip()
+        # The last commit that changed skills/, so bench-only commits don't look like a new router.
+        ROUTER_COMMIT = (sh(["git", "log", "-1", "--format=%h", "--", "skills"], cwd=ROOT).stdout.strip()
                          + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip() else ""))
     return ROUTER_COMMIT
 
@@ -412,7 +413,7 @@ def cmd_run(args):
             "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE, "delegate_nudge": DELEGATE_NUDGE,
             "claude_version": sh(["claude", "--version"], check=False).stdout.strip(),
             # The router version under test: published numbers come from one commit, unmodified.
-            "router_commit": sh(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT).stdout.strip()
+            "router_commit": sh(["git", "log", "-1", "--format=%h", "--", "skills"], cwd=ROOT).stdout.strip()
                              + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip()
                                 else "")}
     if (out / "meta.json").exists():
