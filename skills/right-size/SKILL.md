@@ -41,7 +41,7 @@ Print the block before doing anything else, even when the decision is to stay in
 
 The block below is the whole answer. `why` gives the two or three facts that drove the choice, so the user can disagree quickly. `apply` covers only the harness you are running in.
 
-After the block, add at most three short bullets, and only for things that would change the decision (an assumption to confirm) or that the subagent's brief must include. Don't restate the reasoning in prose. An advisor that writes 400 words spends the tokens it is supposed to save.
+After the block, add at most three bullets, and only for things that would change the decision (an assumption to confirm) or that the subagent's brief must include. Each bullet is one or two sentences; name the points, don't explain them. Don't restate the reasoning in prose, and don't end with an offer to proceed. Keep the whole reply under 150 words for one task (about 60 words per extra ticket): an advisor that writes 400 words spends the tokens it is supposed to save.
 
 ```
 right-size: delegate=no · tier=mechanical · effort=low

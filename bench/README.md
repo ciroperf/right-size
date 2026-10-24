@@ -37,6 +37,20 @@ Question: does a router that checks its own work beat simply running everything 
 python bench/run.py run --out bench/results/<date>-v1 --set v1 --configs sonnet,ladder,router --reps 3
 ```
 
+### Reading the results: difficulty and variance
+
+A cheaper total can come from a cheaper configuration or from an easier set of tasks, and one run per cell can't tell a reliable saving from a lucky one. So `summarize`:
+
+- **shows each task's difficulty from outside the configs being compared:** the size of the merged fix (source files and lines, tests excluded) and the solve rate of `haiku`, a floor config that runs the cheapest writing tier alone (Haiku at low effort, no checks, no escalation). Tasks the floor fails at least half the time are the ones where escalation has to earn its keep;
+- **compares configs only on tasks every one of them ran**, and names any task left out;
+- **reports totals per repetition**: solved and cost as mean ± standard deviation and min–max, plus each cell's cost range;
+- **splits totals by difficulty**, so a saving that exists only on tasks the floor already solves is visible as such.
+
+```bash
+python bench/run.py run --out bench/results/<date>-floor --configs haiku --reps 2
+python bench/run.py summarize bench/results/<date>-final bench/results/<date>-floor   # pool dirs; later dirs replace reruns
+```
+
 Prompt checks: before a result counts, failing runs are compared against the PR's test names. Where a prompt left out behavior the tests check, the prompt was fixed and the task rerun; the superseded runs are kept in `superseded-prompts/` and the fix is noted in `tasks/hono.yaml`.
 
 ## Running it
