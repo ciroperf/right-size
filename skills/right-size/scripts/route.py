@@ -329,14 +329,17 @@ def snapshot(root):
     return tree.stdout.strip() if tree.returncode == 0 else None
 
 
-def wants_review(mode, p, risk_area):
+def wants_review(mode, p, risk_area, escalated=False):
     if mode == "always":
         return True
     if mode == "never":
         return False
     # Risk areas get a second pair of eyes instead of a bigger model from the start,
     # and the cheapest tier's work is reviewed because it is the one most often wrong.
-    return bool(risk_area) or TIERS.index(p["tier"]) < TIERS.index("standard")
+    # So is any attempt after a failed check: the task already proved harder than its
+    # first tier. On bench (2026-10-24) a Sonnet attempt after a Haiku failure passed the
+    # tests unreviewed and failed the PR's tests, where Opus solved it.
+    return bool(risk_area) or escalated or TIERS.index(p["tier"]) < TIERS.index("standard")
 
 
 def reviewer_profile(p, risk_area, top, hmap, tiers):
@@ -496,7 +499,7 @@ def check_attempt(ck, p, hmap, tiers):
         records.append({"kind": "verify", "ok": ok})
         if not ok:
             return f"`{ck['verify_cmd']}` failed:\n{tail(out)}", records
-    if wants_review(ck["review"], p, ck["risk_area"]) and ck["start"] and end:
+    if wants_review(ck["review"], p, ck["risk_area"], ck.get("escalated")) and ck["start"] and end:
         diff = run(["git", "diff", ck["start"], end], cwd=ck["root"]).stdout
         rp = reviewer_profile(p, ck["risk_area"], ck["top"], hmap, tiers)
         ok, reason, info = review(ck["task"], diff, rp, ck["harness"], ck["root"], ck["verify_cmd"],
@@ -558,7 +561,7 @@ def note(p, why, nxt, interactive, checks=None):
         what = ["it fails if no file changed"]
         if checks["verify_cmd"]:
             what.append(f"it runs `{checks['verify_cmd']}`, so run it yourself before you stop")
-        if wants_review(checks["review"], p, checks["risk_area"]):
+        if wants_review(checks["review"], p, checks["risk_area"], checks.get("escalated")):
             what.append("a higher tier reviews the diff against the task")
         lines.append("When you stop, the router checks the work: " + "; ".join(what) + ". "
                      "Delete scratch or debug files you created before you stop.")
@@ -736,6 +739,8 @@ def run_headless(harness, p, prompt, extra, why, top, hmap, tiers, max_escalatio
         sys.stderr.write(f"right-size: escalate · {label}{p['tier']} → {up['tier']} ({up['model']}, effort "
                          f"{up['effort'] or 'default'}) · {short}\n")
         prev, p = p, up
+        if checks:
+            checks = {**checks, "escalated": True}
         sys_note = note(p, f"escalated after: {short}", next_profile(p, 1, top, hmap, tiers), False, checks)
         why_not = (f"it asked to escalate: {reason}" if kind == "asked"
                    else f"a check failed: {reason[:3000]}")

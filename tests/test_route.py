@@ -197,6 +197,28 @@ class Checks(unittest.TestCase):
         self.assertFalse(runs[1]["resumed"])
         self.assertEqual(runs[1]["cost_usd"], 0.2)  # a fresh session's cost is not cumulative
 
+    def test_attempts_after_an_escalation_are_reviewed(self):
+        std = route.profile("standard", None, CLAUDE, TIERS_YAML)
+        self.assertFalse(route.wants_review("auto", std, None))
+        self.assertTrue(route.wants_review("auto", std, None, escalated=True))
+        self.assertFalse(route.wants_review("never", std, None, escalated=True))
+
+        p = route.profile("mechanical", None, CLAUDE, TIERS_YAML)
+        results = iter([("done", "s1", {"total_cost_usd": 0.01}), ("done", "s2", {"total_cost_usd": 0.2})])
+
+        def fake_run(harness, cmd, task, log):
+            (Path(self.root) / "a.txt").write_text(f"attempt {cmd.count('-p')}\n{task[:20]}\n", encoding="utf-8")
+            return next(results)
+
+        reviews = iter([(False, "wrong", {"cost_usd": 0.05}), (True, "ok", {"cost_usd": 0.1})])
+        with mock.patch.object(route, "headless_run", side_effect=fake_run), \
+             mock.patch.object(route, "review", side_effect=lambda *a, **k: next(reviews)) as rv:
+            runs, _ = route.run_headless("claude-code", p, "fix it", [], "why", "deep", CLAUDE, TIERS_YAML, 2, None,
+                                         checks=self.checks(review="auto"))
+        self.assertEqual([r["profile"]["tier"] for r in runs], ["mechanical", "standard"])
+        self.assertEqual(rv.call_count, 2)  # the standard attempt is reviewed too
+        self.assertEqual(rv.call_args_list[1].args[2]["tier"], "deep")
+
     def test_effort_only_escalation_resumes(self):
         p = route.profile("deep", None, CLAUDE, TIERS_YAML)
         results = iter([("done", "s1", {"total_cost_usd": 0.5}), ("done", "s1", {"total_cost_usd": 0.8})])

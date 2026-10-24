@@ -62,7 +62,7 @@ To pick the model for a whole session before it starts, `scripts/route.py` in th
 
 ## Escalation
 
-Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas or `mechanical` work a review one tier up (a short-lived reviewer subagent with the task and the diff, allowed to write and run a throwaway test for a requirement it doubts) finds no missed requirement and nothing broken. Passing tests are not enough on their own: the defects that remain are the ones the tests don't cover.
+Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas, `mechanical` work or an attempt after a failed check, a review one tier up (a short-lived reviewer subagent with the task and the diff, allowed to write and run a throwaway test for a requirement it doubts) finds no missed requirement and nothing broken. Passing tests are not enough on their own: the defects that remain are the ones the tests don't cover.
 
 When escalating to a bigger model, hand it a fresh brief (the task, the current diff, why the last attempt failed) rather than the whole previous conversation: a new model re-reads everything uncached.
 

@@ -9,7 +9,7 @@ The first v1 runs showed that sessions never ask to escalate on their own: a fai
 ### Added
 
 - **`/right-size-audit`** (user-invoked): prices the project's Claude Code transcripts at list price and reports spend by model, token kind and subagent, model switches inside conversations, top-tier sessions that barely edited, and unpriced models, then recommends at most two changes. Local files only, no model calls. Also `scripts/audit.py` with `--days`, `--project`, `--all`, `--json`.
-- **Checks in router mode** (`--print`): after each attempt the router fails it on an empty diff, on a failing test command (`--verify-cmd`, or detected from `package.json`, `Cargo.toml`, `go.mod`, pytest config or a `Makefile`), or when a review one tier up rejects the diff (always `deep` for risk areas). `--review auto|always|never`, `--no-checks` for the old behavior.
+- **Checks in router mode** (`--print`): after each attempt the router fails it on an empty diff, on a failing test command (`--verify-cmd`, or detected from `package.json`, `Cargo.toml`, `go.mod`, pytest config or a `Makefile`), or when a review one tier up rejects the diff. Reviews run on the cheapest tier's work, on every attempt after a failed check, and on risk areas (always at `deep`). `--review auto|always|never`, `--no-checks` for the old behavior.
 - **Probing reviews:** the reviewer may write a throwaway test and run it with the project's test runner, the only command it is allowed; the working tree is restored afterwards. Denied commands are recorded with the review.
 - `--max-escalations` (default 3), `--log <dir>` to keep each attempt's transcript.
 - List prices per model in `harnesses/claude-code.yaml`, with source and date.
