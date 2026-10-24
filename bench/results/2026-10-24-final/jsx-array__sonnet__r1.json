@@ -1,0 +1,66 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "sonnet",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 45.6,
+  "is_error": false,
+  "num_turns": 10,
+  "duration_ms": 44331,
+  "cost_usd": 0.18942030000000004,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 4627,
+      "cacheReadInputTokens": 316343,
+      "cacheCreationInputTokens": 27872,
+      "webSearchRequests": 0,
+      "costUSD": 0.18942030000000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1407,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": null,
+  "diff_lines": 42,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "cted\n+ Received\n\n  [\n    \"<!DOCTYPE html><html><body><template id=\\\"H:1\\\"></template><p>Loading...</p><!--/$--></body></html>\",\n-   \"<template data-hono-target=\\\"H:1\\\"><p>Hello Hono again!</p></template><script>\n- ((d,c,n) => {\n- c=d.currentScript.previousSibling\n- d=d.getElementById('H:1')\n- if(!d)return\n- do{n=d.nextSibling;n.remove()}while(n.nodeType!=8||n.nodeValue!='/$')\n- d.replaceWith(c.content)\n- })(document)\n- </script>\",\n  ]\n\n \u276f src/middleware/jsx-renderer/index.test.tsx:342:19\n    340|       chunk.push(decoder.decode(value))\n    341|     }\n    342|     expect(chunk).toEqual([\n       |                   ^\n    343|       '<!DOCTYPE html><html><body><template id=\"H:1\"></template><p>Loa\u2026\n    344|       `<template data-hono-target=\"H:1\"><p>Hello Hono again!</p></temp\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[29/30]\u23af\n\n FAIL  |main| src/middleware/jsx-renderer/index.test.tsx > JSX renderer > Should accept function-based options\nAssertionError: expected '<!DOCTYPE html><html><body><div><temp\u2026' to contain '<script'\n\nExpected: \"<script\"\nReceived: \"<!DOCTYPE html><html><body><div><template id=\"H:2\"></template>loading...<!--/$--></div></body></html>\"\n\n \u276f src/middleware/jsx-renderer/index.test.tsx:467:24\n    465|     const textStream = await resStream.text()\n    466|     expect(textStream).toContain('<template')\n    467|     expect(textStream).toContain('<script')\n       |                        ^\n    468|     expect(textStream).toContain('loading...')\n    469|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[30/30]\u23af\n\n"
+}

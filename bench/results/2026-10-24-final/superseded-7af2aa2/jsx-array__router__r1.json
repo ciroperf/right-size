@@ -1,0 +1,109 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "router",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 499.5,
+  "is_error": false,
+  "num_turns": 56,
+  "duration_ms": 406048,
+  "cost_usd": 2.3486583600000004,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 834,
+      "cacheReadInputTokens": 1556,
+      "cacheCreationInputTokens": 8730,
+      "webSearchRequests": 0,
+      "costUSD": 0.00217876,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 559
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 98,
+      "outputTokens": 32050,
+      "cacheReadInputTokens": 3275036,
+      "cacheCreationInputTokens": 131260,
+      "webSearchRequests": 0,
+      "costUSD": 2.346479200000001,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 13371
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 7,
+  "route": {
+    "decision": {
+      "tier": "deep",
+      "effort": "medium",
+      "risk_area": "security-sensitive code (input sanitization)",
+      "why": "One change threading through hono/jsx string rendering, streaming, jsx-renderer and FC typing, and it must keep existing escaping and hoisting behavior intact; the repo has 139 test files, so the safety net is present. Escaped-string callbacks touch input sanitization, which is a risk area.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "Array returns from function components work in string rendering, streaming and jsx-renderer. Nested arrays, async items, async components returning arrays, escaping, callback propagation, <title> hoisting and per-provider context for shared promises all behave as required. All 39 jsx and jsx-renderer test files pass (1954 tests). My extra checks for Suspense, context across async arrays, nested async arrays and a sync <title> in a streamed array also passed. ErrorBoundary output differs for async arrays, but it does the same for a single async child, so that predates this diff.",
+        "cost_usd": 0.3376266,
+        "probed": true,
+        "denied": []
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 63,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "1.66 |      75 |   63.15 | 17-21,35-39,64-69 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.99 |     5.33 |   18.18 |    7.81 |                   \n  node.ts          |    6.06 |     5.47 |    12.5 |    6.72 | ...2,37-39,45-243 \n  router.ts        |   18.18 |        0 |   33.33 |   22.22 | 14-26             \n src/utils         |   37.07 |     25.2 |   29.41 |   37.17 |                   \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |   87.65 |     82.5 |      90 |   87.17 | ...11,132,163,173 \n  url.ts           |   31.29 |    24.77 |      30 |   32.16 | ...31,242-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 62.13% ( 1800/2897 )\nBranches     : 57.11% ( 1047/1833 )\nFunctions    : 57.86% ( 309/534 )\nLines        : 62.51% ( 1731/2769 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}
