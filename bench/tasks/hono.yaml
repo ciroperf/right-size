@@ -250,6 +250,77 @@ tasks:
       requests because Web Crypto is not available.` A custom cache key must not be
       resolved as a URL.
 
+  # Hard set (added 2026-10-24): multi-module or long-reasoning PRs merged after
+  # July, picked for a low solve rate of the `haiku` floor config.
+
+  - id: regexp-wildcard-middleware
+    pr: 5266
+    solution: a10592f3e1864cbe277619633db953450a6b1e4b
+    expected_tier: deep
+    # The PR's new cases are in common.case.test.ts, which has no tests of its own:
+    # every router's test file runs them. Copying it in and running those scores the task.
+    test_files:
+      - src/router/common.case.test.ts
+      - src/router/linear-router/router.test.ts
+      - src/router/pattern-router/router.test.ts
+      - src/router/reg-exp-router/prepared-router.test.ts
+      - src/router/reg-exp-router/router.test.ts
+      - src/router/smart-router/router.test.ts
+      - src/router/trie-router/router.test.ts
+    prompt: |
+      With the `RegExpRouter`, a wildcard route whose path has a parameter before
+      the trailing `*` is not applied to the routes it covers. After
+      `add('GET', '/:name/*', 'mw')` and `add('GET', '/:id', 'h')`, matching
+      `GET /abc` should return both handlers, `mw` with params `{ name: 'abc' }`
+      and `h` with `{ id: 'abc' }`; `GET /abc/sub` returns only `mw`.
+
+      The same must work when the parameter has a pattern: `/:name{[a-z]+}/*`,
+      patterns with nested braces such as `/posts/:year{[0-9]{4}}/*` together with
+      `/posts/:yr{[0-9]{4}}/comments`, patterns with regexp meta characters such as
+      `/files/:kind{(?:foo|bar)}/*`, and the explicit default pattern
+      `/user/:userId{[^/]+}/*` together with `/user/:id/profile`. Each handler gets
+      the parameter names of its own route. Handlers come back in registration
+      order, whichever of the two was added first, and a wildcard registered for
+      `ALL` applies to a `POST` route. A suffix wildcard without a slash also has
+      to be associated: `/assets*` and `/assets/app.js` (both `POST`) both match
+      `/assets/app.js`, in registration order, whichever comes first.
+
+      The other routers already behave this way and must keep doing so.
+      `LinearRouter` doesn't support these patterns; leave it as it is.
+
+  - id: mount-middleware
+    pr: 5221
+    solution: ae595de8ae05ea548560da93140ee1d53e5a8202
+    expected_tier: standard
+    prompt: |
+      Add a Mount Middleware that replaces `app.mount()`: `src/middleware/mount/index.ts`
+      exporting `mount(applicationHandler, options?)`, which returns a middleware for
+      serving an app built with another framework, e.g.
+      `app.all('/itty/*', mount(ittyRouter.handle))`. Export it as `hono/mount` like
+      the other middleware, and mark `app.mount()` as deprecated in favor of it.
+
+      - The handler is called as `applicationHandler(request, ...args)`. By default
+        `args` is `[c.env, executionCtx]`, with `executionCtx` undefined when the
+        context has none (that must not throw). `options` may be a function
+        `(c) => value` whose result becomes `args` (an array is spread, any other
+        value is passed as the single argument), or an object
+        `{ optionHandler?, replaceRequest? }` where `optionHandler` is that function.
+      - By default the request handed over has the mount prefix stripped from its
+        path. The prefix is the route path the middleware was registered on,
+        without the trailing `/*`, including any `basePath()`: `/another-app/hello`
+        becomes `/hello`, `/another-app` becomes `/`. Query string and headers are
+        kept. Mounted on `/*`, the path is passed on unchanged. The prefix is
+        matched against the decoded path (a route `/api/é/*` strips the prefix of
+        `/api/%C3%A9/hello`, giving `/hello`), while the rest keeps its original
+        encoding: `/api/v1/admin%2Fsecret` gives `/admin%2Fsecret`, and
+        `/api/foo%252Fbar` under `/api/*` gives `/foo%252Fbar`.
+      - `replaceRequest: (req) => Request` replaces that default;
+        `replaceRequest: false` hands over the original request unchanged.
+      - When the handler returns a response, that is the response, and outer
+        middleware still runs on it. When it returns nothing, the middleware calls
+        `next()`: with `app.use('/x/*', mount(h))` later routes handle the request,
+        and with nothing else matching, the app's `notFound` handler answers.
+
 # Batches: several independent bug reports in one prompt, on a commit where all
 # of them are still present. Each part keeps its own PR's tests as the scorer.
 # They exist to give delegation room to pay off: the parts touch different

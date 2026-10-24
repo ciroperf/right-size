@@ -126,6 +126,9 @@ def base_rev(task):
 
 
 def test_files(task):
+    # A task lists its tests when the PR only changed a shared case file that other test files import.
+    if task.get("test_files"):
+        return list(task["test_files"])
     out = sh(["git", "diff", "--name-only", f"{task['solution']}^", task["solution"]]).stdout
     return [f for f in out.split() if f.startswith("src/") and (f.endswith(".test.ts") or f.endswith(".test.tsx"))]
 
@@ -143,21 +146,38 @@ def score(task):
 _installed_lock = None
 
 
+def lockfile():
+    # Hono moved from bun to pnpm on 2026-09-24 (#5433); later task bases use pnpm.
+    pnpm = WORK / "pnpm-lock.yaml"
+    return pnpm if pnpm.exists() else WORK / "bun.lock"
+
+
+def install_cmd():
+    """The frozen install for the checked-out commit, with its pinned package manager."""
+    if lockfile().name == "bun.lock":
+        return BUN + ["install", "--frozen-lockfile"]
+    pm = json.loads((WORK / "package.json").read_text(encoding="utf-8")).get("packageManager", "pnpm@10")
+    return ["npx", "-y", pm.split("+")[0], "install", "--frozen-lockfile"]
+
+
 def checkout(rev):
     """Clean checkout of rev, reinstalling dependencies only if the lockfile changed."""
     global _installed_lock
     sh(["git", "checkout", "-f", "-q", rev])
     sh(["git", "clean", "-fdq"])  # keeps ignored node_modules
-    # Every task predates Hono's move to pnpm, so all bases install with bun.
-    lock = hashlib.md5((WORK / "bun.lock").read_bytes()).hexdigest()
+    install = install_cmd()
+    lock = (install[2], hashlib.md5(lockfile().read_bytes()).hexdigest())
     if lock != _installed_lock:
-        sh(BUN + ["install", "--frozen-lockfile"], timeout=900)
+        if _installed_lock and _installed_lock[0] != lock[0]:
+            # bun and pnpm lay out node_modules differently: switching needs a clean slate.
+            shutil.rmtree(WORK / "node_modules", ignore_errors=True)
+        sh(install, timeout=900)
         _installed_lock = lock
     # Checked on every checkout: an incremental install once left vitest resolving an old
     # top-level vite, and an agent's rm could break node_modules. Either way, start clean.
     if not vitest_starts():
         shutil.rmtree(WORK / "node_modules", ignore_errors=True)
-        sh(BUN + ["install", "--frozen-lockfile"], timeout=900)
+        sh(install, timeout=900)
         if not vitest_starts():
             raise SystemExit(f"vitest does not start after a clean install at {rev}")
 
@@ -257,7 +277,7 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None, classify
         "subagent_stats": last.get("subagent_stats"),
         "permission_denials": [d for x in runs for d in (x.get("permission_denials") or [])],
         "route": {"decision": summary["decision"], "profiles": [x["profile"] for x in summary["runs"]],
-                  "checks": [{k: c.get(k) for k in ("kind", "ok", "reason", "cost_usd")} for c in checks],
+                  "checks": [{k: c.get(k) for k in ("kind", "ok", "reason", "cost_usd", "probed", "denied")} for c in checks],
                   "parts": [{"title": x["title"], "profiles": [r["profile"] for r in x["runs"]],
                              "cost_usd": sum(r["cost_usd"] or 0 for r in x["runs"])}
                             for x in summary.get("parts") or []] or None},

@@ -460,7 +460,9 @@ def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError, TypeError, AttributeError) as e:
         return None, f"review unavailable ({type(e).__name__})", {"cost_usd": None}
     finally:
-        restore(root, before, snapshot(root))
+        after = snapshot(root)
+        restore(root, before, after)
+    info["probed"] = bool(before and after and before != after)  # the review wrote a file
     if not isinstance(out, dict) or out.get("verdict") not in ("pass", "fail"):
         return None, "review unavailable (unexpected answer)", info
     return out["verdict"] == "pass", str(out.get("reason") or ""), info
