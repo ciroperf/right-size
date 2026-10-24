@@ -53,5 +53,5 @@
   "nudge": "Before starting, size the task with the right-size skill and follow its decision.",
   "delegate_nudge": "Size each independent part of the task with the right-size skill, then delegate every part to the right-size-* subagent for its tier, in parallel where the parts are independent. Do not fix any part yourself; review and verify the subagents' results.",
   "claude_version": "2.1.302 (Claude Code)",
-  "router_commit": "5047976 (ladder and router runs; 7af2aa2 runs moved to superseded-7af2aa2/)"
+  "router_commit": "5047976 (ladder and router runs; 7af2aa2 runs moved to superseded-7af2aa2/) / 5dc5664"
 }

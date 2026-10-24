@@ -1,0 +1,116 @@
+{
+  "task": "jsx-array",
+  "pr": 5179,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "standard",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 188.2,
+  "is_error": false,
+  "num_turns": 21,
+  "duration_ms": 96072,
+  "cost_usd": 0.19331569999999998,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 20,
+      "outputTokens": 20268,
+      "cacheReadInputTokens": 594020,
+      "cacheCreationInputTokens": 64721,
+      "webSearchRequests": 0,
+      "costUSD": 0.029020400000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 15945
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 22,
+      "outputTokens": 6103,
+      "cacheReadInputTokens": 230937,
+      "cacheCreationInputTokens": 20032,
+      "webSearchRequests": 0,
+      "costUSD": 0.1642957,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1173
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 2,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I ran throwaway tests against the diff and found no defect. Function components returning arrays work: sync, nested, async items, and async components returning arrays (strings escaped). Array results work in `jsx-renderer` streaming. In streaming, the `<title>` returned in an async component's array comes out the same as a plain async `<title>`. When one promise is rendered under two providers (values A and B), each render sees its own value, with and without arrays. The existing `src/jsx`, `jsx-renderer` and `helper/html` tests all pass (1949 passed, 9 skipped). My scratch tests didn't reproduce real `<head>` hoisting. They had no hoisting mechanism, so plain and array cases simply matched each other.",
+        "cost_usd": 0.1642957,
+        "probed": false,
+        "denied": [
+          {
+            "command": "sed -i \"s/expect((await (<ul><B \\/><\\/ul>).toString()))/expect(String(await (<ul><B \\/><\\/ul>).toString()))/; s/expect(\\[await a, await b\\])/expect([String(await a), String(await b)])/\" src/jsx/tmp.test.tsx && npx vitest --run src/jsx/tmp.test.tsx 2>&1 | grep -v \"^ *\\\"\" | head -60"
+          },
+          {
+            "command": "python3 - <<'E' 2>/dev/null || sed -i \"s/<C.Provider value='A'>{p as any}<\\/C.Provider>/<C.Provider value='A'><F \\/><\\/C.Provider>/; s/<C.Provider value='B'>{p as any}<\\/C.Provider>/<C.Provider value='B'><F \\/><\\/C.Provider>/; s/const p = (async () => <V \\/>)()/const p = (async () => <V \\/>)(); const F = () => p as any/\" src/jsx/tmp.test.tsx\nE\nnpx vitest --run src/jsx/tmp.test.tsx 2>&1 | grep -E \"\u2713|\u00d7|Tests|Expected|Received|\\\"\" | head"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 53,
+  "parts_solved": null,
+  "test_files": [
+    "src/jsx/dom/index.test.tsx",
+    "src/jsx/index.test.tsx",
+    "src/jsx/intrinsic-element/components.test.tsx",
+    "src/jsx/streaming.test.tsx",
+    "src/middleware/jsx-renderer/index.test.tsx"
+  ],
+  "test_tail": "/head><body><h1>World</h1></body></html>\"\n\n+ Received:\nString {\n  \"0\": \"<\",\n  \"1\": \"h\",\n  \"10\": \"d\",\n  \"11\": \">\",\n  \"12\": \"<\",\n  \"13\": \"/\",\n  \"14\": \"h\",\n  \"15\": \"e\",\n  \"16\": \"a\",\n  \"17\": \"d\",\n  \"18\": \">\",\n  \"19\": \"<\",\n  \"2\": \"t\",\n  \"20\": \"b\",\n  \"21\": \"o\",\n  \"22\": \"d\",\n  \"23\": \"y\",\n  \"24\": \">\",\n  \"25\": \"<\",\n  \"26\": \"t\",\n  \"27\": \"i\",\n  \"28\": \"t\",\n  \"29\": \"l\",\n  \"3\": \"m\",\n  \"30\": \"e\",\n  \"31\": \">\",\n  \"32\": \"H\",\n  \"33\": \"e\",\n  \"34\": \"l\",\n  \"35\": \"l\",\n  \"36\": \"o\",\n  \"37\": \"<\",\n  \"38\": \"/\",\n  \"39\": \"t\",\n  \"4\": \"l\",\n  \"40\": \"i\",\n  \"41\": \"t\",\n  \"42\": \"l\",\n  \"43\": \"e\",\n  \"44\": \">\",\n  \"45\": \"<\",\n  \"46\": \"h\",\n  \"47\": \"1\",\n  \"48\": \">\",\n  \"49\": \"W\",\n  \"5\": \">\",\n  \"50\": \"o\",\n  \"51\": \"r\",\n  \"52\": \"l\",\n  \"53\": \"d\",\n  \"54\": \"<\",\n  \"55\": \"/\",\n  \"56\": \"h\",\n  \"57\": \"1\",\n  \"58\": \">\",\n  \"59\": \"<\",\n  \"6\": \"<\",\n  \"60\": \"/\",\n  \"61\": \"b\",\n  \"62\": \"o\",\n  \"63\": \"d\",\n  \"64\": \"y\",\n  \"65\": \">\",\n  \"66\": \"<\",\n  \"67\": \"/\",\n  \"68\": \"h\",\n  \"69\": \"t\",\n  \"7\": \"h\",\n  \"70\": \"m\",\n  \"71\": \"l\",\n  \"72\": \">\",\n  \"8\": \"e\",\n  \"9\": \"a\",\n  \"callbacks\": [],\n  \"isEscaped\": true,\n}\n\n \u276f src/jsx/intrinsic-element/components.test.tsx:35:96\n     33|         )\n     34|         const rendered = await template.toString()\n     35|         expect(await resolveCallback(rendered, HtmlEscapedCallbackPhas\u2026\n       |                                                                                                ^\n     36|           '<html><head><title>Hello</title></head><body><h1>World</h1>\u2026\n     37|         )\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[22/22]\u23af\n\n"
+}

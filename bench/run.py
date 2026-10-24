@@ -284,6 +284,18 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None, classify
     }, False
 
 
+ROUTER_COMMIT = None
+
+
+def router_commit():
+    """The commit route.py runs from, marked dirty if skills/ has local changes."""
+    global ROUTER_COMMIT
+    if ROUTER_COMMIT is None:
+        ROUTER_COMMIT = (sh(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT).stdout.strip()
+                         + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip() else ""))
+    return ROUTER_COMMIT
+
+
 def run_one(task, name, out_dir, rep=None):
     cfg = CONFIGS[name]
     stem = f"{task['id']}__{name}" + (f"__r{rep}" if rep else "")
@@ -335,6 +347,7 @@ def run_one(task, name, out_dir, rep=None):
 
     record = {
         "task": task["id"], "pr": task["pr"], "config": name, "rep": rep, "expected_tier": task["expected_tier"],
+        "router_commit": router_commit() if cfg.get("router") else None,
         "solved": solved and not timed_out, "timed_out": timed_out, "wall_s": round(wall, 1),
         "is_error": result.get("is_error"), "num_turns": result.get("num_turns"),
         "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
@@ -562,6 +575,11 @@ def cmd_summarize(args):
         cps = f"${sum(cost) / sum(solved):.2f}" if sum(solved) else "–"
         totals.append(f"| {c} | {s_txt} | {c_txt} | {cps} | {esc if any(r.get('route') for r in rs) else '–'} "
                       f"| {wall / 60:.0f} min |")
+    commits = sorted({r["router_commit"] for r in recs if r.get("router_commit")})
+    if len(commits) > 1:
+        totals += ["", f"Warning: routed runs come from different route.py commits ({', '.join(commits)})."]
+    elif commits:
+        totals += ["", f"Routed runs: route.py at {commits[0]}."]
     if max((r["rep"] for r in recs), default=1) <= 1:
         totals += ["", "One run per cell: a difference of one task between configs can be noise."]
 

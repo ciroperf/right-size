@@ -431,7 +431,7 @@ def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
     runner = probe_runner(verify_cmd)
     # On bench (2026-10-24) a reviewer wrote its probe with a shell heredoc, which the
     # allowlist denies; naming the Write tool avoids the wasted turn.
-    system = REVIEW_SYSTEM.format(run_hint=f": create the file with the Write tool, then run `{runner} <your test file>`,"
+    system = REVIEW_SYSTEM.format(run_hint=f": create it with the Write tool (Edit to change it), then run `{runner} <your test file>`,"
                                   f" the only command you can run" if runner else "")
     prompt = f"## Task\n{task}\n\n## Diff\n```diff\n{diff}\n```\n"
     before = snapshot(root)
@@ -440,8 +440,9 @@ def review(task, diff, rp, harness, root, verify_cmd=None, extra=()):
             # Headless sessions deny shell commands that aren't allowed explicitly: without
             # these rules every probe was denied on bench v1 (2026-10-21).
             shells = ["Bash", "PowerShell"] if os.name == "nt" else ["Bash"]
-            rules = ["Write", *(f"{sh}({runner}{suffix})" for sh in shells for suffix in ("", " *"))] if runner else []
-            cmd = ["claude", "-p", "--model", rp["model"], "--tools", ",".join(["Read", "Grep", "Glob", "Write", *shells]),
+            rules = ["Write", "Edit", *(f"{sh}({runner}{suffix})" for sh in shells for suffix in ("", " *"))] if runner else []
+            cmd = ["claude", "-p", "--model", rp["model"],
+                   "--tools", ",".join(["Read", "Grep", "Glob", "Write", "Edit", *shells]),
                    "--system-prompt", system, "--output-format", "json",
                    "--json-schema", json.dumps(REVIEW_SCHEMA), "--no-session-persistence",
                    "--strict-mcp-config", "--disable-slash-commands", "--max-budget-usd", "1"]
