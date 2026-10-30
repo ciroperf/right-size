@@ -21,6 +21,7 @@ The first v1 runs showed that sessions never ask to escalate on their own: a fai
 - **Risk floor:** risk areas are sized like any change and reviewed at `deep`; they start at `deep` only without tests or for a design change. Breaking changes to public APIs count as a risk area, adding a capability does not.
 - Bug fixes with a clear reproduction in a repo with tests start at `mechanical`.
 - Sessions are told to run the existing tests of every module they changed and to delete scratch files before stopping.
+- **The advisor's description leads with the questions users ask** (which model or effort, whether a subagent should do it). In a trigger test on Opus 5.5 the old one loaded the skill in 7 of 21 runs where it should; the new one in 18 of 18, and in none of the 12 runs where it shouldn't.
 - The advisor counts a fresh-eyes reviewer as a reason to delegate, and a split by kind of work (a tests agent, a docs agent) as a reason not to; the `deep` subagent template no longer asks for a written plan before editing. README cites Anthropic's guidance on folding subagents into the main loop, and how right-size fits with `/claude-api cost-optimize` and `/skill-doctor`.
 
 ### Benchmark
