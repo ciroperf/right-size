@@ -1,62 +1,70 @@
 {
   "sonnet": {
     "tasks": 4,
-    "reps": 1,
+    "reps": 2,
     "solved_per_rep": [
+      3,
       3
     ],
     "cost_per_rep": [
-      1.0739
+      1.0739,
+      1.5436
     ],
     "escalations": 0,
-    "wall_s": 367.4,
+    "wall_s": 866.8,
     "by_difficulty": [
-      "4/6 solved \u00b7 $0.25 per run"
+      "6/8 solved \u00b7 $0.33 per run"
     ]
   },
   "ladder": {
     "tasks": 4,
-    "reps": 1,
+    "reps": 2,
     "solved_per_rep": [
+      4,
       4
     ],
     "cost_per_rep": [
-      3.311
+      3.311,
+      3.0342
     ],
-    "escalations": 3,
-    "wall_s": 1254.1,
+    "escalations": 5,
+    "wall_s": 2494.7,
     "by_difficulty": [
-      "6/6 solved \u00b7 $0.77 per run"
+      "8/8 solved \u00b7 $0.79 per run"
     ]
   },
   "opus-high": {
     "tasks": 4,
-    "reps": 1,
+    "reps": 2,
     "solved_per_rep": [
+      4,
       4
     ],
     "cost_per_rep": [
-      5.594
+      5.594,
+      6.4073
     ],
     "escalations": 0,
-    "wall_s": 1129.6,
+    "wall_s": 2291.2,
     "by_difficulty": [
-      "6/6 solved \u00b7 $1.58 per run"
+      "8/8 solved \u00b7 $1.50 per run"
     ]
   },
   "router": {
     "tasks": 4,
-    "reps": 1,
+    "reps": 2,
     "solved_per_rep": [
+      4,
       4
     ],
     "cost_per_rep": [
-      3.0903
+      3.0903,
+      4.6959
     ],
-    "escalations": 0,
-    "wall_s": 954.6,
+    "escalations": 2,
+    "wall_s": 2325.0,
     "by_difficulty": [
-      "6/6 solved \u00b7 $0.83 per run"
+      "8/8 solved \u00b7 $0.97 per run"
     ]
   }
 }

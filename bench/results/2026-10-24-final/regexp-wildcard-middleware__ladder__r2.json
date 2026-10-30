@@ -1,0 +1,157 @@
+{
+  "task": "regexp-wildcard-middleware",
+  "pr": 5266,
+  "config": "ladder",
+  "rep": 2,
+  "expected_tier": "deep",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 528.6,
+  "is_error": false,
+  "num_turns": 47,
+  "duration_ms": 387160,
+  "cost_usd": 1.5749263999999998,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 28,
+      "outputTokens": 34559,
+      "cacheReadInputTokens": 930270,
+      "cacheCreationInputTokens": 53913,
+      "webSearchRequests": 0,
+      "costUSD": 0.03736760000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 28280
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 15,
+      "outputTokens": 4147,
+      "cacheReadInputTokens": 363993,
+      "cacheCreationInputTokens": 24807,
+      "webSearchRequests": 0,
+      "costUSD": 0.17712729999999996,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 628
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 54,
+      "outputTokens": 22874,
+      "cacheReadInputTokens": 1215238,
+      "cacheCreationInputTokens": 82461,
+      "webSearchRequests": 0,
+      "costUSD": 1.3604316000000003,
+      "contextWindow": 3000000,
+      "maxOutputTokens": 384000,
+      "thinkingTokens": 10664
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "In src/router/reg-exp-router/router.ts, `isWildcardMatch` checks a parameterized route through `sampleMatch`, which tries only a fixed list of sample values (`SAMPLE_VALUES`). When no sample fits the route's pattern, the wildcard is not attached at all. This breaks existing behavior: `add('GET','*','mw')` + `add('GET','/:id{[A-Z]+}','h')` now returns only `h` for `/ABC`, and `/api/*` + `/api/:id{[0-9]{3}}` returns only `h` for `/api/123`. Before the change, `*` and `/api/*` were applied to these routes.",
+        "cost_usd": 0.1722938,
+        "probed": true,
+        "denied": []
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "RegExpRouter now gives each handler its own path's param names and associates wildcards with a param before the star, including patterned, nested-brace, meta-char, default-pattern and slashless /assets* wildcards. Results match TrieRouter and PatternRouter for both registration orders, ALL wildcards, stacked wildcards and optional params. Existing router and hono tests pass.",
+        "cost_usd": 0.33559259999999996,
+        "probed": true,
+        "denied": []
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 63,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/common.case.test.ts",
+    "src/router/linear-router/router.test.ts",
+    "src/router/pattern-router/router.test.ts",
+    "src/router/reg-exp-router/prepared-router.test.ts",
+    "src/router/reg-exp-router/router.test.ts",
+    "src/router/smart-router/router.test.ts",
+    "src/router/trie-router/router.test.ts"
+  ],
+  "test_tail": "1 |    91.95 |     100 |   97.64 | 66,71             \n ...reg-exp-router |   96.62 |    89.62 |     100 |   96.36 |                   \n  node.ts          |    89.7 |    85.39 |     100 |   89.39 | 31-42             \n  ...red-router.ts |     100 |    97.61 |     100 |     100 | 41                \n  router.ts        |   97.41 |    90.16 |     100 |   97.11 | 60,97,217         \n  trie.ts          |   97.87 |    85.71 |     100 |   97.72 | 78                \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |     100 |    98.66 |     100 |     100 |                   \n  node.ts          |     100 |    98.63 |     100 |     100 | 147               \n src/utils         |   47.61 |    28.31 |      45 |   46.85 |                   \n  url.ts           |   47.61 |    28.31 |      45 |   46.85 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 87.29% ( 653/748 )\nBranches     : 77.73% ( 405/521 )\nFunctions    : 87.91% ( 80/91 )\nLines        : 86.51% ( 603/697 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

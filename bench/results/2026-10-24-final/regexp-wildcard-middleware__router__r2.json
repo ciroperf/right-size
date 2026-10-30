@@ -1,0 +1,142 @@
+{
+  "task": "regexp-wildcard-middleware",
+  "pr": 5266,
+  "config": "router",
+  "rep": 2,
+  "expected_tier": "deep",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 312.8,
+  "is_error": false,
+  "num_turns": 32,
+  "duration_ms": 212360,
+  "cost_usd": 1.11075386,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 615,
+      "cacheReadInputTokens": 1556,
+      "cacheCreationInputTokens": 8970,
+      "webSearchRequests": 0,
+      "costUSD": 0.00211726,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 360
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 21,
+      "outputTokens": 11829,
+      "cacheReadInputTokens": 528464,
+      "cacheCreationInputTokens": 32330,
+      "webSearchRequests": 0,
+      "costUSD": 0.3004984,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4261
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 33,
+      "outputTokens": 12930,
+      "cacheReadInputTokens": 684552,
+      "cacheCreationInputTokens": 51562,
+      "webSearchRequests": 0,
+      "costUSD": 0.8081384,
+      "contextWindow": 2000000,
+      "maxOutputTokens": 256000,
+      "thinkingTokens": 6209
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 6,
+  "route": {
+    "decision": {
+      "tier": "standard",
+      "effort": "medium",
+      "risk_area": null,
+      "why": "Clear repro and tests exist (140 test files), but the fix must keep ordering, pattern params, ALL and suffix-wildcard cases correct inside the RegExpRouter, so it needs design judgment rather than a mechanical pattern. Not a risk area: routing only.",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "The RegExpRouter change in src/router/reg-exp-router/router.ts meets the task. Wildcards with a param before the `*` (plain, with a pattern, nested braces, meta characters, explicit default pattern) and suffix wildcards without a slash are now applied to the routes they cover. Handlers come back in registration order with their own param names, and an ALL wildcard applies to POST routes. The src/router tests pass, plus extra checks for both orders, optional params and nested wildcards. One unconfirmed point: a wider run (src/hono.test.ts, smart-router, middleware) had failures I could not list. The one visible was a logger test unrelated to routing.",
+        "cost_usd": 0.2700806,
+        "probed": true,
+        "denied": [
+          {
+            "command": "npx vitest --run src/hono.test.ts src/router/smart-router src/middleware 2>&1 | Select-String -Pattern \"FAIL|Tests |\u00d7\" | Select-Object -First 30",
+            "timeout": 400000,
+            "description": "List failing tests"
+          }
+        ]
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 95,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/common.case.test.ts",
+    "src/router/linear-router/router.test.ts",
+    "src/router/pattern-router/router.test.ts",
+    "src/router/reg-exp-router/prepared-router.test.ts",
+    "src/router/reg-exp-router/router.test.ts",
+    "src/router/smart-router/router.test.ts",
+    "src/router/trie-router/router.test.ts"
+  ],
+  "test_tail": "7.91 |    91.95 |     100 |   97.64 | 66,71             \n ...reg-exp-router |   96.67 |    90.82 |     100 |   96.43 |                   \n  node.ts          |    89.7 |    85.39 |     100 |   89.39 | 31-42             \n  ...red-router.ts |     100 |    97.61 |     100 |     100 | 41                \n  router.ts        |   97.35 |    93.58 |     100 |    97.1 | 38,98,135,257     \n  trie.ts          |   97.87 |    85.71 |     100 |   97.72 | 78                \n ...r/smart-router |   85.71 |    58.33 |     100 |   84.84 |                   \n  router.ts        |   85.71 |    58.33 |     100 |   84.84 | 15,23,43,54,65    \n ...er/trie-router |     100 |    98.66 |     100 |     100 |                   \n  node.ts          |     100 |    98.63 |     100 |     100 | 147               \n src/utils         |   47.61 |    28.31 |      45 |   46.85 |                   \n  url.ts           |   47.61 |    28.31 |      45 |   46.85 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 87.73% ( 687/783 )\nBranches     : 78.62% ( 423/538 )\nFunctions    : 87.64% ( 78/89 )\nLines        : 87% ( 636/731 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}
