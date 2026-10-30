@@ -287,13 +287,19 @@ def run_router(task, log_dir, tier=None, split=False, escalations=None, classify
 ROUTER_COMMIT = None
 
 
+# What route.py reads: its own folder, the tiers and the harness maps. SKILL.md and the other
+# skills are text for the advisor, so editing them doesn't make a new router.
+ROUTER_PATHS = ["skills/right-size/scripts", "skills/right-size/tiers.yaml", "skills/right-size/harnesses"]
+
+
 def router_commit():
-    """The commit route.py runs from, marked dirty if skills/ has local changes."""
+    """The commit route.py runs from, marked dirty if its files have local changes."""
     global ROUTER_COMMIT
     if ROUTER_COMMIT is None:
-        # The last commit that changed skills/, so bench-only commits don't look like a new router.
-        ROUTER_COMMIT = (sh(["git", "log", "-1", "--format=%h", "--", "skills"], cwd=ROOT).stdout.strip()
-                         + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip() else ""))
+        # The last commit that changed the router, so other commits don't look like a new router.
+        ROUTER_COMMIT = (sh(["git", "log", "-1", "--format=%h", "--", *ROUTER_PATHS], cwd=ROOT).stdout.strip()
+                         + ("-dirty" if sh(["git", "status", "--porcelain", "--", *ROUTER_PATHS],
+                                           cwd=ROOT).stdout.strip() else ""))
     return ROUTER_COMMIT
 
 
@@ -413,9 +419,7 @@ def cmd_run(args):
             "allowed_tools": ALLOWED_TOOLS, "nudge": RIGHT_SIZE_NUDGE, "delegate_nudge": DELEGATE_NUDGE,
             "claude_version": sh(["claude", "--version"], check=False).stdout.strip(),
             # The router version under test: published numbers come from one commit, unmodified.
-            "router_commit": sh(["git", "log", "-1", "--format=%h", "--", "skills"], cwd=ROOT).stdout.strip()
-                             + ("-dirty" if sh(["git", "status", "--porcelain", "skills"], cwd=ROOT).stdout.strip()
-                                else "")}
+            "router_commit": router_commit()}
     if (out / "meta.json").exists():
         # A later batch of runs into the same folder adds to the record instead of replacing it.
         prev = json.loads((out / "meta.json").read_text(encoding="utf-8"))

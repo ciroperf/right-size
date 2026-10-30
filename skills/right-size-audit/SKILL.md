@@ -27,5 +27,6 @@ The audit reads local files only. It makes no model calls and sends nothing anyw
 ## Caveats to state when they apply
 
 - List prices are what the tokens are worth at API rates. On a subscription plan they show relative weight, not money spent.
+- The audit splits spend by model, token kind and subagent, not by skill. For what each loaded skill costs, point to Claude Code's `/skill-doctor`.
 - "The same tokens on a cheaper model" is a ceiling on the saving: a smaller model can need more turns. right-size's benchmark measures the real effect on solved tasks.
 - A model without a price entry is listed, not counted: tell the user to add it to `harnesses/claude-code.yaml` in the right-size skill.

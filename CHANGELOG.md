@@ -21,11 +21,13 @@ The first v1 runs showed that sessions never ask to escalate on their own: a fai
 - **Risk floor:** risk areas are sized like any change and reviewed at `deep`; they start at `deep` only without tests or for a design change. Breaking changes to public APIs count as a risk area, adding a capability does not.
 - Bug fixes with a clear reproduction in a repo with tests start at `mechanical`.
 - Sessions are told to run the existing tests of every module they changed and to delete scratch files before stopping.
+- The advisor counts a fresh-eyes reviewer as a reason to delegate, and a split by kind of work (a tests agent, a docs agent) as a reason not to; the `deep` subagent template no longer asks for a written plan before editing. README cites Anthropic's guidance on folding subagents into the main loop, and how right-size fits with `/claude-api cost-optimize` and `/skill-doctor`.
 
 ### Benchmark
 
 - **v1 with checks** (11 tasks, one run): <!-- TODO(0.4.0): final numbers after the trie rerun -->.
 - **v2-hard** (<!-- TODO(0.4.0): N --> multi-module tasks Haiku fails): <!-- TODO(0.4.0) -->.
+- Runner: the router version recorded with each run is the last commit that changed `route.py`, `tiers.yaml` or the harness maps.
 - Runner: more read-only shell tools allowed, checks for environment errors at checkout and scoring.
 - Task prompts corrected where they left out behavior the PR tests check (`trie-suffix-wildcard`, `method-not-allowed`, `cache-query`, `regexp-router-unsupported`, `jsx-array`); superseded results are kept apart and don't count.
 

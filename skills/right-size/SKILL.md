@@ -18,7 +18,7 @@ The decision itself must stay cheap. Use what is already in context plus at most
    - whether it is mostly reading, mostly mechanical, or mostly reasoning;
    - whether it splits into independent parts.
 
-3. **Decide whether to delegate.** Start from inline. A subagent starts cold: it gets its own system prompt and has to re-read whatever context it needs. So delegate only when that start-up cost buys something: keeping a large amount of reading out of the main context, running independent parts in parallel, or handing off a chunk that is large compared to its brief. If the relevant files are already in context, or the next reasoning step needs the result right away, stay inline.
+3. **Decide whether to delegate.** Start from inline. A subagent starts cold: it gets its own system prompt and has to re-read whatever context it needs. So delegate only when that start-up cost buys something: keeping a large amount of reading out of the main context, running independent parts in parallel, checking finished work with fresh eyes (a reviewer that sees only the task and the diff), or handing off a chunk that is large compared to its brief. If the relevant files are already in context, or the next reasoning step needs the result right away, stay inline.
 
 4. **Pick the tier.** Size by the structure of the change, not by its domain: how many places must change together and how many existing behaviors must keep working.
    - Mostly reading, and a lot of it → `scout`, even in a risk area: reading can't break anything. A lookup that a grep or two can answer stays `inline`.
@@ -62,7 +62,7 @@ To pick the model for a whole session before it starts, `scripts/route.py` in th
 
 ## Escalation
 
-Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas, `mechanical` work or an attempt after a failed check, a review one tier up (a short-lived reviewer subagent with the task and the diff, allowed to write and run a throwaway test for a requirement it doubts) finds no missed requirement and nothing broken. Passing tests are not enough on their own: the defects that remain are the ones the tests don't cover.
+Don't trust "done" without a check: models at every tier stop with a wrong answer and believe it is right. Before calling the work finished, run the checks in `escalation.checks`: something actually changed, tests or the project's checks pass, and for risk areas, `mechanical` work or an attempt after a failed check, a review one tier up (`deep` for risk areas; a short-lived reviewer subagent with the task and the diff, allowed to write and run a throwaway test for a requirement it doubts) finds no missed requirement and nothing broken. Passing tests are not enough on their own: the defects that remain are the ones the tests don't cover.
 
 When escalating to a bigger model, hand it a fresh brief (the task, the current diff, why the last attempt failed) rather than the whole previous conversation: a new model re-reads everything uncached.
 
@@ -81,4 +81,5 @@ Delegation is a tool, not a default. The common cases where it costs more than i
 - the task is a few lines;
 - the subagent's brief would be about as long as the work itself;
 - the user is iterating on the change interactively;
-- several "parallel" parts actually depend on each other's results.
+- several "parallel" parts actually depend on each other's results;
+- the split follows kinds of work (one agent for tests, one for docs) rather than separate contexts: specialists that pass a change along each re-read the same files.

@@ -347,7 +347,10 @@ Delegation costs more than it saves when:
 - the change is a few lines;
 - the brief would be about as long as the work;
 - you are iterating on the change interactively;
-- the "parallel" parts actually depend on each other.
+- the "parallel" parts actually depend on each other;
+- the split follows kinds of work (a tests agent, a docs agent) instead of separate contexts.
+
+Anthropic reached the same conclusion for agents in general: a single loop with skills usually beats subagents on quality, cost and latency, and subagents earn their place for context isolation, parallel throwaway work and black-box verification ([When to fold subagents into your main agent loop](https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop), October 2026). right-size's only default subagent is the reviewer, which is the verification case.
 
 ## Benchmark
 
@@ -433,6 +436,13 @@ No. Inside a running session nothing can switch the main model or effort for you
 <summary><strong>Will it go stale when new models ship?</strong></summary>
 
 The skill reasons in tiers, so only the YAML maps need updating. Each map records the date it was verified.
+
+</details>
+
+<details>
+<summary><strong>How does it fit with <code>/claude-api cost-optimize</code> and <code>/skill-doctor</code>?</strong></summary>
+
+They cover other parts of the bill. `cost-optimize` (in Anthropic's `claude-api` skill) works on an application that calls the Claude API: caching, trimming, effort and model choice in your code. `/skill-doctor` shows what each skill loaded into Claude Code costs. right-size works on the coding sessions themselves: which model and effort a session or subagent runs on, and when to delegate.
 
 </details>
 
