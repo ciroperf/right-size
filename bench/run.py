@@ -425,10 +425,14 @@ def cmd_run(args):
         prev = json.loads((out / "meta.json").read_text(encoding="utf-8"))
         meta["started"] = prev.get("started", meta["started"])
         meta["configs"] = {**prev.get("configs", {}), **meta["configs"]}
-        if prev.get("router_commit") not in (None, meta["router_commit"]):
+        if prev.get("router_commit") and not prev["router_commit"].endswith(meta["router_commit"]):
             meta["router_commit"] = f"{prev['router_commit']} / {meta['router_commit']}"
-        if prev.get("claude_version") not in (None, meta["claude_version"]):
+        elif prev.get("router_commit"):
+            meta["router_commit"] = prev["router_commit"]
+        if prev.get("claude_version") and not prev["claude_version"].endswith(meta["claude_version"]):
             meta["claude_version"] = f"{prev['claude_version']} / {meta['claude_version']}"
+        elif prev.get("claude_version"):
+            meta["claude_version"] = prev["claude_version"]
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     tasks = load_tasks(args.tasks, args.set)
     # Repetitions outermost, configs innermost: every configuration sees each task
