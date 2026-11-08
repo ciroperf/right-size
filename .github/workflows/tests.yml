@@ -10,7 +10,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # ubuntu-latest is Ubuntu 26.04 since 2026-10-19 and has no Python 3.9 build;
+        # 24.04 still does, so the minimum supported version stays tested.
+        os: [ubuntu-24.04, windows-latest]
         python: ["3.9", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
