@@ -1,0 +1,63 @@
+{
+  "task": "mount-middleware",
+  "pr": 5221,
+  "config": "sonnet",
+  "rep": 2,
+  "expected_tier": "standard",
+  "router_commit": null,
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 70.2,
+  "is_error": false,
+  "num_turns": 13,
+  "duration_ms": 69016,
+  "cost_usd": 0.20212289999999997,
+  "model_usage": {
+    "claude-sonnet-5-5": {
+      "inputTokens": 15,
+      "outputTokens": 8612,
+      "cacheReadInputTokens": 361809,
+      "cacheCreationInputTokens": 19948,
+      "webSearchRequests": 0,
+      "costUSD": 0.20212289999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1573,
+      "canonicalModel": "claude-sonnet-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": null,
+  "diff_lines": 13,
+  "parts_solved": null,
+  "test_files": [
+    "src/middleware/mount/index.test.ts"
+  ],
+  "test_tail": ".ts |    2.46 |        0 |       0 |    2.66 | ...98-153,160-164 \n  router.ts        |   94.59 |       75 |    92.3 |   94.28 | 64,73,165-166     \n  trie.ts          |   65.95 |    42.85 |      75 |    65.9 | ...46-50,62,74-79 \n ...r/smart-router |      80 |       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.89 |        0 |       0 |    7.47 |                   \n  node.ts          |     5.4 |        0 |       0 |    5.88 | 30-215            \n  router.ts        |      40 |        0 |       0 |      40 | 10-16             \n src/utils         |   17.52 |     7.93 |    9.61 |   17.67 |                   \n  body.ts          |   11.29 |        0 |       0 |   11.47 | ...13,231-256,262 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   26.14 |     16.8 |      25 |   26.17 | ...29,237-317,332 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 36.41% ( 449/1233 )\nBranches     : 26.87% ( 204/759 )\nFunctions    : 33.33% ( 73/219 )\nLines        : 36.66% ( 433/1181 )\n================================================================================\n"
+}

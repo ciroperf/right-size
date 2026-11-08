@@ -1,0 +1,106 @@
+{
+  "task": "accepts-case",
+  "pr": 5376,
+  "config": "ladder",
+  "rep": 2,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 32.8,
+  "is_error": false,
+  "num_turns": 6,
+  "duration_ms": 16134,
+  "cost_usd": 0.0578351,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 1777,
+      "cacheReadInputTokens": 159023,
+      "cacheCreationInputTokens": 8005,
+      "webSearchRequests": 0,
+      "costUSD": 0.00408053,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 561
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 6,
+      "outputTokens": 451,
+      "cacheReadInputTokens": 40121,
+      "cacheCreationInputTokens": 11305,
+      "webSearchRequests": 0,
+      "costUSD": 0.0537541,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 93
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 0,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I judged this by reading the code and did not run any tests. `matchType` in `src/helper/accepts/accepts.ts` now lowercases both the Accept value and the supported value before comparing. That covers exact matches and `TEXT/*` wildcards. `defaultMatch` still returns the original `supported` string, so the registered casing is kept. `getSpecificity` and the `*` checks involve no letters, so casing can't affect them.",
+        "cost_usd": 0.0537541,
+        "probed": false,
+        "denied": []
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 15,
+  "parts_solved": null,
+  "test_files": [
+    "src/helper/accepts/accepts.test.ts"
+  ],
+  "test_tail": "       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.89 |        0 |       0 |    7.47 |                   \n  node.ts          |     5.4 |        0 |       0 |    5.88 | 30-215            \n  router.ts        |      40 |        0 |       0 |      40 | 10-16             \n src/utils         |   29.34 |    19.32 |   17.74 |   29.72 |                   \n  accept.ts        |    65.3 |    55.23 |      80 |   65.06 | ...50,255,261,264 \n  body.ts          |   11.29 |        0 |       0 |   11.47 | ...13,231-256,262 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   20.26 |     9.24 |      15 |    20.8 | ...29,237-317,332 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 35.48% ( 478/1347 )\nBranches     : 25.26% ( 211/835 )\nFunctions    : 29.01% ( 65/224 )\nLines        : 35.82% ( 465/1298 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

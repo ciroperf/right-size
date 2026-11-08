@@ -1,0 +1,38 @@
+{
+  "ladder": {
+    "tasks": 18,
+    "reps": 2,
+    "solved_per_rep": [
+      17,
+      18
+    ],
+    "cost_per_rep": [
+      7.4504,
+      6.0491
+    ],
+    "escalations": 10,
+    "wall_s": 5470.6,
+    "by_difficulty": [
+      "27/28 solved \u00b7 $0.26 per run",
+      "8/8 solved \u00b7 $0.79 per run"
+    ]
+  },
+  "sonnet": {
+    "tasks": 18,
+    "reps": 2,
+    "solved_per_rep": [
+      16,
+      16
+    ],
+    "cost_per_rep": [
+      3.2924,
+      3.1512
+    ],
+    "escalations": 0,
+    "wall_s": 1983.0,
+    "by_difficulty": [
+      "26/28 solved \u00b7 $0.14 per run",
+      "6/8 solved \u00b7 $0.33 per run"
+    ]
+  }
+}

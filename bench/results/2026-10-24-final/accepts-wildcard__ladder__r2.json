@@ -1,0 +1,106 @@
+{
+  "task": "accepts-wildcard",
+  "pr": 5255,
+  "config": "ladder",
+  "rep": 2,
+  "expected_tier": "standard",
+  "router_commit": "cc8e5fe",
+  "solved": true,
+  "timed_out": false,
+  "wall_s": 40.0,
+  "is_error": false,
+  "num_turns": 8,
+  "duration_ms": 27023,
+  "cost_usd": 0.0384443,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 3252,
+      "cacheReadInputTokens": 246184,
+      "cacheCreationInputTokens": 9261,
+      "webSearchRequests": 0,
+      "costUSD": 0.00594124,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1212
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 438,
+      "cacheReadInputTokens": 8433,
+      "cacheCreationInputTokens": 6819,
+      "webSearchRequests": 0,
+      "costUSD": 0.0325033,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 223
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 1,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "I didn't run any tests; this verdict comes from reading the diff. `defaultMatch` in `src/helper/accepts/accepts.ts` now meets each requirement:\n- A `type/*` entry matches the first supported type with that prefix.\n- At equal quality, exact matches sort ahead of subtype wildcards.\n- `*/*` and `*` are not treated as subtype wildcards, so they still fall through to the default.",
+        "cost_usd": 0.0325033,
+        "probed": false,
+        "denied": []
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 21,
+  "parts_solved": null,
+  "test_files": [
+    "src/helper/accepts/accepts.test.ts"
+  ],
+  "test_tail": "       50 |     100 |   78.78 |                   \n  router.ts        |      80 |       50 |     100 |   78.78 | 15,23,40-43,54,65 \n ...er/trie-router |    6.89 |        0 |       0 |    7.47 |                   \n  node.ts          |     5.4 |        0 |       0 |    5.88 | 30-215            \n  router.ts        |      40 |        0 |       0 |      40 | 10-16             \n src/utils         |    29.7 |    20.05 |   18.03 |    30.1 |                   \n  accept.ts        |    65.1 |    55.14 |      80 |   64.86 | ...53,256,259,262 \n  body.ts          |    7.54 |        0 |       0 |    7.69 | ...99-209,226-245 \n  buffer.ts        |      12 |        0 |       0 |   12.24 | ...99-103,110-116 \n  crypto.ts        |   16.66 |        0 |       0 |   16.66 | ...24,28-30,36-57 \n  html.ts          |    8.64 |        0 |       0 |    8.97 | ...30-139,149-180 \n  url.ts           |   21.08 |     9.73 |      15 |   21.67 | ...16,226-299,314 \n-------------------|---------|----------|---------|---------|-------------------\n\n=============================== Coverage summary ===============================\nStatements   : 35.11% ( 461/1313 )\nBranches     : 24.96% ( 203/813 )\nFunctions    : 28.37% ( 63/222 )\nLines        : 35.39% ( 447/1263 )\n================================================================================\nLoaded  vitest@4.1.9  and  @vitest/coverage-v8@4.1.7 .\nRunning mixed versions is not supported and may lead into bugs\nUpdate your dependencies and make sure the versions match.\n"
+}

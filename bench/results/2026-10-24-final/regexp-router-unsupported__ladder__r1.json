@@ -1,0 +1,151 @@
+{
+  "task": "regexp-router-unsupported",
+  "pr": 5171,
+  "config": "ladder",
+  "rep": 1,
+  "expected_tier": "deep",
+  "router_commit": "cc8e5fe",
+  "solved": false,
+  "timed_out": false,
+  "wall_s": 596.7,
+  "is_error": false,
+  "num_turns": 55,
+  "duration_ms": 398015,
+  "cost_usd": 2.3606515999999997,
+  "model_usage": {
+    "claude-haiku-5-5": {
+      "inputTokens": 28,
+      "outputTokens": 16783,
+      "cacheReadInputTokens": 770572,
+      "cacheCreationInputTokens": 43632,
+      "webSearchRequests": 0,
+      "costUSD": 0.02482642,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 11154
+    },
+    "claude-sonnet-5-5": {
+      "inputTokens": 6,
+      "outputTokens": 1341,
+      "cacheReadInputTokens": 91354,
+      "cacheCreationInputTokens": 48375,
+      "webSearchRequests": 0,
+      "costUSD": 0.21605739999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 400
+    },
+    "claude-opus-5-5": {
+      "inputTokens": 65,
+      "outputTokens": 33481,
+      "cacheReadInputTokens": 1672362,
+      "cacheCreationInputTokens": 139427,
+      "webSearchRequests": 0,
+      "costUSD": 2.1197684,
+      "contextWindow": 3000000,
+      "maxOutputTokens": 384000,
+      "thinkingTokens": 19545
+    }
+  },
+  "subagents": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "permission_denials": 8,
+  "route": {
+    "decision": {
+      "tier": "mechanical",
+      "effort": null,
+      "risk_area": null,
+      "why": "tier set by the user",
+      "shared": "",
+      "parts": []
+    },
+    "profiles": [
+      {
+        "tier": "mechanical",
+        "model": "haiku",
+        "effort": "low"
+      },
+      {
+        "tier": "standard",
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      {
+        "tier": "deep",
+        "model": "opus",
+        "effort": "medium"
+      }
+    ],
+    "checks": [
+      {
+        "kind": "verify",
+        "ok": false,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": false,
+        "reason": "In src/router/reg-exp-router/router.ts, `add()` now rebuilds the whole matcher (trie plus RegExp compile) on every call, so registration cost grows quadratically. I measured 1000 GET routes at about 4.5 s and 2000 at about 19 s, where one build used to take milliseconds. That breaks the router's existing performance, and RegExpRouter is used by SmartRouter, Hono's default router. Detect unsupported paths without a full rebuild on each add: for example, keep a persistent trie per method and insert only the new paths with the existing PATH_ERROR checks, leaving the real matcher build lazy.",
+        "cost_usd": 0.2940046,
+        "probed": true,
+        "denied": []
+      },
+      {
+        "kind": "verify",
+        "ok": true,
+        "reason": null,
+        "cost_usd": null,
+        "probed": null,
+        "denied": null
+      },
+      {
+        "kind": "review",
+        "ok": true,
+        "reason": "add() now inserts each path into a separate checker trie for each method, so unsupported paths throw at registration time. This works for ALL routes and specific-method routes in either order, and when a method is first created from ALL routes. Single meta-character param patterns like /:x{.} are rejected. With /w/*/x registered before /w/:id/y, matching /w/123/y now captures id = 123. It also works in the reverse order. The checker only throws in the cases the build step would also throw for. The wildcard exemption just makes the result the same whatever the registration order. I ran the reg-exp-router, smart-router and hono tests plus a probe test of my own. They all pass, and routing results, ordering, method inheritance and the matcher format are unchanged.",
+        "cost_usd": 0.452345,
+        "probed": true,
+        "denied": []
+      }
+    ],
+    "parts": null
+  },
+  "diff_lines": 57,
+  "parts_solved": null,
+  "test_files": [
+    "src/router/reg-exp-router/router.test.ts"
+  ],
+  "test_tail": "src/router/reg-exp-router/router.ts:207:13\n \u276f RegExpRouter.add src/router/reg-exp-router/router.ts:204:27\n \u276f src/router/reg-exp-router/router.test.ts:208:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/3]\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Single character regexp pattern > Should coexist with dynamic paths regardless of the order\nError: /:x{a}\n \u276f checkPath src/router/reg-exp-router/router.ts:149:34\n    147|         pathCheckers[m].insert(p, 0, false)\n    148|       } catch (e) {\n    149|         throw e === PATH_ERROR ? new UnsupportedPathError(p) : e\n       |                                  ^\n    150|       }\n    151|     }\n \u276f src/router/reg-exp-router/router.ts:207:13\n \u276f RegExpRouter.add src/router/reg-exp-router/router.ts:204:27\n \u276f src/router/reg-exp-router/router.test.ts:222:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/3]\u23af\n\n FAIL  |main| src/router/reg-exp-router/router.test.ts > RegExpRouter > Static path including a colon in the middle > Should be treated as a static path\nError: /v1/name2\n \u276f checkPath src/router/reg-exp-router/router.ts:149:34\n    147|         pathCheckers[m].insert(p, 0, false)\n    148|       } catch (e) {\n    149|         throw e === PATH_ERROR ? new UnsupportedPathError(p) : e\n       |                                  ^\n    150|       }\n    151|     }\n \u276f src/router/reg-exp-router/router.ts:207:13\n \u276f RegExpRouter.add src/router/reg-exp-router/router.ts:204:27\n \u276f src/router/reg-exp-router/router.test.ts:258:18\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[3/3]\u23af\n\n"
+}

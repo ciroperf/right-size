@@ -511,6 +511,10 @@ def cmd_summarize(args):
             r["rep"] = r.get("rep") or 1  # single-rep runs record no rep
             pooled[(r["task"], r["config"], r["rep"])] = r
     recs = list(pooled.values())
+    if args.configs:
+        # Compare a subset of configs on every task they all ran, not only on what the others ran.
+        keep = set(args.configs.split(",")) | {FLOOR}
+        recs = [r for r in recs if r["config"] in keep]
     configs = (list(dict.fromkeys(r["config"] for r in recs if r["config"] != FLOOR))
                or [FLOOR])  # a floor-only run summarizes the floor itself
     tasks_by_id = {t["id"]: t for t in load_tasks()}
@@ -613,8 +617,9 @@ def cmd_summarize(args):
             totals.append(f"| {c} | " + " | ".join(cells) + " |")
             agg[c]["by_difficulty"] = cells
     md = "\n".join(lines + totals) + "\n"
-    (d / "summary.md").write_text(md, encoding="utf-8")
-    (d / "summary.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
+    stem = "summary" + (f"-{args.configs.replace(',', '-')}" if args.configs else "")
+    (d / f"{stem}.md").write_text(md, encoding="utf-8")
+    (d / f"{stem}.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
     print(md)
 
 
@@ -627,6 +632,7 @@ def main():
     r.add_argument("--tasks"); r.add_argument("--set"); r.add_argument("--force", action="store_true")
     r.add_argument("--reps", type=int, default=1)
     s = sub.add_parser("summarize"); s.add_argument("dirs", nargs="+")  # first dir gets summary.md
+    s.add_argument("--configs", help="only these configs (comma-separated), written to summary-<configs>.md")
     args = p.parse_args()
     {"validate": cmd_validate, "run": cmd_run, "summarize": cmd_summarize}[args.cmd](args)
 
