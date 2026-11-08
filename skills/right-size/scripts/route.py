@@ -805,6 +805,8 @@ def main():
     ap.add_argument("--max-escalations", type=int, default=3)
     ap.add_argument("--verify-cmd")
     ap.add_argument("--review", choices=["auto", "always", "never"], default="auto")
+    # Only the classifier recognizes risk areas; without it, the user names one to get the deep review.
+    ap.add_argument("--risk", metavar="AREA")
     ap.add_argument("--no-checks", action="store_true")
     ap.add_argument("--log", type=Path)
     ap.add_argument("--json", action="store_true")
@@ -839,6 +841,8 @@ def main():
             sys.stderr.write(f"right-size: classifier unavailable ({e}); using {FALLBACK_TIER}\n")
             decision = {"tier": FALLBACK_TIER, "effort": None, "risk_area": None,
                         "why": "classifier unavailable, router fallback", "shared": "", "parts": []}
+    if args.risk:
+        decision["risk_area"] = args.risk
     tier, capped = cap(decision["tier"], facts["max_tier"])
     p = profile(tier, decision.get("effort"), hmap, tiers)
     top = facts["max_tier"] or "deep"
@@ -887,7 +891,7 @@ def main():
             runs, text = run_headless(args.harness, pp, part_prompt(part, decision["shared"], n, len(plan)),
                                       extra, part_why, top, hmap, tiers, args.max_escalations, args.log,
                                       label=f"part{n}-",
-                                      checks=make_checks(args, facts, part.get("risk_area"), top, args.harness))
+                                      checks=make_checks(args, facts, part.get("risk_area") or args.risk, top, args.harness))
             parts_out.append({"title": part["title"], "runs": runs})
             texts.append(f"## Part {n}: {part['title']}\n\n{text}")
         runs = [r for x in parts_out for r in x["runs"]]

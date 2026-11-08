@@ -44,9 +44,10 @@ right-size sizes the work, starts on the smallest setup that still gets it done,
 | A cheaper session model is where the saving is | Whole session on Sonnet: **60% cheaper, ~3× faster** than the Opus default, same 6/6 bugs solved |
 | Subagents rarely pay off on small, related fixes | Forcing delegation: **about 2× the cost** of doing it inline |
 
-<!-- TODO(0.4.0): add the v1 headline rows (ladder vs sonnet, hard tasks) once measured -->
+| On hard tasks, a cheap start with checks matches Opus for about half the cost | 4 tasks Haiku alone fails: ladder **8/8 at $0.79 a run**, Opus at high effort 8/8 at $1.50, Sonnet alone 6/8 at $0.33 |
+| Checks cost extra on easy work | All 18 tasks: ladder 17.5 solved per rep for $6.75, Sonnet alone 16.0 for $3.22 |
 
-These are single runs on one repo. See [Benchmark](#benchmark) for v1, with harder tasks.
+One repo (Hono); the first three rows are single runs, the last two are two runs per task. See [Benchmark](#benchmark), regressions included.
 
 **Four ways to use it**
 
@@ -239,9 +240,9 @@ why: ladder: start on the cheapest writing tier, checks escalate on failure
 escalate if: a real attempt fails → standard (sonnet, effort medium)
 ```
 
-<!-- TODO(0.4.0): replace with a real escalate/done pair from a bench run -->
+A real run from the benchmark (`trie-suffix-wildcard`, rep 1): Haiku's attempt changed no file, so the router moved to Sonnet; Sonnet's change passed the existing tests, and the review one tier up (Opus) wrote throwaway tests, ran them with the router suites, and accepted it. Solved, $0.58 in all, $0.33 of it the review.
 
-With `--classify`, one call on the cheapest tier (about $0.002) sizes the task with the same `tiers.yaml` and picks the starting tier instead. In the benchmark so far that solved the same tasks as the ladder at about three times the cost, so it is opt-in. Without `--print` nothing checks the work automatically, so the router opens the interactive session on `standard` (or on the classifier's tier with `--classify`).
+With `--classify`, one call on the cheapest tier (about $0.002) sizes the task with the same `tiers.yaml` and picks the starting tier instead. In the benchmark it solved the same tasks as the ladder at a higher cost (about three times on the first pass, about 20% more on the final hard set), so it is opt-in. Without `--print` nothing checks the work automatically, so the router opens the interactive session on `standard` (or on the classifier's tier with `--classify`).
 
 The script ships inside the skill folder and needs only Python 3.9+, no packages. Where it lives depends on how you installed right-size; inside a session, asking "give me the right-size router command" makes the skill print it with the full path.
 
@@ -269,6 +270,7 @@ function rs { python .claude\skills\right-size\scripts\route.py @args }   # Powe
 | `--no-checks` | With `--print`: escalate only when the session asks for it (`RIGHT-SIZE-ESCALATE:`), the 0.3.0 behavior |
 | `--max-escalations <n>` | Steps up allowed after the first attempt (default 3) |
 | `--classify` | Size the task with a classifier call instead of starting on the ladder |
+| `--risk <area>` | Mark the task as touching a risk area (e.g. `auth`), so every attempt gets the `deep` review. Only the classifier detects risk areas on its own |
 | `--tier <tier>` | Start on this tier |
 | `--file <path>` | Read the task from a file, or from stdin with `-` |
 | `--dry-run` | Show the decision and the command, don't run anything |
@@ -389,22 +391,27 @@ What it shows, regressions included:
 - **Subagents didn't pay.** The Haiku and Sonnet subagents were cheap, but the Opus session's briefing and review, plus security parts sent to a cold Opus subagent, doubled the cost. The advisor's choice to stay inline was right.
 - **What changed because of it:** the `deep` tier now starts at medium effort, with high as its first escalation step, and `/right-size-defaults` exists.
 
-**v1, 2026-10-21 → <!-- TODO(0.4.0) date -->:** does a router with checks beat simply running everything on Sonnet? 11 tasks (v0 fixes, two batches, four harder tasks) plus <!-- TODO(0.4.0): N --> hard multi-module tasks that Haiku fails, scored by each PR's own tests. Records in [`bench/results/`](bench/results/).
+**v1, 2026-10-21 → 2026-11-08:** does a router with checks beat simply running everything on Sonnet? 18 Hono tasks merged after the models' training cutoff, two runs each, scored by each PR's own tests (never shown to the agent). The hard set is the 4 tasks that Haiku alone, at low effort and with no checks, fails at least once in two runs. Claude Code 2.1.302, `route.py` at cc8e5fe. Records and the full reading in [`bench/results/2026-10-24-final/`](bench/results/2026-10-24-final/NOTES.md).
 
-<!-- TODO(0.4.0): table from bench/results/2026-10-21-v1-checks + the rerun + v2-hard. Columns: config, solved, total cost, cost per solved task. Rows: sonnet, ladder, router (--classify), opus-high reference. -->
-
-| Config | v1 solved | v1 cost | hard solved | hard cost |
+| Config | Hard set: solved | Hard set: cost per run | All 18: solved per rep | All 18: cost per rep |
 |---|---|---|---|---|
-| `sonnet` (whole session on Sonnet, medium) | TBD | TBD | TBD | TBD |
-| `ladder` (`route.py --print`, checks) | TBD | TBD | TBD | TBD |
-| `router` (`route.py --print --classify`) | TBD | TBD | TBD | TBD |
-| `opus-high` (reference) | — | — | TBD | TBD |
+| `sonnet` (whole session on Sonnet, medium) | 6/8 | $0.33 | 16.0 | $3.22 |
+| `ladder` (`route.py --print`: Haiku first, checks) | **8/8** | $0.79 | **17.5** | $6.75 |
+| `router` (`route.py --print --classify`) | 8/8 | $0.97 | — | — |
+| `opus-high` (reference, Opus at high) | 8/8 | $1.50 | — | — |
+| `haiku` (floor: Haiku at low, no checks) | 2/8 | — | 15 | about $0.40 |
+
+- **The ladder solved what Opus at high effort solved on the hard set, for about half the cost**, and more than Sonnet alone overall (35/36 runs vs 32/36), for about twice Sonnet's cost.
+- **On easy tasks the ladder usually ends on Haiku plus a Sonnet review, for $0.04 to $0.08**, below Sonnet alone. Its cost comes from the few tasks that escalate to Opus, and it varies a lot: `method-not-allowed` cost $0.18 in one rep and $2.06 in the other. Sonnet's cost barely moves.
+- **Regression:** `regexp-router-unsupported` failed once under the ladder ($2.36), though Haiku alone solves it. The Opus review rejected Sonnet's passing fix for quadratic registration cost (a real issue), and the Opus rewrite broke two of the PR's tests, which its own review missed. Sonnet alone failed this task in both reps, and `jsx-array` too.
+- **Risk areas in ladder mode:** without the classifier the router didn't know `jwt-bad-signature` was auth work, so it got a Sonnet review instead of a `deep` one. `--risk` fixes that; these runs predate it.
+- **Which to pick:** if your tasks are mostly easy and a missed fix is cheap to catch later, Sonnet alone is the cheapest. If a missed fix costs you more than the ladder's extra $3.50 per 18 tasks, the ladder's extra solves pay for themselves.
 
 What changed because of v1, measured on its first pass:
 
 - **Sessions never asked to escalate.** In the pilot, every failed session stopped with a wrong answer at every tier. The router now checks each attempt itself; with checks, escalation fired where it should.
 - **Resuming on a bigger model was the expensive part of an escalation**: most of one ladder run's cost was Opus re-reading the earlier conversation uncached. A model change now starts a fresh session with a brief.
-- **Tests and a read-only review both missed a defect** that a cheap model introduced. The reviewer may now write a throwaway test and run it. (In the first runs with this change every probe was denied, because headless sessions block shell commands that aren't explicitly allowed; the reviewer now gets the project's test runner. <!-- TODO(0.4.0): measured effect -->)
+- **Tests and a read-only review both missed a defect** that a cheap model introduced. The reviewer may now write a throwaway test and run it. (In the first runs with this change every probe was denied, because headless sessions block shell commands that aren't explicitly allowed; the reviewer now gets the project's test runner. Measured after the change: reviews write and run throwaway tests, e.g. on `jsx-array` two probe files plus the existing suites, 1,942 tests, and in the final run the review on `regexp-router-unsupported` measured the quadratic registration cost it rejected.)
 - **The classifier did not pay for itself**: same solved count as the ladder at about three times the cost. It is now opt-in (`--classify`).
 
 One task prompt (`accepts-wildcard`) contradicted its PR's tests in the first pass and failed in all three configurations. It was corrected and all three reran; the note is in [`bench/tasks/hono.yaml`](bench/tasks/hono.yaml).

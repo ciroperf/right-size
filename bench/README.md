@@ -30,8 +30,8 @@ Question: does a router that checks its own work beat simply running everything 
 
 - **Configurations:** `sonnet` (always Sonnet 5.5 at medium), `ladder` (`route.py --print --tier mechanical --max-escalations 3`: start on Haiku, step up when a check fails), `router` (`route.py --print --classify`: a classifier picks the starting tier). `default` and `opus-high` (Opus 5.5 at medium and high) are kept as references.
 - **Checks** (ladder and router): after each attempt the router fails it on an empty diff, when the existing tests of the changed files fail (`--verify-cmd "npx vitest --run --changed"`), or when a review one tier up rejects the diff (`deep` for risk areas). The PR's own tests are never shown to the agent; they only score the result.
-- **Tasks:** the `v1` set in [`tasks/hono.yaml`](tasks/hono.yaml), 11 in all: 5 from v0, the two batches, and 4 harder tasks (a router refactor, JSX arrays across five test files, a new middleware, QUERY caching). <!-- TODO(0.4.0): the v2-hard set, multi-module PRs that Haiku fails -->
-- **Repetitions:** one run per task and configuration so far, so a one-task difference between configs can be noise. `--reps 3` runs more; reps are the outer loop and an interrupted run resumes where it stopped.
+- **Tasks:** the `v1` set in [`tasks/hono.yaml`](tasks/hono.yaml), 11 in all: 5 from v0, the two batches, and 4 harder tasks (a router refactor, JSX arrays across five test files, a new middleware, QUERY caching). The final run uses `all` (18 tasks: v1, the remaining v0 fixes and two tasks added on 2026-10-24) and `hard` (the 4 tasks the `haiku` floor fails at least once), which also ran `router` and `opus-high`.
+- **Repetitions:** two per task and configuration in the final run (`--reps 2`); the earlier v1 folders are single runs, where a one-task difference between configs can be noise. More reps cost more; reps are the outer loop and an interrupted run resumes where it stopped.
 
 ```bash
 python bench/run.py run --out bench/results/<date>-v1 --set v1 --configs sonnet,ladder,router --reps 3
@@ -73,7 +73,10 @@ Raw transcripts and diffs go to `bench/raw/` (not committed). Per-run records an
 
 - [`results/2026-10-19-v1/`](results/2026-10-19-v1/) and [`results/2026-10-20-v1-pilot-local/`](results/2026-10-20-v1-pilot-local/): v1 pilots before checks existed. No session ever asked to escalate; they led to the checks. Not v1 results.
 - [`results/2026-10-21-v1-checks/`](results/2026-10-21-v1-checks/): v1 with checks, one run. sonnet 9/11 $2.10, ladder 10/11 $3.54, router 10/11 $10.31, with the trie row invalid (old prompt). See its [NOTES.md](results/2026-10-21-v1-checks/NOTES.md).
-- <!-- TODO(0.4.0): the rerun folder and v2-hard -->
+- [`results/2026-10-21-v1-rerun/`](results/2026-10-21-v1-rerun/): trie with the fixed prompt for all configs, and the ladder with fresh-brief escalation. [`results/2026-10-19-v1-checks/`](results/2026-10-19-v1-checks/), [`results/2026-10-21-v1-probe-check/`](results/2026-10-21-v1-probe-check/) and [`results/2026-10-24-probe-check/`](results/2026-10-24-probe-check/): small checks of task prompts and of review probes, each with its NOTES.md.
+- [`results/2026-10-24-floor/`](results/2026-10-24-floor/): `haiku` alone on every task, two runs each; it defines the hard set.
+- [`results/2026-10-24-final/`](results/2026-10-24-final/): the final v1 run, 18 tasks × `sonnet`, `ladder` and 4 hard tasks × `router`, `opus-high`, two reps, route.py at cc8e5fe. Hard set: ladder 8/8 at $0.79 a run, router 8/8 at $0.97, opus-high 8/8 at $1.50, sonnet 6/8 at $0.33. All 18: ladder 17.5 solved per rep for $6.75, sonnet 16.0 for $3.22. One ladder regression (`regexp-router-unsupported`). See its [NOTES.md](results/2026-10-24-final/NOTES.md).
+- [`results/2026-10-24-setup-smoke/`](results/2026-10-24-setup-smoke/): the subagents `right-size-setup` generates for Claude Code run on their tier's model.
 
 ## Limits
 

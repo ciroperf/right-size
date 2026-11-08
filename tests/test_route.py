@@ -395,6 +395,14 @@ class Misc(unittest.TestCase):
         self.assertEqual(list(usage), ["sonnet"])
         self.assertEqual(route.own_usage(first, None), (0.2, first["modelUsage"]))
 
+    def test_risk_flag_names_the_area_without_the_classifier(self):
+        script = Path(route.__file__)
+        with tempfile.TemporaryDirectory() as tmp:
+            for extra, want in (([], None), (["--risk", "auth"], "auth")):
+                out = subprocess.run([sys.executable, str(script), "--dry-run", *extra, "fix the jwt check"],
+                                     cwd=tmp, capture_output=True, text=True, encoding="utf-8", check=True)
+                self.assertEqual(json.loads(out.stdout)["decision"]["risk_area"], want)
+
     def test_read_task_from_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             f = Path(tmp) / "issue.md"

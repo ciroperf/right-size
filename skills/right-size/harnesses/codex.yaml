@@ -1,12 +1,12 @@
 # Tier -> Codex configuration.
-# Verified against official docs on 2026-10-17:
+# Verified against official docs on 2026-10-17, re-checked 2026-11-08:
 #   https://learn.chatgpt.com/docs/agent-configuration/subagents
 #   https://learn.chatgpt.com/docs/config-file/config-reference
 #   https://learn.chatgpt.com/docs/models
 # Model choices are initial and unbenchmarked. Availability depends on plan and sign-in method.
 
 harness: codex
-verified: 2026-10-17
+verified: 2026-11-08
 
 tiers:
   inline:
@@ -44,3 +44,5 @@ notes:
   - model_reasoning_effort values are model-dependent; current docs list low, medium, high, xhigh, max, ultra. gpt-6-luna has no ultra.
   - gpt-6.1-sol is still rolling out; if unavailable, use gpt-6-astra at medium for standard.
   - An agent file that sets only model keeps the previously resolved effort, so always set both.
+  - Values in a custom agent file win over spawn values and [agents] defaults (docs, 2026-11-08). Users report that with multi-agent v2 some models' spawn requests no longer take a model or effort, so the children inherit the parent's; prefer the right_size_* agent files over per-spawn values.
+  - gpt-6.1-terra (fast, aimed at writing, vision and computer use) is not mapped to a tier until measured on coding tasks.

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.4.0 - 2026-11-08
 
 The first v1 runs showed that sessions never ask to escalate on their own: a failing session stops with a wrong answer at every tier. This release makes the router check the work itself.
 
@@ -22,12 +22,14 @@ The first v1 runs showed that sessions never ask to escalate on their own: a fai
 - Bug fixes with a clear reproduction in a repo with tests start at `mechanical`.
 - Sessions are told to run the existing tests of every module they changed and to delete scratch files before stopping.
 - **The advisor's description leads with the questions users ask** (which model or effort, whether a subagent should do it). In a trigger test on Opus 5.5 the old one loaded the skill in 7 of 21 runs where it should; the new one in 18 of 18, and in none of the 12 runs where it shouldn't.
+- **Router `--risk AREA`:** names a risk area without the classifier, so ladder runs get the `deep` review on auth, payments and the like.
+- **Harness maps re-checked on 2026-11-08:** Claude Code's per-invocation `effort` on the Agent tool, `CLAUDE_CODE_SUBAGENT_EFFORT`, and subagents on another model using that model's effort; Codex agent files winning over spawn values, and multi-agent v2 spawns that may ignore model and effort.
 - The advisor counts a fresh-eyes reviewer as a reason to delegate, and a split by kind of work (a tests agent, a docs agent) as a reason not to; the `deep` subagent template no longer asks for a written plan before editing. README cites Anthropic's guidance on folding subagents into the main loop, and how right-size fits with `/claude-api cost-optimize` and `/skill-doctor`.
 
 ### Benchmark
 
-- **v1 with checks** (11 tasks, one run): <!-- TODO(0.4.0): final numbers after the trie rerun -->.
-- **v2-hard** (<!-- TODO(0.4.0): N --> multi-module tasks Haiku fails): <!-- TODO(0.4.0) -->.
+- **Final v1 run** (Hono, 18 tasks, two reps, Claude Code 2.1.302): on the 4 tasks Haiku alone fails, the ladder solved 8/8 at $0.79 a run, Opus at high effort 8/8 at $1.50, the classifier router 8/8 at $0.97, Sonnet alone 6/8 at $0.33. On all 18, the ladder solved 17.5 per rep for $6.75, Sonnet alone 16.0 for $3.22. Regression: `regexp-router-unsupported` failed once under the ladder after an Opus review rejected a passing fix.
+- **Difficulty floor:** `haiku` (Haiku at low effort, no checks) on every task; the summary splits results by how often it fails.
 - Runner: the router version recorded with each run is the last commit that changed `route.py`, `tiers.yaml` or the harness maps.
 - Runner: more read-only shell tools allowed, checks for environment errors at checkout and scoring.
 - Task prompts corrected where they left out behavior the PR tests check (`trie-suffix-wildcard`, `method-not-allowed`, `cache-query`, `regexp-router-unsupported`, `jsx-array`); superseded results are kept apart and don't count.
