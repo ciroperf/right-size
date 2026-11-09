@@ -1,6 +1,6 @@
 ---
 name: right-size
-description: Size a coding task before doing it: work inline or hand it to a subagent, which tier (inline, scout, mechanical, standard, deep), which model and reasoning effort, and when to escalate. Use it whenever the user asks which model or effort a task needs, whether a subagent should do it, or how to size, split or cut the cost of a task, even when the answer looks obvious: the current model names, prices and harness settings live in this skill's maps, not in your memory. Also use it before spawning a subagent or fanning tickets out to parallel agents. Not needed for ordinary edits nobody asked to size.
+description: "Size a coding task before doing it: work inline or hand it to a subagent, which tier (inline, scout, mechanical, standard, deep), which model and reasoning effort, and when to escalate. Use it whenever the user asks which model or effort a task needs, whether a subagent should do it, or how to size, split or cut the cost of a task, even when the answer looks obvious: the current model names, prices and harness settings live in this skill's maps, not in your memory. Also use it before spawning a subagent or fanning tickets out to parallel agents. Not needed for ordinary edits nobody asked to size."
 ---
 
 Most token waste in coding agents comes from two habits: sending everything to the biggest model at the highest effort, and delegating to subagents when doing the work inline would be cheaper. This skill picks the smallest setup that still solves the task, and says when to step up.

@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## 0.4.1 - 2026-11-09
+
+- **Fix:** the advisor's description held an unquoted `: `, which strict YAML parsers reject, so `npx skills add` skipped the `right-size` skill (Claude Code's plugin loader accepted it). The description is now quoted, and a test checks every skill's frontmatter.
+
 ## 0.4.0 - 2026-11-08
 
 The first v1 runs showed that sessions never ask to escalate on their own: a failing session stops with a wrong answer at every tier. This release makes the router check the work itself.

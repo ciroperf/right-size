@@ -18,6 +18,24 @@ class Skills(unittest.TestCase):
                 self.assertRegex(text, r"(?m)^description: \S")
                 self.assertTrue((d / "agents" / "openai.yaml").exists(), "Codex metadata missing")
 
+    def test_frontmatter_is_strict_yaml(self):
+        # Claude Code tolerates `: ` inside a plain scalar; the skills CLI's YAML parser
+        # skips the whole skill (0.4.0 shipped that way). Quote values that contain one.
+        for d in SKILLS:
+            with self.subTest(skill=d.name):
+                front = (d / "SKILL.md").read_text(encoding="utf-8").split("---")[1]
+                for line in front.strip().splitlines():
+                    key, _, value = line.partition(": ")
+                    if value and value[0] not in "\"'|>":
+                        self.assertNotIn(": ", value, f"{key}: quote this value")
+                        self.assertNotIn(" #", value, f"{key}: quote this value")
+                try:
+                    import yaml
+                except ImportError:
+                    continue
+                self.assertEqual(yaml.safe_load(front)["name"], d.name)
+                yaml.safe_load((d / "agents" / "openai.yaml").read_text(encoding="utf-8"))
+
     def test_registered_in_plugin_and_release(self):
         plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
         release = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")

@@ -1,6 +1,6 @@
 {
   "name": "right-size",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Pick the model, reasoning effort and delegation a coding task deserves, set a project's default model and effort, and apply it in your harness.",
   "author": {
     "name": "Ciro Perfetto",
